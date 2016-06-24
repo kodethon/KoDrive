@@ -1,7 +1,7 @@
 from syncthing import Syncthing
 
 import subprocess 
-import os
+import os, sys
 import xml.etree.ElementTree as ET
 
 class SyncthingFacade():
@@ -14,9 +14,9 @@ class SyncthingFacade():
                 self.adapter = adapter
 
 	        try:
-                    self.sync = adapter.get_gui_hook()
+                    self.sync = self.adapter.get_gui_hook()
 		except Exception:
-		    return
+		    pass
 
 	def get_config(self):	
 		return self.sync.sys.config()
@@ -24,21 +24,33 @@ class SyncthingFacade():
 	def set_config(self, config):
 		return self.sync.sys.set.config(config)
 
-	def handshake(self):
-		return
-
 	def restart(self):
 		self.sync.sys.set.restart();
 
 	def start(self):	
-		path = self.adapter.get_path()
-		return self.adapter.start(path);
+            path = self.adapter.get_path()
+            
+            return self.adapter.start(path);
 
 	def ping(self):
-		return type(self.sync.sys.ping()) == dict
+	    # Silence stderr
+	    save_stderr = sys.stderr
+	    sys.stderr = open('trash', 'w')
+
+	    # Run command
+	    t = type(self.sync.sys.set.ping()) 
+	    sys.stderr = save_stderr
+
+	    return t == dict
 
 	def shutdown(self):
-		return self.sync.sys.set.shutdown()
+	    return self.sync.sys.set.shutdown()
+
+	def name(self):
+	    try:
+	        return self.sync.sys.config()['devices'][0]['deviceID']
+	    except Exception:
+	        return self.adapter.get_device_id()
 
 class SyncthingLinux64(): 
 	
@@ -53,6 +65,11 @@ class SyncthingLinux64():
 
 		return Syncthing(api_key=api_key, port=int(port))
 
+	def get_device_id(self):
+	    home_dir = os.path.expanduser('~')
+            tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
+            return tree.find('device').items()[0][1]
+
 	def get_path(self):
 		dest = '/var/opt'
 		linux_64_bit_file = 'syncthing-linux-amd64-v0.13.7'
@@ -60,15 +77,16 @@ class SyncthingLinux64():
 		
 		# If syncthing doesn't exist, install it
 		if not os.path.exists(syncthing_path):
-			dest_tmp = '/tmp'
-			linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.7.tar.gz'
+                    dest_tmp = '/tmp'
+                    linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.7'
+                    linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.7.tar.gz'
 
-			command = "wget -P %s https://github.com/syncthing/syncthing/releases/download/v0.13.7/%s" % (dest_tmp, linux_64_bit_tar)
-			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+                    command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
+                    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-			src = dest_tmp
-			command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
-			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+                    src = dest_tmp
+                    command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
+                    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
 		return syncthing_path
 
@@ -89,36 +107,36 @@ class SyncthingFactory:
 		self.syncthing_posix = SyncthingFacade(SyncthingLinux64())
 
 	def get_handler(self):
-		handler = {
-			'posix' : self.syncthing_posix
-		}.get(os.name, None)
+            handler = {
+                'posix' : self.syncthing_posix
+            }.get(os.name, None)
+            
+            if not handler:
+                raise "%s is not currently supported." % os.name
 
-		if not handler:
-			raise "%s is not currently supported." % os.name
-
-		return handler
+            return handler
 
 # Singleton
 factory = SyncthingFactory()
 
 def start():
 	handler = factory.get_handler()
-        success = True
 
         try:
-            success = handler.ping()
+            alive = handler.ping()
         except Exception:
-            success = False
+            alive = False
 
-	if not success:
-		success = handler.start()
+	if not alive:
+	    
+            success = handler.start()
 
-		if not success:
-			return 'An error has occurred.'
-		else:
-			return 'Syncthing has started.'
+            if not success:
+                return 'An error has occurred'
+            else:
+                return handler.name()
 	
-	return 'Syncthing already started.'
+	return 'KodeDrive has already been started.' 
 
 def config():
 	handler = factory.get_handler()
@@ -126,6 +144,24 @@ def config():
 	return handler.get_config()
 
 def stop():
+        
 	handler = factory.get_handler()
 
+        try:
+            alive = handler.ping()
+        except:
+            alive = False
+
+	if not alive:
+	    return 'KodeDrive has already exited.'
+
 	return handler.shutdown()
+
+def status():
+	handler = factory.get_handler()
+
+	return 'KodeDrive is up.' if handler.ping() else 'KodeDrive is down.'
+
+def name():
+	handler = factory.get_handler()
+	return handler.name()

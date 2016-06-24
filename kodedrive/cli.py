@@ -1,28 +1,63 @@
 import click
 import cde_syncthing
 
-@click.command()
-@click.option('--as-cowboy', '-c', is_flag=True, help='Greet as a cowboy.')
-@click.argument('arg', default='config', required=False)
+#@click.group(invoke_without_command=True)
+#@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
+#click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
+#click.echo("See 'kodedrive --help'.")
 
-def main(arg, as_cowboy):
-	"""test"""
+@click.version_option()
+@click.group(
+    epilog="Run 'kodedrive COMMAND --help' for more information on a command.", 
+    #add_help_option=False, 
+    #options_metavar="\b",
+)
+@click.pass_context
 
-	greet = 'Howdy' if as_cowboy else 'Hello'
+def cli(ctx):
+    ''' Synchronize remote files with local directory. '''
+    pass
 
-	#click.echo('{0}, {1}.'.format(greet, name))
-	#click.echo('{0}, {1}.'.format(greet, syncthing_facade.config()))
-	#click.echo('{0}, {1}.'.format(greet, syncthing_facade.start()))
+# 
+# Subcommands start
+#
 
-	handler = {
-		'start' : cde_syncthing.start,
-		'stop' : cde_syncthing.stop,
-		'config' : cde_syncthing.config
-	}.get(arg, None)
-	
-	if handler:
-	        output = handler()
-	        output = output.strip()
-		click.echo("%s" % output)
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--test')
+def start(test):
+    ''' Start KodeDrive daemon. '''
 
+    output = cde_syncthing.start()
+    click.echo("%s" % output)
 
+@cli.command()
+def stop():
+    ''' Stop KodeDrive daemon. '''
+
+    output = cde_syncthing.stop()
+    output = output.strip()
+    click.echo("%s" % output)
+
+@cli.command()
+def inspect():
+    ''' Return low-level information. '''
+
+    output = cde_syncthing.config()
+    click.echo("%s" % output)
+
+@cli.command()
+def status():
+    ''' Determine if KodeDrive is up. '''
+
+    output = cde_syncthing.status()
+    click.echo("%s" % output)
+
+@cli.command()
+def name():
+    ''' Display Kodedrive key. '''
+
+    output = cde_syncthing.name()
+    click.echo("%s" % output)
+
+cli()
