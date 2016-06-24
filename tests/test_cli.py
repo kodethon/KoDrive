@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from kodedrive import cli
+from kdr import cli
 
 
 @pytest.fixture

@@ -3,6 +3,8 @@ from syncthing import Syncthing
 import subprocess 
 import os, sys
 import xml.etree.ElementTree as ET
+import json
+import hashlib
 
 class SyncthingFacade():
 	
@@ -18,7 +20,7 @@ class SyncthingFacade():
 		except Exception:
 		    pass
 
-	def get_config(self):	
+	def get_config(self):
 		return self.sync.sys.config()
 		
 	def set_config(self, config):
@@ -52,10 +54,59 @@ class SyncthingFacade():
 	    except Exception:
 	        return self.adapter.get_device_id()
 
+	def init(self, key, name, path):
+		try:
+			config = self.adapter.create_config(key, name, path)
+			return 'Success'
+		except Exception, e:
+			print str(e)
+			return 'Failure'
+	  	
+	def test(self):
+		sync = Syncthing(api_key='ACWpWrFTsgME52NAA7sHFeSfbvSKcCtG', port=8384)
+		print sync
+		return sync.sys.ping()
+
 class SyncthingLinux64(): 
 	
 	binary = 'syncthing'
-	
+
+	def create_config(self, key, name, path):
+		home_dir = os.path.expanduser('~')
+		folder_path = os.path.join(home_dir, '.config/kdr')
+		config_path = os.path.join(folder_path, 'config.json')
+		
+		name = hashlib.sha1(key).hexdigest() if not name else name
+
+		record = {
+			name : {
+				'local_path' : path,
+				'remote_key' : key
+			}
+		}
+		
+		# If config file does not exist, create it
+		# And then add the new directory data into it
+		if not os.path.exists(folder_path):
+			os.makedirs(folder_path)
+		
+			config = {
+				'directories' : [record]
+			}
+
+			fp = open(config_path, 'w')
+			fp.write(json.dumps(config))
+			fp.close
+		else:
+			
+			with open(config_path, "r+") as f:
+				raw = f.read()
+				f.seek(0)
+				config = json.loads(raw)
+				config['directories'].append(record)
+				f.write(json.dumps(config))
+				f.truncate()
+
 	def get_gui_hook(self):
 		home_dir = os.path.expanduser('~')
 		tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
@@ -98,7 +149,8 @@ class SyncthingLinux64():
 		is_success = (process.stderr == None)
 
 	        return is_success
-			
+
+				
 class SyncthingFactory:
 	
 	syncthing_posix = None
@@ -141,7 +193,7 @@ def start():
 def config():
 	handler = factory.get_handler()
 	
-	return handler.get_config()
+	return json.dumps(handler.get_config())
 
 def stop():
         
@@ -165,3 +217,11 @@ def status():
 def name():
 	handler = factory.get_handler()
 	return handler.name()
+
+def init(key, name, path):
+	handler = factory.get_handler()
+	return handler.init(key, name, path)
+
+def test():
+	handler = factory.get_handler()
+	return handler.test()

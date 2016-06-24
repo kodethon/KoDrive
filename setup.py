@@ -1,18 +1,18 @@
 """
-Synchronize program files.
+Synchronize remote files with local directory.
 """
 from setuptools import find_packages, setup
 
 dependencies = ['click', 'syncthing']
 
 setup(
-    name='kodedrive',
+    name='kdr',
     version='0.1.0',
     url='https://github.com/Jvlythical/KodeDrive',
     license='BSD',
     author='Michael Yen',
     author_email='lvlichael8@Gmail.Com',
-    description='Synchronize program files.',
+    description='Synchronize remote files with local directory.',
     long_description=__doc__,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
@@ -21,7 +21,7 @@ setup(
     install_requires=dependencies,
     entry_points={
         'console_scripts': [
-            'kodedrive = kodedrive.cli:main',
+            'kdr = kdr.cli:main',
         ],
     },
     classifiers=[

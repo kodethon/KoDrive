@@ -1,6 +1,6 @@
 # KodeDrive
 
-Synchronize program files.
+Synchronize remote files with local directory.
 
 
 # Installation
@@ -17,5 +17,5 @@ Simply run:
 
 To use it:
 
-    $ kodedrive --help
+    $ kdr --help
 
