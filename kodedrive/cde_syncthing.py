@@ -10,8 +10,13 @@ class SyncthingFacade():
 	adapter = None
 
 	def __init__(self, adapter):
-		self.sync = adapter.get_gui_hook()
-		self.adapter = adapter
+
+                self.adapter = adapter
+
+	        try:
+                    self.sync = adapter.get_gui_hook()
+		except Exception:
+		    return
 
 	def get_config(self):	
 		return self.sync.sys.config()
@@ -46,7 +51,6 @@ class SyncthingLinux64():
 		address = tree.find('gui').find('address').text
 		port = address.split(':')[1]
 
-		print Syncthing(api_key=api_key, port=int(port)).sys.config
 		return Syncthing(api_key=api_key, port=int(port))
 
 	def get_path(self):
@@ -59,27 +63,23 @@ class SyncthingLinux64():
 			dest_tmp = '/tmp'
 			linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.7.tar.gz'
 
-			command = "curl -P %s https://github.com/syncthing/syncthing/releases/download/v0.13.7/%s" % (dest, linux_64_bit_tar)
+			command = "wget -P %s https://github.com/syncthing/syncthing/releases/download/v0.13.7/%s" % (dest_tmp, linux_64_bit_tar)
 			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
 			src = dest_tmp
-			command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_file, dest)
+			command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
 			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
 		return syncthing_path
 
 	def start(self, folder_path):	
 		command = os.path.join(folder_path, self.binary)
-		status = subprocess.call(command)
-		is_success = status == 0
-		
-		# Modify the config
-		if is_success:
-			config = self.get_config();
-			config['gui']['enabled'] = False
-			self.set_config(config)
 
-		return is_success
+		DEVNULL = open(os.devnull, 'w') 
+                process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+		is_success = (process.stderr == None)
+
+	        return is_success
 			
 class SyncthingFactory:
 	
@@ -103,8 +103,14 @@ factory = SyncthingFactory()
 
 def start():
 	handler = factory.get_handler()
+        success = True
 
-	if not handler.ping():
+        try:
+            success = handler.ping()
+        except Exception:
+            success = False
+
+	if not success:
 		success = handler.start()
 
 		if not success:
@@ -120,6 +126,6 @@ def config():
 	return handler.get_config()
 
 def stop():
-	handler = factory.get_hander()
+	handler = factory.get_handler()
 
 	return handler.shutdown()

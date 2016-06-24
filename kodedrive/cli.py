@@ -21,6 +21,8 @@ def main(arg, as_cowboy):
 	}.get(arg, None)
 	
 	if handler:
-		click.echo("%s" % handler())
+	        output = handler()
+	        output = output.strip()
+		click.echo("%s" % output)
 
 
