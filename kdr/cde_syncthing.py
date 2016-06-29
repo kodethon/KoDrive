@@ -1,5 +1,9 @@
 from syncthing import Syncthing
 
+# Self-defined
+import src_proxy
+
+# Standard library
 import subprocess 
 import os, sys
 import xml.etree.ElementTree as ET
@@ -13,12 +17,12 @@ class SyncthingFacade():
 
 	def __init__(self, adapter):
 
-                self.adapter = adapter
+		self.adapter = adapter
 
-	        try:
-                    self.sync = self.adapter.get_gui_hook()
+		try:
+			self.sync = self.adapter.get_gui_hook()
 		except Exception:
-		    pass
+		  pass
 
 	def get_config(self):
 		return self.sync.sys.config()
@@ -30,9 +34,9 @@ class SyncthingFacade():
 		self.sync.sys.set.restart();
 
 	def start(self):	
-            path = self.adapter.get_path()
-            
-            return self.adapter.start(path);
+		path = self.adapter.get_path()
+		
+		return self.adapter.start(path);
 
 	def ping(self):
 	    # Silence stderr
@@ -55,13 +59,39 @@ class SyncthingFacade():
 	        return self.adapter.get_device_id()
 
 	def init(self, key, name, path):
+
+		"""
+
+			1. If config.json not created:
+				Create config as ~/.config/kdr/config.json
+				Initialize contents in confing.json
+			else
+				Append new folder data to config
+			
+			2. Notify the remote device that this machine
+				 wants to connect to it.
+
+			Args:
+				key(str): remote device-id used to identify src
+				name(str): user defined name associating key 
+				path(str): path to folder user wants to sync
+			
+			returns success or failure
+
+		"""
+
 		try:
 			config = self.adapter.create_config(key, name, path)
-			return 'Success'
+			res = src_proxy.connect(self.name())
+
+			if res.status == '200':
+				return 'Success' 
+			else:
+				raise RuntimeError(res.body)
 		except Exception, e:
 			print str(e)
 			return 'Failure'
-	  	
+	 
 	def test(self):
 		sync = Syncthing(api_key='ACWpWrFTsgME52NAA7sHFeSfbvSKcCtG', port=8384)
 		print sync
@@ -128,16 +158,16 @@ class SyncthingLinux64():
 		
 		# If syncthing doesn't exist, install it
 		if not os.path.exists(syncthing_path):
-                    dest_tmp = '/tmp'
-                    linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.7'
-                    linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.7.tar.gz'
+			dest_tmp = '/tmp'
+			linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.7'
+			linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.7.tar.gz'
 
-                    command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
-                    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+			command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
+			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-                    src = dest_tmp
-                    command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
-                    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+			src = dest_tmp
+			command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
+			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
 		return syncthing_path
 
@@ -159,14 +189,14 @@ class SyncthingFactory:
 		self.syncthing_posix = SyncthingFacade(SyncthingLinux64())
 
 	def get_handler(self):
-            handler = {
-                'posix' : self.syncthing_posix
-            }.get(os.name, None)
-            
-            if not handler:
-                raise "%s is not currently supported." % os.name
+		handler = {
+				'posix' : self.syncthing_posix
+		}.get(os.name, None)
+		
+		if not handler:
+				raise "%s is not currently supported." % os.name
 
-            return handler
+		return handler
 
 # Singleton
 factory = SyncthingFactory()
@@ -174,10 +204,10 @@ factory = SyncthingFactory()
 def start():
 	handler = factory.get_handler()
 
-        try:
-            alive = handler.ping()
-        except Exception:
-            alive = False
+	try:
+			alive = handler.ping()
+	except Exception:
+			alive = False
 
 	if not alive:
 	    
