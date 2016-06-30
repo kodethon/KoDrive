@@ -143,7 +143,8 @@ class SyncthingProxy(SyncthingFacade):
             port=self.remote_port, 
             host=host
         )
-
+        
+        # If remote host can't be detected, throw a tantrum >:/
         if not self.ping():
             raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
