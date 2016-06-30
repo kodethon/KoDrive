@@ -4,14 +4,13 @@ from syncthing import Syncthing
 import platform_adapter
 
 # Standard library
-import sys, platform
-import json, hashlib
-
+import sys, platform, json
 
 class SyncthingFacade():
     
     def __init__(self):
         self.sync = None
+        self.adapter = None
             
     def get_config(self):
         return self.sync.sys.config()
@@ -20,10 +19,13 @@ class SyncthingFacade():
         try:
             return self.sync.sys.config()['devices'][0]['deviceID']
         except Exception:
-            return self.adapter.get_device_id()
+            if self.adapter:
+                return self.adapter.get_device_id()
+            else:
+                return None
         
     def set_config(self, config):
-        return self.sync.sys.set.config(config)
+        return self.sync.sys.set.config(config = config)
 
     def restart(self):
         self.sync.sys.set.restart();
@@ -49,11 +51,17 @@ class SyncthingFacade():
 
     def devid_to_ip(self, devid):
         discovery = self.sync.sys.discovery()
-        
+
         if not devid in discovery:
             return None
         else:
-            href = discovery[devid]['addresses'][0]
+            address = discovery[devid]['addresses']
+
+            for e in address:
+                if 'tcp://' in e:
+                    href = e
+                    break
+
             return href.split('/')[2].split(':')[0]
 
 class SyncthingClient(SyncthingFacade):
@@ -89,35 +97,37 @@ class SyncthingClient(SyncthingFacade):
             returns success or failure
 
         """
-    
-        toks = key.split('@')
-        device_id = toks[0]
         
+        try:
+            toks = key.split('@')
+            device_id = toks[0]
+            api_key = toks[1]
+        except IndexError as e:
+            return 'Invalid Key.'
+
         # Check if the device id is valid
         if 'error' in self.sync.misc.device_id(id=device_id):
-            return 'Invaid Key.'
-
-        api_key = toks[1]
-
-        # Check if api_key is valid
+            return 'Invalid Key.'
 
         try:
-
-            config = self.adapter.create_config(key, name, path)
-            res = src_proxy.connect(self.name())
-
-            if res.status == '200':
-                return "%s is now synchronizing with %s" % (path, key)
-            else:
-                raise RuntimeError(res.body)
-
-        except Exception, e:
+            host = self.devid_to_ip(device_id)
+            remote = SyncthingProxy(device_id, host, api_key)
+            res = remote.connect()
+            config = self.adapter.update_config({
+                'device_id' : device_id,
+                'api_key' : api_key,
+                'name' : name,
+                'path' : path
+            })
+        except KeyError as e:
+            return e.message
+        except Exception as e:
             print str(e)
-            return 'Failure'
+            return 'Please fix me.'
  
-    def test(self):
+    def test(self): 
         print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
-        print dir(self.sync.misc)
+        print dir(self.sync.sys.set.config)
         print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
         return self.sync.sys.ping()
 
@@ -125,21 +135,26 @@ class SyncthingProxy(SyncthingFacade):
 
     remote_port = 8384
 
-    def __init__(device_id, api_key):
+    def __init__(self, device_id, host, api_key):
         SyncthingFacade.__init__(self)
+        
         self.sync = Syncthing(
             api_key=api_key, 
             port=self.remote_port, 
-            host=self.devid_to_ip(device_id)
+            host=host
         )
 
-    def status():
-        return True
+        if not self.ping():
+            raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
-    def connect():
+    def connect(self):
+        config = self.get_config()       
+
+        res = self.set_config(json.dumps(config))
+        print 'Remote ' + res.text
         return
 
-    def disconnect():
+    def disconnect(self):
         return
 
 syncthing_linux = None

@@ -75,6 +75,8 @@ def init(key, name, path):
 
 @cli.command()
 def test():
+    ''' Test random functions :) '''
+
     output = syncthing_adapter.test()
     click.echo("%s" % output)
 
