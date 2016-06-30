@@ -4,7 +4,8 @@ from py_syncthing_adapter import Syncthing
 import platform_adapter
 
 # Standard library
-import sys, platform, json
+import sys, platform
+import socket, json
 
 class SyncthingFacade():
     
@@ -64,6 +65,44 @@ class SyncthingFacade():
 
             return href.split('/')[2].split(':')[0]
 
+    def device_exists(self, client_devid):
+        config = self.get_config()       
+
+        # Check to see if device already exists
+        for e in config['devices']:
+            device_id = e['deviceID']
+            
+            if device_id == client_devid:
+                return True
+        
+        return False
+
+    def folder_exists(self, object, config = None):
+
+        if not config:
+            config = self.get_config()
+        
+        exists = False
+
+        # list of folders
+        folders = config['folders']
+
+        for f in folders:
+            n = 0
+            d = 0
+
+            for k in object:
+                if object[k] == f[k]:
+                    n += 1
+
+                d += 1
+
+            if n == d:
+                exists = True
+                break
+
+        return exists
+
 class SyncthingClient(SyncthingFacade):
     
     def __init__(self, adapter):
@@ -112,7 +151,19 @@ class SyncthingClient(SyncthingFacade):
         try:
             host = self.devid_to_ip(device_id)
             remote = SyncthingProxy(device_id, host, api_key)
-            res = remote.connect()
+            remote_folder = remote.request_folder(device_id)
+
+            # Ensure that user is not adding device again
+            #if not remote.device_exists(device_id):
+            #    remote_folder = remote.share_default_folder(device_id)
+            #else
+            #    remote_folder = None
+
+            #if not remote_folder:
+            #    return 'Internal Error.'   
+
+            self.acknowledge(remote_folder, path)
+
             config = self.adapter.update_config({
                 'device_id' : device_id,
                 'api_key' : api_key,
@@ -121,9 +172,27 @@ class SyncthingClient(SyncthingFacade):
             })
         except KeyError as e:
             return e.message
-        except Exception as e:
-            print str(e)
-            return 'Please fix me.'
+        except ValueError as e:
+            return e.message
+        #except Exception as e:
+        #    print str(e.traceback()
+        #    return 'Please fix me.'
+    
+    # Commit the shared remote folder data
+    # into local config.xml file
+    def acknowledge(self, remote_folder, local_path):
+        config = self.get_config()
+        
+        if self.folder_exists({
+            'id' : remote_folder['id']
+        }, config):
+            raise ValueError('Folder already exists.')
+
+        remote_folder['path'] = local_path
+        remote_folder['label'] = 'sync'
+        config['folders'].push(remote_folder)
+
+        return self.set_config(config)
  
     def test(self): 
         print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
@@ -138,6 +207,9 @@ class SyncthingProxy(SyncthingFacade):
     def __init__(self, device_id, host, api_key):
         SyncthingFacade.__init__(self)
         
+        self.device_id = device_id
+        self.host = host
+        self.api_key = api_key
         self.sync = Syncthing(
             api_key=api_key, 
             port=self.remote_port, 
@@ -148,26 +220,24 @@ class SyncthingProxy(SyncthingFacade):
         if not self.ping():
             raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
-    def connect(self):
+    def request_folder(self, client_devid):
         config = self.get_config()       
-        
-        """
 
-         Modify the config:
+        record = {
+            'deviceId' : client_devid,
+            'name' : socket.gethostname(),
+            'compression' : 'metadata',
+            'introducer' : False,
+            'certName' : '',
+            'address' : ['dynamic']
+        }
+        config['devices'].append(record)
+        config['folders'][0]['devices'].append({
+            'deviceID' : client_devid
+        })
+        self.set_config(config)
 
-        1. Open the file for write
-        2. Change folder specs:
-            id (of shared folder), 
-            label (name), 
-            path (depends on OS), 
-            device ids (all devices with access)
-        3. Change devices:
-            id
-            name
-
-        """
-
-        success = self.set_config(config)
+        return config['folders'][0]
 
     def disconnect(self):
         return

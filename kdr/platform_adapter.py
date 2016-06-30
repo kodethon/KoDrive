@@ -1,5 +1,4 @@
-
-from syncthing import Syncthing
+from py_syncthing_adapter import Syncthing
 
 import xml.etree.ElementTree as ET
 import os, subprocess
