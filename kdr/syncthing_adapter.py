@@ -1,3 +1,4 @@
+from syncthing import Syncthing
 
 # Self-defined
 import src_proxy
@@ -9,6 +10,8 @@ import json, hashlib
 
 class SyncthingFacade():
     
+    remote_port = 8384
+
     sync = None
     adapter = None
 
@@ -23,6 +26,12 @@ class SyncthingFacade():
 
     def get_config(self):
         return self.sync.sys.config()
+
+    def get_device_id(self):
+        try:
+            return self.sync.sys.config()['devices'][0]['deviceID']
+        except Exception:
+            return self.adapter.get_device_id()
         
     def set_config(self, config):
         return self.sync.sys.set.config(config)
@@ -35,6 +44,9 @@ class SyncthingFacade():
         
         return self.adapter.start(path);
 
+    def shutdown(self):
+        return self.sync.sys.set.shutdown()
+        
     def ping(self):
         # Silence stderr
         save_stderr = sys.stderr
@@ -46,14 +58,9 @@ class SyncthingFacade():
 
         return t == dict
 
-    def shutdown(self):
-        return self.sync.sys.set.shutdown()
-
-    def name(self):
-        try:
-            return self.sync.sys.config()['devices'][0]['deviceID']
-        except Exception:
-            return self.adapter.get_device_id()
+    def devid_to_ip(devid):
+        return
+        
 
     def init(self, key, name, path):
 
@@ -69,30 +76,45 @@ class SyncthingFacade():
                  wants to connect to it.
 
             Args:
-                key(str): remote device-id used to identify src
+                key(str): remote deviceId@apiKey used to identify src
                 name(str): user defined name associating key 
                 path(str): path to folder user wants to sync
             
             returns success or failure
 
         """
+        
+        toks = key.split('@')
+        device_id = toks[0]
+        
+        # Check if the device id is valid
+        if 'error' in self.sync.misc.device_id(id=device_id):
+            return 'Invaid Key.'
+
+        api_key = toks[1]
+
+        remote_sync = Syncthing(api_key=api_key, port=self.remote_port, host='1')
+
+        # Check if api_key is valid
 
         try:
-            device_id = 's'
-            api_key = 'h'
+
             config = self.adapter.create_config(key, name, path)
             res = src_proxy.connect(self.name())
 
             if res.status == '200':
-                return 'Success' 
+                return "%s is now synchronizing with %s" % (path, key)
             else:
                 raise RuntimeError(res.body)
+
         except Exception, e:
             print str(e)
             return 'Failure'
      
     def test(self):
-        print self.sync
+        print Syncthing
+        print dir(self.sync.misc)
+        print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
         return self.sync.sys.ping()
                 
 class SyncthingFactory:
@@ -175,7 +197,7 @@ def status():
 
 def name():
     handler = factory.get_handler()
-    return handler.name()
+    return handler.get_device_id()
 
 def init(key, name, path):
     handler = factory.get_handler()
