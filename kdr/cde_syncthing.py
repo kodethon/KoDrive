@@ -1,17 +1,11 @@
-from syncthing import Syncthing
 
 # Self-defined
 import src_proxy
 import platform_adapter
 
 # Standard library
-import subprocess 
-import os, sys
-import xml.etree.ElementTree as ET
-import json
-import hashlib
-import platform
-
+import sys, platform
+import json, hashlib
 
 class SyncthingFacade():
     
@@ -84,6 +78,8 @@ class SyncthingFacade():
         """
 
         try:
+            device_id = 's'
+            api_key = 'h'
             config = self.adapter.create_config(key, name, path)
             res = src_proxy.connect(self.name())
 
@@ -96,30 +92,33 @@ class SyncthingFacade():
             return 'Failure'
      
     def test(self):
-        sync = Syncthing(api_key='ACWpWrFTsgME52NAA7sHFeSfbvSKcCtG', port=8384)
-        print sync
-        return sync.sys.ping()
+        print self.sync
+        return self.sync.sys.ping()
                 
 class SyncthingFactory:
     
-    syncthing_posix = None
+    syncthing_linux = None
     syncthing_mac = None
     syncthing_win = None
 
     def __init__(self):
+
         if platform.system() == "Linux" or platform.system() == "Linux2":
-            self.syncthing_posix = SyncthingFacade(platform_adapter.SyncthingLinux64())
-            # Linux
+            self.syncthing_linux = SyncthingFacade(
+                platform_adapter.SyncthingLinux64()
+            ) # Linux
         elif platform.system() == "Darwin":
-            self.syncthing_mac = SyncthingFacade(platform_adapter.SyncthingMac64())
-            # MacOSX
+            self.syncthing_mac = SyncthingFacade(
+                platform_adapter.SyncthingMac64()
+            ) # MacOSX
         elif platform.system() == "Windows":
-            self.syncthing_win = SyncthingFacade(platform_adapter.SyncthingWin64())
-            # TODO: Windows
+            self.syncthing_win = SyncthingFacade(
+                platform_adapter.SyncthingWin64()
+            ) # TODO: Windows
 
     def get_handler(self):
         handler = {
-            'Linux' : self.syncthing_posix,
+            'Linux' : self.syncthing_linux,
             'Darwin' : self.syncthing_mac,
             'Windows' : self.syncthing_win
         }.get(platform.system(), None)
@@ -133,25 +132,22 @@ class SyncthingFactory:
 factory = SyncthingFactory()
 
 def start():
-    handler = factory.get_handler()
 
     try:
+        handler = factory.get_handler()
         alive = handler.ping()
-
-    except Exception:
+    except Exception as e:
         alive = False
+    
+    if not alive:
+        success = handler.start()   
 
-    finally:
-        if not alive:
-            success = handler.start()
-
-            if not success:
-                return 'An error has occurred'
-
-            else:
-                return handler.name()
-
-    return 'KodeDrive has already been started.' 
+        if not success:
+            return e if e else 'KodeDrive could not be started.'
+        else:
+            return handler.name()
+    else:
+        return 'KodeDrive has already been started.' 
 
 def config():
     handler = factory.get_handler()
@@ -174,7 +170,7 @@ def stop():
 
 def status():
     handler = factory.get_handler()
-
+    
     return 'KodeDrive is up.' if handler.ping() else 'KodeDrive is down.'
 
 def name():

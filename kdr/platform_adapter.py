@@ -1,3 +1,9 @@
+
+from syncthing import Syncthing
+
+import xml.etree.ElementTree as ET
+import os, subprocess
+
 class SyncthingLinux64(): 
     
     binary = 'syncthing'
@@ -73,14 +79,14 @@ class SyncthingLinux64():
         return syncthing_path
 
     def start(self, folder_path):   
+        
         command = os.path.join(folder_path, self.binary)
-
+        
         DEVNULL = open(os.devnull, 'w') 
         process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
         is_success = (process.stderr == None)
 
         return is_success
-
 
 class SyncthingMac64():
     binary = 'syncthing'
