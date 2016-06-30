@@ -5,10 +5,10 @@ Synchronize remote files with local directory.
 
 # Installation
 
-If you don't use `pipsi`, you're missing out.
-Here are [installation instructions](https://github.com/mitsuhiko/pipsi#readme).
+If you don't have `pipsi` installed, you can find 
+the instructions to install it [here](https://github.com/mitsuhiko/pipsi#readme).
 
-Simply run:
+Otherwise, simply run:
 
     $ pipsi install .
 
