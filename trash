@@ -1,0 +1,37 @@
+No handlers could be found for logger "syncthing"
+Traceback (most recent call last):
+  File "/Users/mathewle/.local/bin/kdr", line 9, in <module>
+    load_entry_point('kdr', 'console_scripts', 'kdr')()
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/pkg_resources/__init__.py", line 542, in load_entry_point
+    return get_distribution(dist).load_entry_point(group, name)
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/pkg_resources/__init__.py", line 2569, in load_entry_point
+    return ep.load()
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/pkg_resources/__init__.py", line 2229, in load
+    return self.resolve()
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/pkg_resources/__init__.py", line 2235, in resolve
+    module = __import__(self.module_name, fromlist=['__name__'], level=0)
+  File "/Users/mathewle/Downloads/KodeDrive/kdr/cli.py", line 85, in <module>
+    cli()
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/click/core.py", line 716, in __call__
+    return self.main(*args, **kwargs)
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/click/core.py", line 696, in main
+    rv = self.invoke(ctx)
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/click/core.py", line 1060, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/click/core.py", line 889, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/Users/mathewle/.local/venvs/kdr/lib/python2.7/site-packages/click/core.py", line 534, in invoke
+    return callback(*args, **kwargs)
+  File "/Users/mathewle/Downloads/KodeDrive/kdr/cli.py", line 31, in start
+    output = cde_syncthing.start()
+  File "/Users/mathewle/Downloads/KodeDrive/kdr/cde_syncthing.py", line 319, in start
+    success = handler.start()
+  File "/Users/mathewle/Downloads/KodeDrive/kdr/cde_syncthing.py", line 41, in start
+    return self.adapter.start(path);
+  File "/Users/mathewle/Downloads/KodeDrive/kdr/cde_syncthing.py", line 265, in start
+    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/subprocess.py", line 710, in __init__
+    errread, errwrite)
+  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/subprocess.py", line 1335, in _execute_child
+    raise child_exception
+OSError: [Errno 2] No such file or directory
