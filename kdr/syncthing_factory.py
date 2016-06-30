@@ -151,7 +151,21 @@ class SyncthingProxy(SyncthingFacade):
     def connect(self):
         config = self.get_config()       
         
-        # Modify the config
+        """
+
+         Modify the config:
+
+        1. Open the file for write
+        2. Change folder specs:
+            id (of shared folder), 
+            label (name), 
+            path (depends on OS), 
+            device ids (all devices with access)
+        3. Change devices:
+            id
+            name
+
+        """
 
         success = self.set_config(config)
 
