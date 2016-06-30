@@ -1,4 +1,4 @@
-from syncthing import Syncthing
+from py_syncthing_adapter import Syncthing
 
 # Self-defined
 import platform_adapter
@@ -25,7 +25,7 @@ class SyncthingFacade():
                 return None
         
     def set_config(self, config):
-        return self.sync.sys.set.config(config = config)
+        return self.sync.sys.set.config(config)
 
     def restart(self):
         self.sync.sys.set.restart();
@@ -149,10 +149,10 @@ class SyncthingProxy(SyncthingFacade):
 
     def connect(self):
         config = self.get_config()       
+        
+        # Modify the config
 
-        res = self.set_config(json.dumps(config))
-        print 'Remote ' + res.text
-        return
+        success = self.set_config(config)
 
     def disconnect(self):
         return

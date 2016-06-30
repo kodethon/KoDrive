@@ -1,5 +1,5 @@
 import click
-import syncthing_adapter
+import cli_syncthing_adapter
 
 @click.version_option()
 @click.group(
@@ -24,14 +24,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 def start(test):
     ''' Start KodeDrive daemon. '''
 
-    output = syncthing_adapter.start()
+    output = cli_syncthing_adapter.start()
     click.echo("%s" % output)
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 def stop():
     ''' Stop KodeDrive daemon. '''
 
-    output = syncthing_adapter.stop()
+    output = cli_syncthing_adapter.stop()
     output = output.strip()
     click.echo("%s" % output)
 
@@ -39,14 +39,14 @@ def stop():
 def inspect():
     ''' Return low-level information. '''
 
-    output = syncthing_adapter.config()
+    output = cli_syncthing_adapter.config()
     click.echo("%s" % output)
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 def status():
     ''' Determine if KodeDrive is up. '''
 
-    output = syncthing_adapter.status()
+    output = cli_syncthing_adapter.status()
     click.echo("%s" % output)
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -70,14 +70,14 @@ def name(path):
 def init(key, name, path):
     ''' Initialize folder to sync with remote folder. '''
 
-    output = syncthing_adapter.init(key, name, path)
+    output = cli_syncthing_adapter.init(key, name, path)
     click.echo("%s" % output)
 
 @cli.command()
 def test():
     ''' Test random functions :) '''
 
-    output = syncthing_adapter.test()
+    output = cli_syncthing_adapter.test()
     click.echo("%s" % output)
 
 cli()
@@ -91,7 +91,7 @@ REFERENCE
 def connect(src, dest):
     ''' Connect to remote server. '''
     
-    output = syncthing_adapter.connect()
+    output = cli_syncthing_adapter.connect()
     click.echo("%s" % output)
 """
 
