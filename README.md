@@ -12,10 +12,17 @@ Otherwise, simply run:
 
     $ pipsi install .
 
+Note: `pipsi` relies on `pip` and `virtualenv` which may need to be installed.
 
-# Usage
+
+# Getting Started
 
 To use it:
 
     $ kdr --help
 
+### Initializing a repository
+
+### Synchronizing files and directories
+
+### Conflicts
