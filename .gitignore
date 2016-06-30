@@ -8,3 +8,5 @@ build/
 .coverage
 
 *.sw*
+trash
+kdr/trash
