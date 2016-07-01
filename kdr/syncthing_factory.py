@@ -4,7 +4,7 @@ from py_syncthing_adapter import Syncthing
 import platform_adapter
 
 # Standard library
-import sys, platform
+import sys, platform, time
 import socket, json
 
 class SyncthingFacade():
@@ -65,8 +65,21 @@ class SyncthingFacade():
 
             return href.split('/')[2].split(':')[0]
 
-    def device_exists(self, client_devid):
-        config = self.get_config()       
+    def new_device(self, config, devid):
+        record = {
+            'deviceId' : devid,
+            'name' : socket.gethostname(),
+            'compression' : 'metadata',
+            'introducer' : False,
+            'certName' : '',
+            'address' : ['dynamic']
+        }
+        config['devices'].append(record)
+
+    def device_exists(self, client_devid, config=None):
+
+        if not config:
+            config = self.get_config()       
 
         # Check to see if device already exists
         for e in config['devices']:
@@ -149,35 +162,47 @@ class SyncthingClient(SyncthingFacade):
             return 'Invalid Key.'
 
         try:
+            config = self.get_config()
+
+            if not self.device_exists(device_id):
+                self.new_device(config, device_id)
+                self.set_config()
+                self.restart()
+            
             host = self.devid_to_ip(device_id)
+
+            count = 0
+            # Wait for changes to take effect
+            while not host and count <= 10:
+                print 'Discovering device ...'
+                time.sleep(1)
+                host = self.devid_to_ip(device_id)
+                count += 1
+             
+            # Request remote to share its folder with us
             remote = SyncthingProxy(device_id, host, api_key)
-            remote_folder = remote.request_folder(device_id)
-
-            # Ensure that user is not adding device again
-            #if not remote.device_exists(device_id):
-            #    remote_folder = remote.share_default_folder(device_id)
-            #else
-            #    remote_folder = None
-
-            #if not remote_folder:
-            #    return 'Internal Error.'   
-
+            remote_folder = remote.request_folder(self.get_device_id())
+            
+            # Save the folder data into syncthing config
             self.acknowledge(remote_folder, path)
-
+            
+            # Save folder data into kdr config
             config = self.adapter.update_config({
                 'device_id' : device_id,
                 'api_key' : api_key,
                 'name' : name,
                 'path' : path
             })
+
+            return 'Success'
         except KeyError as e:
             return e.message
         except ValueError as e:
             return e.message
-        #except Exception as e:
-        #    print str(e.traceback()
-        #    return 'Please fix me.'
-    
+        except Exception as e:
+            print e.message
+            return 'Big bad un-expected booboo.'
+
     # Commit the shared remote folder data
     # into local config.xml file
     def acknowledge(self, remote_folder, local_path):
@@ -222,16 +247,9 @@ class SyncthingProxy(SyncthingFacade):
 
     def request_folder(self, client_devid):
         config = self.get_config()       
+        
+        self.new_device(config, client_devid)
 
-        record = {
-            'deviceId' : client_devid,
-            'name' : socket.gethostname(),
-            'compression' : 'metadata',
-            'introducer' : False,
-            'certName' : '',
-            'address' : ['dynamic']
-        }
-        config['devices'].append(record)
         config['folders'][0]['devices'].append({
             'deviceID' : client_devid
         })
