@@ -18,7 +18,7 @@ class SyncthingFacade():
 
     def get_device_id(self):
         try:
-            return self.sync.sys.config()['devices'][0]['deviceID']
+            return self.sync.sys.status()['myID']
         except Exception:
             if self.adapter:
                 return self.adapter.get_device_id()
@@ -50,32 +50,61 @@ class SyncthingFacade():
 
         return t == dict
 
-    def devid_to_ip(self, devid):
-        discovery = self.sync.sys.discovery()
+    def devid_to_ip(self, devid, wait = True):
 
-        if not devid in discovery:
-            return None
+        if not wait:
+            try:
+                discovery = self.sync.sys.discovery()
+
+                if not devid in discovery:
+                    return None
+                else:
+                    address = discovery[devid]['addresses']
+
+                    for e in address:
+                        if 'tcp://' in e:
+                            href = e
+                            break
+
+                    return href.split('/')[2].split(':')[0]
+            except Exception:
+                return None
         else:
-            address = discovery[devid]['addresses']
+            count = 1
+            host = None
 
-            for e in address:
-                if 'tcp://' in e:
-                    href = e
-                    break
+            # Wait for changes to take effect
+            while count <= 5:
 
-            return href.split('/')[2].split(':')[0]
+                print "Attempt %i to discover device." % count
+
+                try:
+                    host = self.devid_to_ip(devid, False)           
+                except Exception:
+                    pass
+
+                if not host:
+                    time.sleep(1.5)
+                    count += 1
+                else:
+                    print 'Device successfully discovered!'
+                    return host
+
+            return None
 
     def new_device(self, config, devid):
+
         record = {
             'deviceId' : devid,
-            'name' : socket.gethostname(),
+            'name' : 'Unknown',
             'compression' : 'metadata',
             'introducer' : False,
             'certName' : '',
             'address' : ['dynamic']
         }
-        config['devices'].append(record)
 
+        config['devices'].append(record)
+                
     def device_exists(self, client_devid, config=None):
 
         if not config:
@@ -160,31 +189,28 @@ class SyncthingClient(SyncthingFacade):
         # Check if the device id is valid
         if 'error' in self.sync.misc.device_id(id=device_id):
             return 'Invalid Key.'
-
         try:
             config = self.get_config()
 
             if not self.device_exists(device_id):
                 self.new_device(config, device_id)
-                self.set_config()
+                self.set_config(config)
                 self.restart()
             
             host = self.devid_to_ip(device_id)
-
-            count = 0
-            # Wait for changes to take effect
-            while not host and count <= 10:
-                print 'Discovering device ...'
-                time.sleep(1)
-                host = self.devid_to_ip(device_id)
-                count += 1
              
             # Request remote to share its folder with us
             remote = SyncthingProxy(device_id, host, api_key)
+            
+            # Hack to fix odd self.sync object change
+            self.sync = self.adapter.get_gui_hook()
+            
             remote_folder = remote.request_folder(self.get_device_id())
             
+            self.sync = self.adapter.get_gui_hook()
             # Save the folder data into syncthing config
             self.acknowledge(remote_folder, path)
+            self.restart()
             
             # Save folder data into kdr config
             config = self.adapter.update_config({
@@ -199,9 +225,9 @@ class SyncthingClient(SyncthingFacade):
             return e.message
         except ValueError as e:
             return e.message
-        except Exception as e:
-            print e.message
-            return 'Big bad un-expected booboo.'
+        #except Exception as e:
+        #   print e.message
+        #    return 'Big bad un-expected booboo.'
 
     # Commit the shared remote folder data
     # into local config.xml file
@@ -215,11 +241,14 @@ class SyncthingClient(SyncthingFacade):
 
         remote_folder['path'] = local_path
         remote_folder['label'] = 'sync'
-        config['folders'].push(remote_folder)
+        config['folders'].append(remote_folder)
 
         return self.set_config(config)
  
     def test(self): 
+
+        print self.sync.sys.status()['myID']
+        return
         print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
         print dir(self.sync.sys.set.config)
         print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
@@ -246,6 +275,11 @@ class SyncthingProxy(SyncthingFacade):
             raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
     def request_folder(self, client_devid):
+        self.sync = Syncthing(
+            api_key=self.api_key, 
+            port=self.remote_port, 
+            host=self.host
+        )
         config = self.get_config()       
         
         self.new_device(config, client_devid)
@@ -253,7 +287,9 @@ class SyncthingProxy(SyncthingFacade):
         config['folders'][0]['devices'].append({
             'deviceID' : client_devid
         })
+
         self.set_config(config)
+        self.restart()
 
         return config['folders'][0]
 

@@ -5,7 +5,6 @@ import os, subprocess
 import json, hashlib
 import urllib
 
-
 class SyncthingLinux64(): 
     
   binary = 'syncthing'
@@ -50,7 +49,9 @@ class SyncthingLinux64():
         directories = config['directories']
 
         if name not in directories:
-          directories[name] = record
+          directories.append({
+						name : record
+          })
         else:
           # Add a more specific message later
           raise KeyError('This device already exists.')
@@ -94,7 +95,7 @@ class SyncthingLinux64():
       # If syncthing doesn't exist, install it
       if not os.path.exists(syncthing_path):
           dest_tmp = '/tmp'
-          linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/tag/v0.13.9'
+          linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
           linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
 
           command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
