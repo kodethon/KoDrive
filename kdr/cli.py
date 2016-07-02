@@ -1,33 +1,32 @@
 import click
 import cli_syncthing_adapter
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
 @click.group(
     epilog="Run 'kdr COMMAND --help' for more information on a command.", 
+    context_settings=CONTEXT_SETTINGS
     #add_help_option=False, 
     #options_metavar="\b",
 )
 
 @click.pass_context
-
 def cli(ctx):
-    ''' Synchronize remote files with local directory. '''
+    ''' A tool to synchronize remote/local directories. '''
     pass
 
 # 
 # Subcommands start
 #
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-@cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--test')
+@cli.command()
 def start(test):
     ''' Start KodeDrive daemon. '''
 
     output = cli_syncthing_adapter.start()
     click.echo("%s" % output)
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 def stop():
     ''' Stop KodeDrive daemon. '''
 
@@ -35,31 +34,37 @@ def stop():
     output = output.strip()
     click.echo("%s" % output)
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
-def inspect():
-    ''' Return low-level information. '''
+@cli.command()
+def info():
+    ''' Display application information. '''
 
     output = cli_syncthing_adapter.config()
     click.echo("%s" % output)
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
+@click.argument('name', nargs=1)
+def inspect(name):
+    ''' Return information regarding local directory. '''
+    return
+
+@cli.command()
 def status():
     ''' Determine if KodeDrive is up. '''
 
     output = cli_syncthing_adapter.status()
     click.echo("%s" % output)
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 @click.option(
     '--path', type=click.Path(exists=True), 
     default=".", nargs=1, metavar="<PATH>",
     help="Specify a folder.")
-def name(path):
-    ''' Display KodeDrive name associated with folder. '''
+def ls(path):
+    ''' List synchronized directories. '''
     
     return
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 @click.argument('key', nargs=1)
 @click.option('-n', '--name', nargs=1, metavar="<TEXT>", help="Associate this folder with a name.")
 @click.option(
@@ -68,7 +73,7 @@ def name(path):
     help="Specify which folder to sync to."
 )
 def init(key, name, path):
-    ''' Initialize folder to sync with remote folder. '''
+    ''' Synchronize remote/local directory. '''
 
     output = cli_syncthing_adapter.init(key, name, path)
     click.echo("%s" % output)
@@ -83,6 +88,7 @@ def test(arg):
 cli()
 
 """
+
 REFERENCE
 
 @cli.command()
@@ -93,10 +99,10 @@ def connect(src, dest):
     
     output = cli_syncthing_adapter.connect()
     click.echo("%s" % output)
+
+@click.group(invoke_without_command=True)
+@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
+click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
+click.echo("See 'kodedrive --help'.")
+
 """
-
-#@click.group(invoke_without_command=True)
-#@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
-#click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
-#click.echo("See 'kodedrive --help'.")
-
