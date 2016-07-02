@@ -45,8 +45,12 @@ class SyncthingFacade():
         sys.stderr = open('trash', 'w')
 
         # Run command
-        t = type(self.sync.sys.set.ping()) 
-        sys.stderr = save_stderr
+        try:
+            t = type(self.sync.sys.set.ping()) 
+            sys.stderr = save_stderr
+            
+        except:
+            return False
 
         return t == dict
 
