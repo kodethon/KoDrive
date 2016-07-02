@@ -40,15 +40,10 @@ class SyncthingFacade():
         return self.sync.sys.set.shutdown()
         
     def ping(self):
-        # Silence stderr
-        save_stderr = sys.stderr
-        sys.stderr = open('trash', 'w')
-
+        
         # Run command
         try:
             t = type(self.sync.sys.ping()) 
-            sys.stderr = save_stderr
-
         except:
             return False
 
@@ -74,18 +69,19 @@ class SyncthingFacade():
             except Exception:
                 return None
         else:
-            count = 1
+            count = 0
             host = None
 
             # Wait for changes to take effect
             while count <= 5:
-
+                
                 print "Attempt %i to discover device." % count
 
-                try:
-                    host = self.devid_to_ip(devid, False)           
-                except Exception:
-                    pass
+                # Silence stderr
+                #save_stderr = sys.stderr
+                #sys.stderr = open('trash', 'w')
+                host = self.devid_to_ip(devid, False)           
+                #sys.stderr = save_stderr
 
                 if not host:
                     time.sleep(1.5)
@@ -96,32 +92,39 @@ class SyncthingFacade():
 
             return None
 
-    def new_device(self, config, devid):
+    def new_device(self, **kwargs):
+
+        if not 'hostname' in kwargs: 
+            kwargs['hostname'] = 'Unknown'
 
         record = {
-            'deviceId' : devid,
-            'name' : 'Unknown',
+            'deviceId' : kwargs['device_id'],
+            'name' : (kwargs['hostname'] or 'Unknown'),
             'compression' : 'metadata',
             'introducer' : False,
             'certName' : '',
             'address' : ['dynamic']
         }
 
-        config['devices'].append(record)
+        kwargs['config']['devices'].append(record)
                 
     def device_exists(self, client_devid, config=None):
 
         if not config:
             config = self.get_config()       
 
-        # Check to see if device already exists
-        for e in config['devices']:
-            device_id = e['deviceID']
+        return self.find_device(client_devid, config) != None
+
+    def find_device(self, client_devid, config=None):
+        
+        if not config:
+            config = self.get_config()
+
+        for d in config['devices']:
+            device_id = d['deviceID']
             
             if device_id == client_devid:
-                return True
-        
-        return False
+                return d
 
     def folder_exists(self, object, config = None):
 
@@ -161,7 +164,7 @@ class SyncthingClient(SyncthingFacade):
         except Exception:
             pass
 
-    def init(self, key, name, path):
+    def init(self, key, name, local_path):
 
         """
 
@@ -197,23 +200,27 @@ class SyncthingClient(SyncthingFacade):
             config = self.get_config()
 
             if not self.device_exists(device_id):
-                self.new_device(config, device_id)
+                self.new_device(config=config, device_id=device_id)
                 self.set_config(config)
                 self.restart()
             
             host = self.devid_to_ip(device_id)
-             
+
             # Request remote to share its folder with us
             remote = SyncthingProxy(device_id, host, api_key)
+            remote_config = remote.request_folder(
+                self.hostname(),    
+                self.get_device_id()
+            )
             
-            # Hack to fix odd self.sync object change
-            self.sync = self.adapter.get_gui_hook()
-            
-            remote_folder = remote.request_folder(self.get_device_id())
-            
-            self.sync = self.adapter.get_gui_hook()
             # Save the folder data into syncthing config
-            self.acknowledge(remote_folder, path)
+            self.acknowledge(
+                remote.hostname(remote_config), 
+                device_id,
+                remote_config['folders'][0], 
+                local_path
+            )
+
             self.restart()
             
             # Save folder data into kdr config
@@ -221,42 +228,70 @@ class SyncthingClient(SyncthingFacade):
                 'device_id' : device_id,
                 'api_key' : api_key,
                 'name' : name,
-                'path' : path
+                'path' : local_path
             })
 
             return 'Success'
-        except KeyError as e:
-            return e.message
-        except ValueError as e:
-            return e.message
-        #except Exception as e:
-        #   print e.message
-        #    return 'Big bad un-expected booboo.'
+        except IOError as e:
+           return e.message
 
-    # Commit the shared remote folder data
-    # into local config.xml file
-    def acknowledge(self, remote_folder, local_path):
+    def acknowledge(self, hostname, devid, remote_folder, local_path):
+
+        """
+
+            Commit the shared remote folder data into local config.xml file
+                1. Update the remote_folder path and label
+                2. Append the remote_folder to config folders list
+
+            Args:
+                remote_folder(folder): syncthing folder object
+                local_path: existing local path
+
+        """
+
         config = self.get_config()
-        
+
         if self.folder_exists({
             'id' : remote_folder['id']
         }, config):
-            raise ValueError('Folder already exists.')
+            # TODO: maybe tell user where they are synchronizing the dev
+            raise ValueError('You are already synchronizing this device.')
 
         remote_folder['path'] = local_path
         remote_folder['label'] = 'sync'
         config['folders'].append(remote_folder)
-
+               
+        device = self.find_device(devid, config)
+        
+        if device:
+            device['name'] = hostname
+       
         return self.set_config(config)
- 
-    def test(self): 
 
+    def hostname(self):
+        return socket.gethostname()
+ 
+    def test(self, arg): 
+        
+        toks = arg.split('@')
+        device_id = toks[0]
+        api_key = toks[1]
+        host = self.devid_to_ip(device_id)
+
+        print self.get_device_id()
+        remote = SyncthingProxy(device_id, host, api_key)
+        #print self.sync._interface.options
+        print self.get_device_id()
+
+
+        '''
         print self.sync.sys.status()['myID']
         return
         print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
         print dir(self.sync.sys.set.config)
         print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
         return self.sync.sys.ping()
+        '''
 
 class SyncthingProxy(SyncthingFacade):
 
@@ -273,29 +308,39 @@ class SyncthingProxy(SyncthingFacade):
             port=self.remote_port, 
             host=host
         )
-        
+
         # If remote host can't be detected, throw a tantrum >:/
         if not self.ping():
             raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
-    def request_folder(self, client_devid):
-        self.sync = Syncthing(
-            api_key=self.api_key, 
-            port=self.remote_port, 
-            host=self.host
-        )
+    def hostname(self, config = None):
+
+        if not config:
+            config = self.get_config()
+
+        devices = config['devices']
+        
+        for d in devices:
+            if d['deviceID'] == self.device_id:
+                return d['name']
+
+    def request_folder(self, client_hostname, client_devid):
         config = self.get_config()       
         
-        self.new_device(config, client_devid)
+        self.new_device(
+            config = config,
+            hostname = client_hostname,
+            device_id = client_devid
+        )
 
         config['folders'][0]['devices'].append({
             'deviceID' : client_devid
         })
-
+        
         self.set_config(config)
         self.restart()
 
-        return config['folders'][0]
+        return config
 
     def disconnect(self):
         return

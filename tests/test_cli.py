@@ -1,7 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from kdr import cli
-
+#from kdr import cli
 
 @pytest.fixture
 def runner():

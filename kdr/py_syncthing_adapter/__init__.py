@@ -61,18 +61,21 @@ REST_ENDPOINT = '/rest'
 class C(object):
     ommand = namedtuple('Command', 'verb endpoint')
 
-    def __init__(self, verb, endpoint):
+    def __init__(self, iface, verb, endpoint):
         self.command = C.ommand(verb, REST_ENDPOINT + endpoint)
+        self.iface = iface
 
     def __call__(self, data_obj=None, **params):
         if data_obj is not None:
             if not isinstance(data_obj, dict):
                 raise ValueError('data_obj must be of type dictionary')
 
-        if not hasattr(C, 'iface'):
+        #if not hasattr(C, 'iface'):
+        #    return None
+        if not self.iface:
             return None
 
-        return C.iface.do_req(self.command.verb, self.command.endpoint, \
+        return self.iface.do_req(self.command.verb, self.command.endpoint, \
                                 data_obj, **params)
 
     def __str__(self):
@@ -81,9 +84,8 @@ class C(object):
     def __repr__(self):
         return '<Command(%s, "%s")>' % (self.command.verb, self.command.endpoint)
 
-
 class GetDict(dict):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, iface, *args, **kwargs):
         super(GetDict, self).__init__(*args, **kwargs)
         for arg in args:
             if isinstance(arg, dict):
@@ -92,7 +94,8 @@ class GetDict(dict):
 
         for k, v in kwargs.items():
             if isinstance(v, tuple):
-                v = C(*v)
+                v = C(iface, *v)
+                
             self[k] = v
 
     def __getattr__(self, item):
@@ -101,9 +104,9 @@ class GetDict(dict):
 
 class Commands(object):
     def __init__(self, interface):
-        C.iface = interface
+        #C.iface = interface
 
-        self.sys = GetDict(
+        self.sys = GetDict(interface,
             config =    ('GET', '/system/config'),
             insync =    ('GET', '/system/config/insync'),
             connections=('GET', '/system/connections'),
@@ -115,7 +118,7 @@ class Commands(object):
             status =    ('GET', '/system/status'),
             upgrade =   ('GET', '/system/upgrade'),
             version =   ('GET', '/system/version'),
-            set = GetDict(
+            set = GetDict(interface,
                 config =    ('POST', '/system/config'),
                 debug =     ('POST', '/system/debug'),
                 discovery = ('POST', '/system/discovery'),
@@ -127,25 +130,25 @@ class Commands(object):
                 shutdown =  ('POST', '/system/shutdown'),
                 upgrade =   ('POST', '/system/upgrade'),
             )
-        )
-        self.db = GetDict(
+        ) 
+        self.db = GetDict(interface,
             browse =    ('GET', '/db/browse'),
             completion =('GET', '/db/completion'),
             file =      ('GET', '/db/file'),
             ignores =   ('GET', '/db/ignores'),
             need =      ('GET', '/db/need'),
             status =    ('GET', '/db/status'),
-            set = GetDict(
+            set = GetDict(interface,
                 ignores = ('POST', '/db/ignores'),
                 prio =    ('POST', '/db/prio'),
                 scan =    ('POST', '/db/scan')
             )
         )
-        self.stats = GetDict(
+        self.stats = GetDict(interface,
             device =    ('GET', '/stats/device'),
             folder =    ('GET', '/stats/folder')
         )
-        self.misc = GetDict(
+        self.misc = GetDict(interface,
             device_id = ('GET', '/svc/deviceid'),
             lang =      ('GET', '/svc/lang'),
             report =    ('GET', '/svc/report')
@@ -162,6 +165,7 @@ class Commands(object):
 
 class Interface(object):
     def __init__(self, api_key, **options):
+
         self.options = {
             'api_key': api_key,
             'host': 'localhost',
@@ -171,9 +175,8 @@ class Interface(object):
             'ssl_cert_file': None
         }
 
-
         self.options.update(options)
-        self.options = GetDict(**self.options)
+        self.options = GetDict(self, **self.options)
 
         if self.options.is_https and self.options.ssl_cert_file is None:
             warnings.warn('using https without specified ssl_cert_file')
@@ -189,19 +192,17 @@ class Interface(object):
         self.last_req = None
         self.last_req_time = 0
 
-    @property
     def host(self):
         return '%s://%s:%d' % (
             self.protocol, self.options.host, self.options.port)
 
-    @property
     def connected(self):
         if not self.last_req or self.last_req_time < (time.time() - 60):
             self.__req('GET', '/')
         return self.last_req
 
     def do_req(self, verb, endpoint, data=None, **params):
-        url = uparse.urljoin(self.host, endpoint)
+        url = uparse.urljoin(self.host(), endpoint)
         return self.__req(verb, url, data, params)
 
     def __req(self, verb, url, data=None, params=None):
@@ -230,11 +231,11 @@ class Interface(object):
             )
 
         except ConnectionError as e:
-            logger.error('could not connect to ' + self.host)
+            #logger.error('could not connect to ' + self.host())
             raise e
 
         except ConnectTimeout as e:
-            logger.error('connection timed out after ' + self.timeout)
+            #logger.error('connection timed out after ' + self.timeout)
             raise e
 
         except requests.RequestException as e:
@@ -245,9 +246,8 @@ class Interface(object):
             self.last_req = time.time()
             
             if resp.status_code != requests.codes.ok:
-
-                logger.error('%s %s (%s): %s' % (
-                    resp.status_code, resp.reason, resp.url, resp.text))
+                #logger.error('%s %s (%s): %s' % (
+                #   resp.status_code, resp.reason, resp.url, resp.text))
                 return resp
 
             if 'json' in resp.headers.get('Content-Type', 'text/plain').lower():

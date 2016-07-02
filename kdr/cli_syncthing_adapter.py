@@ -51,6 +51,6 @@ def init(key, name, path):
     handler = factory.get_handler()
     return handler.init(key, name, path)
 
-def test():
+def test(arg):
     handler = factory.get_handler()
-    return handler.test()
+    return handler.test(arg)

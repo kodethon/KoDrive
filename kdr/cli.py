@@ -74,11 +74,11 @@ def init(key, name, path):
     click.echo("%s" % output)
 
 @cli.command()
-def test():
+@click.argument('arg', nargs=1)
+def test(arg):
     ''' Test random functions :) '''
 
-    output = cli_syncthing_adapter.test()
-    click.echo("%s" % output)
+    cli_syncthing_adapter.test(arg)
 
 cli()
 

@@ -26,6 +26,7 @@ class SyncthingLinux64():
     if not name:
       name = hashlib.sha1(device_id).hexdigest() 
 
+
     record = {name : metadata}
 
     # If config file does not exist, create it
@@ -42,22 +43,13 @@ class SyncthingLinux64():
           
         if len(raw) > 0:
           config = json.loads(raw)
-          # Should handle corrupt config files later
+          config['directories'][name] = metadata
+          f.write(json.dumps(config))
+          f.truncate()
+          
+          # TODO: Should handle corrupt config files later
         else:
           config = self.create_config(folder_path, record)
-        
-        directories = config['directories']
-
-        if name not in directories:
-          directories.append({
-						name : record
-          })
-        else:
-          # Add a more specific message later
-          raise KeyError('This device already exists.')
-
-        f.write(json.dumps(config))
-        f.truncate()
 
   def create_config(self, folder, record):
 			config_path = os.path.join(folder, self.config) 
