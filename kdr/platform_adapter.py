@@ -162,7 +162,9 @@ class SyncthingMac64():
         directories = config['directories']
 
         if name not in directories:
-          directories[name] = record
+          directories.append({
+            name : record
+          })
         else:
           # Add a more specific message later
           raise KeyError('This device already exists.')

@@ -46,9 +46,9 @@ class SyncthingFacade():
 
         # Run command
         try:
-            t = type(self.sync.sys.set.ping()) 
+            t = type(self.sync.sys.ping()) 
             sys.stderr = save_stderr
-            
+
         except:
             return False
 
