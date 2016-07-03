@@ -5,7 +5,7 @@ import platform_adapter
 
 # Standard library
 import sys, platform, time
-import socket, json
+import socket, json, base64
 
 class SyncthingFacade():
     
@@ -24,7 +24,27 @@ class SyncthingFacade():
                 return self.adapter.get_device_id()
             else:
                 return None
-        
+            
+    def encode_key(self):
+    	config = self.get_config()
+    	api_key = config['gui']['apiKey']
+    	devid = self.get_device_id()
+    	key = "%s@%s" % (devid, api_key)
+    	key = base64.b64encode(key)
+    	
+    	encoded_key = str()
+    	segment = len(key) / 3
+
+    	for i in range(0, 3):
+			  encoded_key += key[:segment] + "\n" 
+			  key = key[segment:]
+		
+    	return encoded_key.strip() + key
+
+    def decode_key(self, encoded_key):
+    	base64_key = "".join(encoded_key.split())
+    	return base64.b64.decode(base64_key)
+
     def set_config(self, config):
         return self.sync.sys.set.config(config)
 
@@ -272,7 +292,8 @@ class SyncthingClient(SyncthingFacade):
         return socket.gethostname()
  
     def test(self, arg): 
-        
+        print self.key
+        return
         toks = arg.split('@')
         device_id = toks[0]
         api_key = toks[1]

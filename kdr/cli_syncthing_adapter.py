@@ -19,11 +19,6 @@ def start():
     else:
         return 'KodeDrive has already been started.' 
 
-def config():
-    handler = factory.get_handler()
-    
-    return json.dumps(handler.get_config())
-
 def stop():
         
     handler = factory.get_handler()
@@ -38,18 +33,20 @@ def stop():
 
     return handler.shutdown()
 
-def status():
-    handler = factory.get_handler()
-    
-    return 'KodeDrive is up.' if handler.ping() else 'KodeDrive is down.'
-
-def name():
-    handler = factory.get_handler()
-    return handler.get_device_id()
-
 def init(key, name, path):
     handler = factory.get_handler()
     return handler.init(key, name, path)
+
+def info(**kwargs):
+    handler = factory.get_handler()
+
+    if kwargs['status']:
+     	info = 'Running' if handler.ping() else 'Exited'
+    elif kwargs['key']:
+    	key = handler.encode_key()
+    	info = handler.encode_key()
+
+    return info
 
 def test(arg):
     handler = factory.get_handler()

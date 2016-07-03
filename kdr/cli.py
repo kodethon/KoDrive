@@ -11,7 +11,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 )
 
 @click.pass_context
-def cli(ctx):
+def main(ctx):
     ''' A tool to synchronize remote/local directories. '''
     pass
 
@@ -19,14 +19,14 @@ def cli(ctx):
 # Subcommands start
 #
 
-@cli.command()
-def start(test):
+@main.command()
+def start():
     ''' Start KodeDrive daemon. '''
 
     output = cli_syncthing_adapter.start()
     click.echo("%s" % output)
 
-@cli.command()
+@main.command()
 def stop():
     ''' Stop KodeDrive daemon. '''
 
@@ -34,37 +34,47 @@ def stop():
     output = output.strip()
     click.echo("%s" % output)
 
-@cli.command()
-def info():
-    ''' Display application information. '''
+@main.command()
+@click.option('-a', '--all', is_flag=True, help="Display all application information.")
+@click.option('-s', '--status', is_flag=True, help="Return daemon status.")
+@click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
+def info(**kwargs):
+		''' Display application information. '''
+		is_default = True
+    
+		for opt in kwargs:
+				if kwargs[opt]:
+						is_default = False
+		
+		if is_default:
+				click.echo(click.get_current_context().get_help())
+		else:
+				output = cli_syncthing_adapter.info(
+						all=kwargs['all'],
+						status=kwargs['status'],
+						key=kwargs['key']
+				)
 
-    output = cli_syncthing_adapter.config()
-    click.echo("%s" % output)
+				click.echo("%s" % output)
 
-@cli.command()
+@main.command()
 @click.argument('name', nargs=1)
 def inspect(name):
     ''' Return information regarding local directory. '''
     return
 
-@cli.command()
-def status():
-    ''' Determine if KodeDrive is up. '''
-
-    output = cli_syncthing_adapter.status()
-    click.echo("%s" % output)
-
-@cli.command()
+@main.command()
 @click.option(
     '--path', type=click.Path(exists=True), 
     default=".", nargs=1, metavar="<PATH>",
     help="Specify a folder.")
+
 def ls(path):
     ''' List synchronized directories. '''
     
     return
 
-@cli.command()
+@main.command()
 @click.argument('key', nargs=1)
 @click.option('-n', '--name', nargs=1, metavar="<TEXT>", help="Associate this folder with a name.")
 @click.option(
@@ -74,18 +84,17 @@ def ls(path):
 )
 def init(key, name, path):
     ''' Synchronize remote/local directory. '''
-
+    
     output = cli_syncthing_adapter.init(key, name, path)
     click.echo("%s" % output)
 
-@cli.command()
+@main.command()
 @click.argument('arg', nargs=1)
 def test(arg):
     ''' Test random functions :) '''
 
     cli_syncthing_adapter.test(arg)
 
-cli()
 
 """
 
