@@ -15,7 +15,7 @@ def start():
         if not success:
             return e if e else 'KodeDrive could not be started.'
         else:
-            return handler.name()
+            return 'KodeDrive has successfully started.'
     else:
         return 'KodeDrive has already been started.' 
 
