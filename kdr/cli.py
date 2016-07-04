@@ -105,16 +105,34 @@ def unlink(**kwargs):
 	
 	return
 
+"""
 @main.command()
+@click.option(
+    '-v', '--verbose', is_flag=True,
+    help='Show synchronize progress.'
+)
 @click.argument(
 	'path', nargs=1, 
 	type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
-def refresh(path):
+def refresh(**kwargs):
   ''' Force synchronization of directory. '''
 
-  output = cli_syncthing_adapter.refresh(path)
-  click.echo("%s" % output)
+  output = cli_syncthing_adapter.refresh(**kwargs)
+
+  if output:
+  	click.echo("%s" % output)
+
+  if kwargs['verbose']:
+  	with click.progressbar(
+  		length=100,
+  		label='Synchronizing') as bar:
+
+  		progress = 0
+
+  		while not progress == 100:
+  			progress = cli_syncthing_adapter.refresh(progress=True)
+"""
 
 @main.command()
 @click.argument('cur', nargs=1)

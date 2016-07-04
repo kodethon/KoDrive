@@ -48,10 +48,20 @@ def info(**kwargs):
 
     return info
 
-def refresh(path):
+def refresh(**kwargs):
     handler = factory.get_handler()
 
-    return handler.scan(path)
+    if 'progress' in kwargs:
+    	return handler.completion()
+	
+    path = kwargs['path']
+
+    try:
+    	success = handler.scan(path)
+
+    	return None if success else 'Failed to refresh ' + path
+    except IOError as e:
+    	return e.message
 
 def test(arg):
     handler = factory.get_handler()

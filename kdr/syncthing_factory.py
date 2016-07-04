@@ -5,7 +5,7 @@ import platform_adapter
 
 # Standard library
 import sys, platform, time
-import socket, json, base64
+import socket, json
 
 class SyncthingFacade():
     
@@ -36,14 +36,32 @@ class SyncthingFacade():
         self.sync.sys.set.restart();
 
     def scan(self, path):
+    	
+        if not path[len(path) - 1] == '/':
+        	path += '/'
+
         folder = self.find_folder({
         	'path' : path
         }) 
-        
+
         if not folder:
-        	return False
+        	raise IOError(path + ' is not being synchronized.')
         else:
-        	return self.sync.db.scan(id=folder['id'])
+        	return self.sync.db.set.scan(folder=folder['id'])
+
+    def completion(self, path):
+
+        if not path[len(path) - 1] == '/':
+        	path += '/'
+
+        folder = self.find_folder({
+        	'path' : path
+        })
+
+        device_id = self.get_device_id()
+        res = self.sync.db.completion(device=device_id, folder=folder)
+	
+        return res['completion']
 		
     def start(self):    
         path = self.adapter.get_path()
@@ -70,17 +88,9 @@ class SyncthingFacade():
     	api_key = config['gui']['apiKey']
     	devid = self.get_device_id()
     	key = "%s@%s" % (devid, api_key)
-    	key = base64.b64encode(key)
+
+    	return base64.b64encode(key)
     	
-    	encoded_key = str()
-    	segment = len(key) / 3
-
-    	for i in range(0, 3):
-			  encoded_key += key[:segment] + "\n" 
-			  key = key[segment:]
-		
-    	return encoded_key.strip() + key
-
     def decode_key(self, encoded_key):
     	base64_key = "".join(encoded_key.split())
     	return base64.b64.decode(base64_key)
@@ -159,18 +169,19 @@ class SyncthingFacade():
                 return d
 
     def find_folder(self, object, config=None):
-
+			
         if not config:
             config = self.get_config()
         
         # list of folders
         folders = config['folders']
-
+				
         for f in folders:
             n = 0
             d = 0
-
+			
             for k in object:
+
                 if object[k] == f[k]:
                     n += 1
                 d += 1
@@ -305,6 +316,11 @@ class SyncthingClient(SyncthingFacade):
         return socket.gethostname()
  
     def test(self, arg): 
+
+        print self.completion('/home/jvlarble/Downloads/node-0')
+        #print self.scan('/home/jvlarble/Downloads/node-0')
+        return
+
         toks = arg.split('@')
         device_id = toks[0]
         api_key = toks[1]
