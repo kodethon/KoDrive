@@ -1,5 +1,7 @@
 import click
 import cli_syncthing_adapter
+import os
+import json
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
@@ -72,7 +74,24 @@ def inspect(path):
 
 def ls(path):
     ''' List synchronized directories. '''
-    
+
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+
+    with open(folder_path + "/config.json") as fp:
+        data = json.load(fp)
+        # data is a dictionary containing a list of dictionaries
+
+    dirs = data['directories'] # type: list
+
+    for i, val in enumerate(dirs):
+        for key, value in val.iteritems(): # type: dict
+            try:
+                click.echo(key + '   ' + value['local_path'])
+            except:
+                click.echo(key + '   ' + value[key]['local_path'])
+    # TODO: padding and check edge cases
+
     return
 
 @main.command()
