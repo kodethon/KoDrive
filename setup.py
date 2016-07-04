@@ -3,7 +3,7 @@ Synchronize remote files with local directory.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click']
+dependencies = ['click', 'requests']
 
 setup(
     name='kdr',
