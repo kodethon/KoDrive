@@ -40,6 +40,7 @@ def stop():
 @click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
 def info(**kwargs):
 		''' Display application information. '''
+
 		is_default = True
     
 		for opt in kwargs:
@@ -49,18 +50,18 @@ def info(**kwargs):
 		if is_default:
 				click.echo(click.get_current_context().get_help())
 		else:
-				output = cli_syncthing_adapter.info(
-						all=kwargs['all'],
-						status=kwargs['status'],
-						key=kwargs['key']
-				)
+				output = cli_syncthing_adapter.info(**kwargs)
 
 				click.echo("%s" % output)
 
 @main.command()
-@click.argument('name', nargs=1)
-def inspect(name):
-    ''' Return information regarding local directory. '''
+@click.argument(
+	'path',
+	type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def inspect(path):
+    ''' Return information regarding directory. '''
     return
 
 @main.command()
@@ -76,17 +77,48 @@ def ls(path):
 
 @main.command()
 @click.argument('key', nargs=1)
-@click.option('-n', '--name', nargs=1, metavar="<TEXT>", help="Associate this folder with a name.")
 @click.option(
-    '-p', '--path', type=click.Path(exists=True, writable=True, resolve_path=True), 
-    default=".", nargs=1, metavar="<PATH>",
-    help="Specify which folder to sync to."
+	'-t', '--tag', nargs=1, metavar="<TEXT>", 
+	help="Associate this folder with a tag."
 )
-def init(key, name, path):
+@click.option(
+    '-p', '--path', 
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
+    default=".", nargs=1, metavar="<PATH>",
+    help="Specify which folder to link."
+)
+def link(key, tag, path):
     ''' Synchronize remote/local directory. '''
     
-    output = cli_syncthing_adapter.init(key, name, path)
+    output = cli_syncthing_adapter.init(key, tag, path)
     click.echo("%s" % output)
+
+@main.command()
+@click.argument(
+	'path',
+	type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def unlink(**kwargs):
+	''' Stop synchronization of directory. '''
+	
+	return
+
+@main.command()
+@click.argument(
+	'path', nargs=1, 
+	type=click.Path(exists=True, writable=True, resolve_path=True), 
+)
+def refresh(**kwargs):
+	''' Force synchronization of directory. '''
+	return
+
+@main.command()
+@click.argument('cur', nargs=1)
+@click.argument('new', nargs=1)
+def retag(cur, new):
+	''' Change tag associated with directory. '''
+	return
 
 @main.command()
 @click.argument('arg', nargs=1)
