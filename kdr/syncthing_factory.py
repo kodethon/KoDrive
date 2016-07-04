@@ -9,9 +9,13 @@ import socket, json, base64
 
 class SyncthingFacade():
     
-    def __init__(self):
-        self.sync = None
-        self.adapter = None
+    def __init__(self, **kwargs):
+    
+        if 'sync' in kwargs:
+        	self.sync = kwargs['sync'] 
+
+        if 'adapter' in kwargs:
+        	self.adapter = kwargs['adapter']
             
     def get_config(self):
         return self.sync.sys.config()
@@ -25,6 +29,42 @@ class SyncthingFacade():
             else:
                 return None
             
+    def set_config(self, config):
+        return self.sync.sys.set.config(config)
+
+    def restart(self):
+        self.sync.sys.set.restart();
+
+    def scan(self, path):
+        folder = self.find_folder({
+        	'path' : path
+        }) 
+        
+        if not folder:
+        	return False
+        else:
+        	return self.sync.db.scan(id=folder['id'])
+		
+    def start(self):    
+        path = self.adapter.get_path()
+        
+        return self.adapter.start(path);
+
+    def shutdown(self):
+        return self.sync.sys.set.shutdown()
+        
+    def ping(self):
+        
+        # Run command
+        try:
+            t = type(self.sync.sys.ping()) 
+        except:
+            return False
+
+        return t == dict
+
+# UTILS
+
     def encode_key(self):
     	config = self.get_config()
     	api_key = config['gui']['apiKey']
@@ -44,30 +84,6 @@ class SyncthingFacade():
     def decode_key(self, encoded_key):
     	base64_key = "".join(encoded_key.split())
     	return base64.b64.decode(base64_key)
-
-    def set_config(self, config):
-        return self.sync.sys.set.config(config)
-
-    def restart(self):
-        self.sync.sys.set.restart();
-
-    def start(self):    
-        path = self.adapter.get_path()
-        
-        return self.adapter.start(path);
-
-    def shutdown(self):
-        return self.sync.sys.set.shutdown()
-        
-    def ping(self):
-        
-        # Run command
-        try:
-            t = type(self.sync.sys.ping()) 
-        except:
-            return False
-
-        return t == dict
 
     def devid_to_ip(self, devid, wait = True):
 
@@ -97,11 +113,7 @@ class SyncthingFacade():
                 
                 print "Attempt %i to discover device." % count
 
-                # Silence stderr
-                #save_stderr = sys.stderr
-                #sys.stderr = open('trash', 'w')
                 host = self.devid_to_ip(devid, False)           
-                #sys.stderr = save_stderr
 
                 if not host:
                     time.sleep(1.5)
@@ -146,13 +158,11 @@ class SyncthingFacade():
             if device_id == client_devid:
                 return d
 
-    def folder_exists(self, object, config = None):
+    def find_folder(self, object, config=None):
 
         if not config:
             config = self.get_config()
         
-        exists = False
-
         # list of folders
         folders = config['folders']
 
@@ -163,14 +173,17 @@ class SyncthingFacade():
             for k in object:
                 if object[k] == f[k]:
                     n += 1
-
                 d += 1
 
             if n == d:
-                exists = True
-                break
+                return f 
 
-        return exists
+    def folder_exists(self, object, config = None):
+
+        if not config:
+            config = self.get_config()
+        
+        return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
     
@@ -292,8 +305,6 @@ class SyncthingClient(SyncthingFacade):
         return socket.gethostname()
  
     def test(self, arg): 
-        print self.key
-        return
         toks = arg.split('@')
         device_id = toks[0]
         api_key = toks[1]
@@ -303,7 +314,7 @@ class SyncthingClient(SyncthingFacade):
         remote = SyncthingProxy(device_id, host, api_key)
         #print self.sync._interface.options
         print self.get_device_id()
-
+        return
 
         '''
         print self.sync.sys.status()['myID']

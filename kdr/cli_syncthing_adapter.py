@@ -48,6 +48,11 @@ def info(**kwargs):
 
     return info
 
+def refresh(path):
+    handler = factory.get_handler()
+
+    return handler.scan(path)
+
 def test(arg):
     handler = factory.get_handler()
     return handler.test(arg)

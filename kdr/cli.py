@@ -89,9 +89,10 @@ def ls(path):
 )
 def link(key, tag, path):
     ''' Synchronize remote/local directory. '''
-    
-    output = cli_syncthing_adapter.init(key, tag, path)
-    click.echo("%s" % output)
+
+    if click.confirm("Are you sure you want to link to %s?" % path):
+    	output = cli_syncthing_adapter.init(key, tag, path)
+    	click.echo("%s" % output)
 
 @main.command()
 @click.argument(
@@ -109,9 +110,11 @@ def unlink(**kwargs):
 	'path', nargs=1, 
 	type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
-def refresh(**kwargs):
-	''' Force synchronization of directory. '''
-	return
+def refresh(path):
+  ''' Force synchronization of directory. '''
+
+  output = cli_syncthing_adapter.refresh(path)
+  click.echo("%s" % output)
 
 @main.command()
 @click.argument('cur', nargs=1)
