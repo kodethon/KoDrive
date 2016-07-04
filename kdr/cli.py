@@ -84,13 +84,14 @@ def ls(path):
 
     dirs = data['directories'] # type: list
 
-    for i, val in enumerate(dirs):
-        for key, value in val.iteritems(): # type: dict
+    click.echo("{:<50}".format('Directory names:') + 'Paths:')
+
+    for i, val in enumerate(dirs): # for each item in the list
+        for key, value in val.iteritems(): # for each dictionary in each item
             try:
-                click.echo(key + '   ' + value['local_path'])
+                click.echo("{:<50}".format(key) + value['local_path'])
             except:
-                click.echo(key + '   ' + value[key]['local_path'])
-    # TODO: padding and check edge cases
+                click.echo("{:<50}".format(key) + value[key]['local_path'])
 
     return
 
