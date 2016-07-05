@@ -115,7 +115,7 @@ def link(key, tag, path):
     output = None
 
     if click.confirm("Are you sure you want to link to %s?" % path):
-        
+
         try:
             output = cli_syncthing_adapter.init(key, tag, path)
 
@@ -125,7 +125,8 @@ def link(key, tag, path):
             output = cli_syncthing_adapter.init(key, tag, path)
 
         finally:
-            click.echo("%s" % output)
+            if output:
+                click.echo("%s" % output)
 
 
 @main.command()
