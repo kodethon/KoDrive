@@ -3,6 +3,7 @@ import cli_syncthing_adapter
 import os
 import json
 
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
 @click.group(
@@ -41,25 +42,25 @@ def stop():
 @click.option('-s', '--status', is_flag=True, help="Return daemon status.")
 @click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
 def info(**kwargs):
-		''' Display application information. '''
+        ''' Display application information. '''
 
-		is_default = True
+        is_default = True
     
-		for opt in kwargs:
-				if kwargs[opt]:
-						is_default = False
-		
-		if is_default:
-				click.echo(click.get_current_context().get_help())
-		else:
-				output = cli_syncthing_adapter.info(**kwargs)
+        for opt in kwargs:
+                if kwargs[opt]:
+                        is_default = False
+        
+        if is_default:
+                click.echo(click.get_current_context().get_help())
+        else:
+                output = cli_syncthing_adapter.info(**kwargs)
 
-				click.echo("%s" % output)
+                click.echo("%s" % output)
 
 @main.command()
 @click.argument(
-	'path',
-	type=click.Path(exists=True, writable=True, resolve_path=True), 
+    'path',
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
 def inspect(path):
@@ -98,8 +99,8 @@ def ls(path):
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
-	'-t', '--tag', nargs=1, metavar="<TEXT>", 
-	help="Associate this folder with a tag."
+    '-t', '--tag', nargs=1, metavar="<TEXT>", 
+    help="Associate this folder with a tag."
 )
 @click.option(
     '-p', '--path', 
@@ -111,19 +112,19 @@ def link(key, tag, path):
     ''' Synchronize remote/local directory. '''
 
     if click.confirm("Are you sure you want to link to %s?" % path):
-    	output = cli_syncthing_adapter.init(key, tag, path)
-    	click.echo("%s" % output)
+        output = cli_syncthing_adapter.init(key, tag, path)
+        click.echo("%s" % output)
 
 @main.command()
 @click.argument(
-	'path',
-	type=click.Path(exists=True, writable=True, resolve_path=True), 
+    'path',
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
 def unlink(**kwargs):
-	''' Stop synchronization of directory. '''
-	
-	return
+    ''' Stop synchronization of directory. '''
+    
+    return
 
 """
 @main.command()
@@ -132,8 +133,8 @@ def unlink(**kwargs):
     help='Show synchronize progress.'
 )
 @click.argument(
-	'path', nargs=1, 
-	type=click.Path(exists=True, writable=True, resolve_path=True), 
+    'path', nargs=1, 
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
 def refresh(**kwargs):
   ''' Force synchronization of directory. '''
@@ -141,25 +142,58 @@ def refresh(**kwargs):
   output = cli_syncthing_adapter.refresh(**kwargs)
 
   if output:
-  	click.echo("%s" % output)
+    click.echo("%s" % output)
 
   if kwargs['verbose']:
-  	with click.progressbar(
-  		length=100,
-  		label='Synchronizing') as bar:
+    with click.progressbar(
+        length=100,
+        label='Synchronizing') as bar:
 
-  		progress = 0
+        progress = 0
 
-  		while not progress == 100:
-  			progress = cli_syncthing_adapter.refresh(progress=True)
+        while not progress == 100:
+            progress = cli_syncthing_adapter.refresh(progress=True)
 """
 
 @main.command()
 @click.argument('cur', nargs=1)
 @click.argument('new', nargs=1)
 def retag(cur, new):
-	''' Change tag associated with directory. '''
-	return
+    ''' Change tag associated with directory. '''
+
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+
+    with open(folder_path + "/config.json") as fp:
+        data = json.load(fp)
+
+    dirs = data['directories']
+
+    for i, val in enumerate(dirs): # for each item in the list
+        for key, value in val.iteritems(): # for each dictionary in each item
+            try:
+                if value[key]['local_path'].split('/')[-1] == cur: # if cur found
+                    path = value[key]['local_path']
+
+                    if path.endswith(cur):
+                        path = path[:-len(cur)]
+
+                    value[key]['local_path'] = path + new
+                    break
+
+                # TODO: what if rename dirs with same name, but different paths?
+            except:
+                pass
+
+    with open(folder_path + "/config.json", 'w') as fp:
+        fp.write(json.dumps(data))
+
+    os.rename(os.path.join(path + cur), os.path.join(path + new))
+    os.chdir(path + new)
+    # renames directories in local environment
+    # TODO: how to refresh path in terminal?
+
+    return
 
 @main.command()
 @click.argument('arg', nargs=1)
