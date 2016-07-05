@@ -2,6 +2,7 @@ import click
 import cli_syncthing_adapter
 import os
 import json
+from time import sleep
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -111,9 +112,21 @@ def ls(path):
 def link(key, tag, path):
     ''' Synchronize remote/local directory. '''
 
+    output = None
+
     if click.confirm("Are you sure you want to link to %s?" % path):
-        output = cli_syncthing_adapter.init(key, tag, path)
-        click.echo("%s" % output)
+        
+        try:
+            output = cli_syncthing_adapter.init(key, tag, path)
+
+        except:
+            cli_syncthing_adapter.start()
+            sleep(1.5)
+            output = cli_syncthing_adapter.init(key, tag, path)
+
+        finally:
+            click.echo("%s" % output)
+
 
 @main.command()
 @click.argument(
