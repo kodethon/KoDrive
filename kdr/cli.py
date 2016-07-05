@@ -172,26 +172,27 @@ def retag(cur, new):
     for i, val in enumerate(dirs): # for each item in the list
         for key, value in val.iteritems(): # for each dictionary in each item
             try:
-                if value[key]['local_path'].split('/')[-1] == cur: # if cur found
+                if value[key]['local_path'] == os.path.abspath(cur): # if cur found
+
                     path = value[key]['local_path']
-
-                    if path.endswith(cur):
-                        path = path[:-len(cur)]
-
+                    path = path[:-len(cur)]
                     value[key]['local_path'] = path + new
+                    # changes path to go to new directory
+
+                    with open(folder_path + "/config.json", 'w') as fp:
+                        fp.write(json.dumps(data))
+                        # write to config.json
+
+                    os.rename(os.path.join(path + cur), os.path.join(path + new))
+                    # renames directories in local environment
+
                     break
 
-                # TODO: what if rename dirs with same name, but different paths?
             except:
                 pass
 
-    with open(folder_path + "/config.json", 'w') as fp:
-        fp.write(json.dumps(data))
-
-    os.rename(os.path.join(path + cur), os.path.join(path + new))
-    os.chdir(path + new)
-    # renames directories in local environment
-    # TODO: how to refresh path in terminal?
+    # TODO: what if user renames directory manually?
+    #       what happens to the remote directory?
 
     return
 
