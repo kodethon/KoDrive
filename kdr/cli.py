@@ -2,6 +2,8 @@ import click
 import cli_syncthing_adapter
 import os
 import json
+import platform
+import xml.etree.ElementTree as ET
 from time import sleep
 
 
@@ -214,6 +216,7 @@ def mv(cur, new):
 
   home_dir = os.path.expanduser('~')
   folder_path = os.path.join(home_dir, '.config/kdr')
+  found = False
 
   with open(folder_path + "/config.json") as fp:
     data = json.load(fp)
@@ -227,23 +230,57 @@ def mv(cur, new):
 
             path = value[key]['local_path']
             path = path[:-len(cur)]
-            value[key]['local_path'] = path + '/' + new
+            value[key]['local_path'] = os.path.join(path, new) #path + '/' + new
             # changes path to go to new directory
 
             with open(folder_path + "/config.json", 'w') as fp:
               fp.write(json.dumps(data))
               # write to config.json
 
-            os.rename(os.path.join(path + '/' + cur), os.path.join(path + '/' + new))
+            os.rename(os.path.join(path, cur), os.path.join(path, new))
             # renames directories in local environment
 
+            found = True
             break
 
         except:
           pass
 
-  # TODO: what if user renames directory manually?
-  #       what happens to the remote directory?
+  if not found:
+    raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(cur))
+
+  """
+    config.json modification above
+    config.xml modification below
+  """
+
+  if platform.system() == "Linux" or platform.system() == "Linux2":
+    xml_path = os.path.join(home_dir, '.config/syncthing/config.xml')
+    tree = ET.parse(xml_path)
+    # Linux
+
+  elif platform.system() == "Darwin":
+    xml_path = os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml')
+    tree = ET.parse(xml_path)
+    # MacOSX
+
+  # elif platform.system() == "Windows":
+    # TODO: Windows
+
+  try:
+    root = tree.getroot()
+    old_path = os.path.abspath(cur)
+    new_path = os.path.join(path, new)
+
+    for child in root:
+      if child.attrib.get('path') and child.attrib['path'] == os.path.join(old_path, '/'):
+        child.attrib['path'] = os.path.join(new_path, '/')
+        break
+
+    tree.write(xml_path)
+
+  except:
+    raise ValueError('fatal: %s not found' % xml_path)
 
   return
 
