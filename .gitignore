@@ -5,8 +5,11 @@ build/
 *.egg-info/
 
 .tox/
-.coverage
+tox.ini
 
+.coverage
 *.sw*
+.cache*
+
 trash
 kdr/trash
