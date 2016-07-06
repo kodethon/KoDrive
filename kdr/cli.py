@@ -12,8 +12,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.pass_context
 def main(ctx):
-    ''' A tool to synchronize remote/local directories. '''
-    pass
+  ''' A tool to synchronize remote/local directories. '''
+  pass
 
 # 
 # Subcommands start
@@ -21,38 +21,38 @@ def main(ctx):
 
 @main.command()
 def start():
-    ''' Start KodeDrive daemon. '''
+  ''' Start KodeDrive daemon. '''
 
-    output = cli_syncthing_adapter.start()
-    click.echo("%s" % output)
+  output = cli_syncthing_adapter.start()
+  click.echo("%s" % output)
 
 @main.command()
 def stop():
-    ''' Stop KodeDrive daemon. '''
+  ''' Stop KodeDrive daemon. '''
 
-    output = cli_syncthing_adapter.stop()
-    output = output.strip()
-    click.echo("%s" % output)
+  output = cli_syncthing_adapter.stop()
+  output = output.strip()
+  click.echo("%s" % output)
 
 @main.command()
 @click.option('-a', '--all', is_flag=True, help="Display all application information.")
 @click.option('-s', '--status', is_flag=True, help="Return daemon status.")
 @click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
 def info(**kwargs):
-		''' Display application information. '''
+	''' Display application information. '''
 
-		is_default = True
-    
-		for opt in kwargs:
-				if kwargs[opt]:
-						is_default = False
-		
-		if is_default:
-				click.echo(click.get_current_context().get_help())
-		else:
-				output = cli_syncthing_adapter.info(**kwargs)
+	is_default = True
+  
+	for opt in kwargs:
+			if kwargs[opt]:
+					is_default = False
+	
+	if is_default:
+			click.echo(click.get_current_context().get_help())
+	else:
+			output = cli_syncthing_adapter.info(**kwargs)
 
-				click.echo("%s" % output)
+			click.echo("%s" % output)
 
 @main.command()
 @click.argument(
@@ -61,19 +61,20 @@ def info(**kwargs):
   nargs=1, metavar="PATH",
 )
 def inspect(path):
-    ''' Return information regarding directory. '''
-    return
+  ''' Return information regarding directory. '''
+  return
 
 @main.command()
 @click.option(
-    '--path', type=click.Path(exists=True), 
-    default=".", nargs=1, metavar="<PATH>",
-    help="Specify a folder.")
+  '--path', type=click.Path(exists=True), 
+  default=".", nargs=1, metavar="<PATH>",
+  help="Specify a folder."
+)
 
 def ls(path):
-    ''' List synchronized directories. '''
-    
-    return
+  ''' List synchronized directories. '''
+  
+  return
 
 @main.command()
 @click.argument('key', nargs=1)
@@ -88,11 +89,11 @@ def ls(path):
     help="Specify which folder to link."
 )
 def link(key, tag, path):
-    ''' Synchronize remote/local directory. '''
+  ''' Synchronize remote/local directory. '''
 
-    if click.confirm("Are you sure you want to link to %s?" % path):
-    	output = cli_syncthing_adapter.init(key, tag, path)
-    	click.echo("%s" % output)
+  if click.confirm("Are you sure you want to link to %s?" % path):
+    output = cli_syncthing_adapter.init(key, tag, path)
+    click.echo("%s" % output)
 
 @main.command()
 @click.argument(
@@ -101,11 +102,30 @@ def link(key, tag, path):
   nargs=1, metavar="PATH",
 )
 def unlink(**kwargs):
-	''' Stop synchronization of directory. '''
-	
+  ''' Stop synchronization of directory. '''
+
+  output = cli_syncthing_adapter.unlink(kwargs['path'])
+  click.echo("%s" % output)
+
+
+@main.command()
+@click.argument('cur', nargs=1)
+@click.argument('new', nargs=1)
+def retag(cur, new):
+	''' Change tag associated with directory. '''
 	return
 
+@main.command()
+@click.argument('arg', nargs=1)
+def test(arg):
+  ''' Test random functions :) '''
+
+  cli_syncthing_adapter.test(arg)
+
 """
+
+Syncthing's scan currently seems buggy
+
 @main.command()
 @click.option(
     '-v', '--verbose', is_flag=True,
@@ -132,22 +152,8 @@ def refresh(**kwargs):
 
   		while not progress == 100:
   			progress = cli_syncthing_adapter.refresh(progress=True)
+
 """
-
-@main.command()
-@click.argument('cur', nargs=1)
-@click.argument('new', nargs=1)
-def retag(cur, new):
-	''' Change tag associated with directory. '''
-	return
-
-@main.command()
-@click.argument('arg', nargs=1)
-def test(arg):
-    ''' Test random functions :) '''
-
-    cli_syncthing_adapter.test(arg)
-
 
 """
 

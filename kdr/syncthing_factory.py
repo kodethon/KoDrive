@@ -5,7 +5,10 @@ import platform_adapter
 
 # Standard library
 import sys, platform, time
-import socket, json
+import socket, json, base64
+
+class FileNotFoundError(Exception):
+	pass
 
 class SyncthingFacade():
     
@@ -141,7 +144,7 @@ class SyncthingFacade():
 
         record = {
             'deviceId' : kwargs['device_id'],
-            'name' : (kwargs['hostname'] or 'Unknown'),
+            'name' : kwargs['hostname'],
             'compression' : 'metadata',
             'introducer' : False,
             'certName' : '',
@@ -167,6 +170,22 @@ class SyncthingFacade():
             
             if device_id == client_devid:
                 return d
+
+
+    def delete_folder(self, path, config):
+
+        if not path[len(path) - 1] == '/':
+        	path += '/'
+
+        # list of folders
+        folders = config['folders']
+				
+        for i, f in enumerate(folders):
+        	if path == f['path']:
+        		del folders[i]
+        		return True
+
+        return False
 
     def find_folder(self, object, config=None):
 			
@@ -272,7 +291,7 @@ class SyncthingClient(SyncthingFacade):
                 'device_id' : device_id,
                 'api_key' : api_key,
                 'name' : name,
-                'path' : local_path
+                'path' : local_path,
             })
 
             return 'Success'
@@ -314,12 +333,34 @@ class SyncthingClient(SyncthingFacade):
 
     def hostname(self):
         return socket.gethostname()
+
+
+    def unlink(self, local_path):
+        config = self.get_config()
+        success = self.delete_folder(local_path, config)
+
+        if success or True:
+        	self.set_config(config)
+        	self.restart()
+			
+					# Process remote
+        	dir_config = self.adapter.get_dir_config(local_path)
+        	print dir_config
+        	r_api_key = dir_config['api_key']
+        	r_device_id = dir_config['device_id']
+        	host = self.devid_to_ip(r_device_id)
+        	
+        	remote = SyncthingProxy(r_device_id, host, r_api_key)
+        	r_config = remote.get_config()
+        	remote.delete_folder(path, r_config)
+        	remote.set_config(r_config)
+        	remote.restart()
+
+        	return True
+        else:
+        	raise FileNotFoundError("%s is not being synchronized" % local_path)
  
     def test(self, arg): 
-
-        print self.completion('/home/jvlarble/Downloads/node-0')
-        #print self.scan('/home/jvlarble/Downloads/node-0')
-        return
 
         toks = arg.split('@')
         device_id = toks[0]

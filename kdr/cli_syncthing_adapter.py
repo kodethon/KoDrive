@@ -63,6 +63,10 @@ def refresh(**kwargs):
     except IOError as e:
     	return e.message
 
+def unlink(path):
+    handler = factory.get_handler()
+    return handler.unlink(path)
+
 def test(arg):
     handler = factory.get_handler()
     return handler.test(arg)
