@@ -176,6 +176,14 @@ def refresh(**kwargs):
 def retag(cur, new):
     ''' Change tag associated with directory. '''
 
+    return
+
+@main.command()
+@click.argument('cur', nargs=1)
+@click.argument('new', nargs=1)
+def mv(cur, new):
+    ''' Rename directory. '''
+
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
 
@@ -191,14 +199,14 @@ def retag(cur, new):
 
                     path = value[key]['local_path']
                     path = path[:-len(cur)]
-                    value[key]['local_path'] = path + new
+                    value[key]['local_path'] = path + '/' + new
                     # changes path to go to new directory
 
                     with open(folder_path + "/config.json", 'w') as fp:
                         fp.write(json.dumps(data))
                         # write to config.json
 
-                    os.rename(os.path.join(path + cur), os.path.join(path + new))
+                    os.rename(os.path.join(path + '/' + cur), os.path.join(path + '/' + new))
                     # renames directories in local environment
 
                     break
