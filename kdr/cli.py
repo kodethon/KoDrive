@@ -8,10 +8,10 @@ from time import sleep
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
 @click.group(
-    epilog="Run 'kdr COMMAND --help' for more information on a command.", 
-    context_settings=CONTEXT_SETTINGS
-    #add_help_option=False, 
-    #options_metavar="\b",
+  epilog="Run 'kdr COMMAND --help' for more information on a command.", 
+  context_settings=CONTEXT_SETTINGS
+  #add_help_option=False, 
+  #options_metavar="\b",
 )
 
 @click.pass_context
@@ -43,29 +43,30 @@ def stop():
 @click.option('-s', '--status', is_flag=True, help="Return daemon status.")
 @click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
 def info(**kwargs):
-	''' Display application information. '''
+  ''' Display application information. '''
 
-	is_default = True
+  is_default = True
   
-	for opt in kwargs:
-			if kwargs[opt]:
-					is_default = False
-	
-	if is_default:
-			click.echo(click.get_current_context().get_help())
-	else:
-			output = cli_syncthing_adapter.info(**kwargs)
+  for opt in kwargs:
+    if kwargs[opt]:
+      is_default = False
 
-			click.echo("%s" % output)
+  if is_default:
+    click.echo(click.get_current_context().get_help())
+
+  else:
+    output = cli_syncthing_adapter.info(**kwargs)
+    click.echo("%s" % output)
 
 @main.command()
 @click.argument(
-    'path',
-    type=click.Path(exists=True, writable=True, resolve_path=True), 
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
 def inspect(path):
   ''' Return information regarding directory. '''
+
   return
 
 @main.command()
@@ -76,39 +77,39 @@ def inspect(path):
 )
 
 def ls(path):
-    ''' List synchronized directories. '''
+  ''' List synchronized directories. '''
 
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, '.config/kdr')
+  home_dir = os.path.expanduser('~')
+  folder_path = os.path.join(home_dir, '.config/kdr')
 
-    with open(folder_path + "/config.json") as fp:
-        data = json.load(fp)
-        # data is a dictionary containing a list of dictionaries
+  with open(folder_path + "/config.json") as fp:
+    data = json.load(fp)
+    # data is a dictionary containing a list of dictionaries
 
-    dirs = data['directories'] # type: list
+  dirs = data['directories'] # type: list
 
-    click.echo("{:<50}".format('Directory names:') + 'Paths:')
+  click.echo("{:<50}".format('Directory names:') + 'Paths:')
 
-    for i, val in enumerate(dirs): # for each item in the list
-        for key, value in val.iteritems(): # for each dictionary in each item
-            try:
-                click.echo("{:<50}".format(key) + value['local_path'])
-            except:
-                click.echo("{:<50}".format(key) + value[key]['local_path'])
+  for i, val in enumerate(dirs): # for each item in the list
+    for key, value in val.iteritems(): # for each dictionary in each item
+      try:
+        click.echo("{:<50}".format(key) + value['local_path'])
+      except:
+        click.echo("{:<50}".format(key) + value[key]['local_path'])
 
-    return
+  return
 
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
-    '-t', '--tag', nargs=1, metavar="<TEXT>", 
-    help="Associate this folder with a tag."
+  '-t', '--tag', nargs=1, metavar="<TEXT>", 
+  help="Associate this folder with a tag."
 )
 @click.option(
-    '-p', '--path', 
-    type=click.Path(exists=True, writable=True, resolve_path=True), 
-    default=".", nargs=1, metavar="<PATH>",
-    help="Specify which folder to link."
+  '-p', '--path', 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  default=".", nargs=1, metavar="<PATH>",
+  help="Specify which folder to link."
 )
 def link(key, tag, path):
   ''' Synchronize remote/local directory. '''
@@ -118,31 +119,31 @@ def link(key, tag, path):
     click.echo("%s" % output)
 
 ''' 
-	*** Make the catch more specific 
+  *** Make the catch more specific 
 
-    output = None
+  output = None
 
-    if click.confirm("Are you sure you want to link to %s?" % path):
-        try:
-            output = cli_syncthing_adapter.init(key, tag, path)
+  if click.confirm("Are you sure you want to link to %s?" % path):
+    try:
+      output = cli_syncthing_adapter.init(key, tag, path)
 
-        except ValueError:
-            raise
+    except ValueError:
+      raise
 
-        except:
-            cli_syncthing_adapter.start()
-            sleep(1.5)
-            output = cli_syncthing_adapter.init(key, tag, path)
+    except:
+      cli_syncthing_adapter.start()
+      sleep(1.5)
+      output = cli_syncthing_adapter.init(key, tag, path)
 
-        finally:
-            if output:
-                click.echo("%s" % output)
+    finally:
+      if output:
+        click.echo("%s" % output)
 '''
 
 @main.command()
 @click.argument(
-    'path',
-    type=click.Path(exists=True, writable=True, resolve_path=True), 
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
 def unlink(**kwargs):
@@ -156,8 +157,8 @@ def unlink(**kwargs):
 @click.argument('cur', nargs=1)
 @click.argument('new', nargs=1)
 def retag(cur, new):
-	''' Change tag associated with directory. '''
-	return
+  ''' Change tag associated with directory. '''
+  return
 
 @main.command()
 @click.argument('arg', nargs=1)
@@ -171,12 +172,12 @@ Syncthing's scan currently seems buggy
 
 @main.command()
 @click.option(
-    '-v', '--verbose', is_flag=True,
-    help='Show synchronize progress.'
+  '-v', '--verbose', is_flag=True,
+  help='Show synchronize progress.'
 )
 @click.argument(
-    'path', nargs=1, 
-    type=click.Path(exists=True, writable=True, resolve_path=True), 
+  'path', nargs=1, 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
 def refresh(**kwargs):
   ''' Force synchronization of directory. '''
@@ -188,13 +189,13 @@ def refresh(**kwargs):
 
   if kwargs['verbose']:
     with click.progressbar(
-        length=100,
-        label='Synchronizing') as bar:
+      length=100,
+      label='Synchronizing') as bar:
 
-        progress = 0
+      progress = 0
 
-        while not progress == 100:
-            progress = cli_syncthing_adapter.refresh(progress=True)
+      while not progress == 100:
+        progress = cli_syncthing_adapter.refresh(progress=True)
 """
 
 @main.command()
@@ -209,49 +210,49 @@ def retag(cur, new):
 @click.argument('cur', nargs=1)
 @click.argument('new', nargs=1)
 def mv(cur, new):
-    ''' Rename directory. '''
+  ''' Rename directory. '''
 
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, '.config/kdr')
+  home_dir = os.path.expanduser('~')
+  folder_path = os.path.join(home_dir, '.config/kdr')
 
-    with open(folder_path + "/config.json") as fp:
-        data = json.load(fp)
+  with open(folder_path + "/config.json") as fp:
+    data = json.load(fp)
 
-    dirs = data['directories']
+  dirs = data['directories']
 
-    for i, val in enumerate(dirs): # for each item in the list
-        for key, value in val.iteritems(): # for each dictionary in each item
-            try:
-                if value[key]['local_path'] == os.path.abspath(cur): # if cur found
+  for i, val in enumerate(dirs): # for each item in the list
+    for key, value in val.iteritems(): # for each dictionary in each item
+        try:
+          if value[key]['local_path'] == os.path.abspath(cur): # if cur found
 
-                    path = value[key]['local_path']
-                    path = path[:-len(cur)]
-                    value[key]['local_path'] = path + '/' + new
-                    # changes path to go to new directory
+            path = value[key]['local_path']
+            path = path[:-len(cur)]
+            value[key]['local_path'] = path + '/' + new
+            # changes path to go to new directory
 
-                    with open(folder_path + "/config.json", 'w') as fp:
-                        fp.write(json.dumps(data))
-                        # write to config.json
+            with open(folder_path + "/config.json", 'w') as fp:
+              fp.write(json.dumps(data))
+              # write to config.json
 
-                    os.rename(os.path.join(path + '/' + cur), os.path.join(path + '/' + new))
-                    # renames directories in local environment
+            os.rename(os.path.join(path + '/' + cur), os.path.join(path + '/' + new))
+            # renames directories in local environment
 
-                    break
+            break
 
-            except:
-                pass
+        except:
+          pass
 
-    # TODO: what if user renames directory manually?
-    #       what happens to the remote directory?
+  # TODO: what if user renames directory manually?
+  #       what happens to the remote directory?
 
-    return
+  return
 
 @main.command()
 @click.argument('arg', nargs=1)
 def test(arg):
-    ''' Test random functions :) '''
+  ''' Test random functions :) '''
 
-    cli_syncthing_adapter.test(arg)
+  cli_syncthing_adapter.test(arg)
 
 """
 
@@ -261,10 +262,10 @@ REFERENCE
 @click.argument('src', type=click.Path(exists=True), nargs=1)
 @click.argument('dest', nargs=1)
 def connect(src, dest):
-    ''' Connect to remote server. '''
+  ''' Connect to remote server. '''
     
-    output = cli_syncthing_adapter.connect()
-    click.echo("%s" % output)
+  output = cli_syncthing_adapter.connect()
+  click.echo("%s" % output)
 
 @click.group(invoke_without_command=True)
 @click.option('-v', '--version', is_flag=True, help='Print version information and quit')

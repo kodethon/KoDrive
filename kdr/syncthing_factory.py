@@ -12,453 +12,461 @@ class FileNotFoundError(Exception):
 
 class SyncthingFacade():
     
-    def __init__(self, **kwargs):
-    
-        if 'sync' in kwargs:
-        	self.sync = kwargs['sync'] 
+  def __init__(self, **kwargs):
+    if 'sync' in kwargs:
+    	self.sync = kwargs['sync'] 
 
-        if 'adapter' in kwargs:
-        	self.adapter = kwargs['adapter']
-            
-    def get_config(self):
-        return self.sync.sys.config()
+    if 'adapter' in kwargs:
+    	self.adapter = kwargs['adapter']
+        
+  def get_config(self):
+    return self.sync.sys.config()
 
-    def get_device_id(self):
-        try:
-            return self.sync.sys.status()['myID']
-        except Exception:
-            if self.adapter:
-                return self.adapter.get_device_id()
-            else:
-                return None
-            
-    def set_config(self, config):
-        return self.sync.sys.set.config(config)
+  def get_device_id(self):
+    try:
+      return self.sync.sys.status()['myID']
 
-    def restart(self):
-        self.sync.sys.set.restart();
+    except Exception:
+      if self.adapter:
+        return self.adapter.get_device_id()
+      else:
+        return None
+        
+  def set_config(self, config):
+    return self.sync.sys.set.config(config)
 
-    def scan(self, path):
-    	
-        if not path[len(path) - 1] == '/':
-        	path += '/'
+  def restart(self):
+    self.sync.sys.set.restart();
 
-        folder = self.find_folder({
-        	'path' : path
-        }) 
-
-        if not folder:
-        	raise IOError(path + ' is not being synchronized.')
-        else:
-        	return self.sync.db.set.scan(folder=folder['id'])
-
-    def completion(self, path):
-
-        if not path[len(path) - 1] == '/':
-        	path += '/'
-
-        folder = self.find_folder({
-        	'path' : path
-        })
-
-        device_id = self.get_device_id()
-        res = self.sync.db.completion(device=device_id, folder=folder)
+  def scan(self, path):
 	
-        return res['completion']
-		
-    def start(self):    
-        path = self.adapter.get_path()
-        
-        return self.adapter.start(path);
+    if not path[len(path) - 1] == '/':
+    	path += '/'
 
-    def shutdown(self):
-        return self.sync.sys.set.shutdown()
-        
-    def ping(self):
-        
-        # Run command
-        try:
-            t = type(self.sync.sys.ping()) 
-        except:
-            return False
+    folder = self.find_folder({
+    	'path' : path
+    }) 
 
-        return t == dict
+    if not folder:
+    	raise IOError(path + ' is not being synchronized.')
+
+    else:
+    	return self.sync.db.set.scan(folder=folder['id'])
+
+  def completion(self, path):
+
+    if not path[len(path) - 1] == '/':
+    	path += '/'
+
+    folder = self.find_folder({
+    	'path' : path
+    })
+
+    device_id = self.get_device_id()
+    res = self.sync.db.completion(device=device_id, folder=folder)
+
+    return res['completion']
+	
+  def start(self):    
+    path = self.adapter.get_path()
+    return self.adapter.start(path);
+
+  def shutdown(self):
+    return self.sync.sys.set.shutdown()
+      
+  def ping(self):
+    
+    # Run command
+    try:
+      t = type(self.sync.sys.ping()) 
+
+    except:
+      return False
+
+    return t == dict
 
 # UTILS
 
-    def encode_key(self):
-    	config = self.get_config()
-    	api_key = config['gui']['apiKey']
-    	devid = self.get_device_id()
-    	key = "%s@%s" % (devid, api_key)
+  def encode_key(self):
+  	config = self.get_config()
+  	api_key = config['gui']['apiKey']
+  	devid = self.get_device_id()
+  	key = "%s@%s" % (devid, api_key)
 
-    	return base64.b64encode(key)
-    	
-    def decode_key(self, encoded_key):
-    	base64_key = "".join(encoded_key.split())
-    	return base64.b64.decode(base64_key)
+  	return base64.b64encode(key)
+  	
+  def decode_key(self, encoded_key):
+  	base64_key = "".join(encoded_key.split())
+  	return base64.b64.decode(base64_key)
 
-    def devid_to_ip(self, devid, wait = True):
+  def devid_to_ip(self, devid, wait = True):
 
-        if not wait:
-            try:
-                discovery = self.sync.sys.discovery()
+    if not wait:
+      try:
+        discovery = self.sync.sys.discovery()
 
-                if not devid in discovery:
-                    return None
-                else:
-                    address = discovery[devid]['addresses']
+        if not devid in discovery:
+          return None
 
-                    for e in address:
-                        if 'tcp://' in e:
-                            href = e
-                            break
-
-                    return href.split('/')[2].split(':')[0]
-            except Exception:
-                return None
         else:
-            count = 0
-            host = None
+          address = discovery[devid]['addresses']
 
-            # Wait for changes to take effect
-            while count <= 5:
-                
-                print "Attempt %i to discover device." % count
+          for e in address:
+            if 'tcp://' in e:
+              href = e
+              break
 
-                host = self.devid_to_ip(devid, False)           
+          return href.split('/')[2].split(':')[0]
 
-                if not host:
-                    time.sleep(1.5)
-                    count += 1
-                else:
-                    print 'Device successfully discovered!'
-                    return host
+      except Exception:
+        return None
 
-            return None
+    else:
+      count = 0
+      host = None
 
-    def new_device(self, **kwargs):
-
-        if not 'hostname' in kwargs: 
-            kwargs['hostname'] = 'Unknown'
-
-        record = {
-            'deviceId' : kwargs['device_id'],
-            'name' : kwargs['hostname'],
-            'compression' : 'metadata',
-            'introducer' : False,
-            'certName' : '',
-            'address' : ['dynamic']
-        }
-
-        kwargs['config']['devices'].append(record)
-                
-    def device_exists(self, client_devid, config=None):
-
-        if not config:
-            config = self.get_config()       
-
-        return self.find_device(client_devid, config) != None
-
-    def find_device(self, client_devid, config=None):
+      # Wait for changes to take effect
+      while count <= 5:
         
-        if not config:
-            config = self.get_config()
+        print "Attempt %i to discover device." % count
 
-        for d in config['devices']:
-            device_id = d['deviceID']
-            
-            if device_id == client_devid:
-                return d
+        host = self.devid_to_ip(devid, False)           
 
+        if not host:
+          time.sleep(1.5)
+          count += 1
 
-    def delete_folder(self, path, config):
+        else:
+          print 'Device successfully discovered!'
+          return host
 
-        if not path[len(path) - 1] == '/':
-        	path += '/'
+      return None
 
-        # list of folders
-        folders = config['folders']
-				
-        for i, f in enumerate(folders):
-        	if path == f['path']:
-        		del folders[i]
-        		return True
+  def new_device(self, **kwargs):
 
-        return False
+    if not 'hostname' in kwargs: 
+      kwargs['hostname'] = 'Unknown'
 
-    def find_folder(self, object, config=None):
-			
-        if not config:
-            config = self.get_config()
-        
-        # list of folders
-        folders = config['folders']
-				
-        for f in folders:
-            n = 0
-            d = 0
-			
-            for k in object:
+    record = {
+      'deviceId' : kwargs['device_id'],
+      'name' : kwargs['hostname'],
+      'compression' : 'metadata',
+      'introducer' : False,
+      'certName' : '',
+      'address' : ['dynamic']
+    }
 
-                if object[k] == f[k]:
-                    n += 1
-                d += 1
+    kwargs['config']['devices'].append(record)
+              
+  def device_exists(self, client_devid, config=None):
 
-            if n == d:
-                return f 
+    if not config:
+      config = self.get_config()       
 
-    def folder_exists(self, object, config = None):
+    return self.find_device(client_devid, config) != None
 
-        if not config:
-            config = self.get_config()
-        
-        return self.find_folder(object, config) != None
+  def find_device(self, client_devid, config=None):
+      
+    if not config:
+      config = self.get_config()
+
+    for d in config['devices']:
+      device_id = d['deviceID']
+      
+      if device_id == client_devid:
+        return d
+
+  def delete_folder(self, path, config):
+
+    if not path[len(path) - 1] == '/':
+    	path += '/'
+
+    # list of folders
+    folders = config['folders']
+		
+    for i, f in enumerate(folders):
+    	if path == f['path']:
+    		del folders[i]
+    		return True
+
+    return False
+
+  def find_folder(self, object, config=None):
+		
+    if not config:
+        config = self.get_config()
+    
+    # list of folders
+    folders = config['folders']
+		
+    for f in folders:
+      n = 0
+      d = 0
+
+      for k in object:
+
+        if object[k] == f[k]:
+          n += 1
+
+        d += 1
+
+      if n == d:
+        return f 
+
+  def folder_exists(self, object, config = None):
+
+    if not config:
+      config = self.get_config()
+    
+    return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
     
-    def __init__(self, adapter):
-        SyncthingFacade.__init__(self)
+  def __init__(self, adapter):
+    SyncthingFacade.__init__(self)
 
-        self.adapter = adapter
+    self.adapter = adapter
 
-        try:
-            self.sync = self.adapter.get_gui_hook()
-        except Exception:
-            pass
+    try:
+      self.sync = self.adapter.get_gui_hook()
+    except Exception:
+      pass
 
-    def init(self, key, name, local_path):
+  def init(self, key, name, local_path):
 
-        """
+    """
 
-            1. If config.json not created:
-                Create config as ~/.config/kdr/config.json
-                Initialize contents in confing.json
-            else
-                Append new folder data to config
-            
-            2. Notify the remote device that this machine
-                 wants to connect to it.
+      1. If config.json not created:
+        Create config as ~/.config/kdr/config.json
+        Initialize contents in confing.json
+      else
+        Append new folder data to config
+      
+      2. Notify the remote device that this machine
+         wants to connect to it.
 
-            Args:
-                key(str): remote deviceId@apiKey used to identify src
-                name(str): user defined name associating key 
-                path(str): path to folder user wants to sync
-            
-            returns success or failure
+      Args:
+        key(str): remote deviceId@apiKey used to identify src
+        name(str): user defined name associating key 
+        path(str): path to folder user wants to sync
+    
+      returns success or failure
 
-        """
-        
-        try:
-            toks = key.split('@')
-            device_id = toks[0]
-            api_key = toks[1]
-        except IndexError as e:
-            return 'Invalid Key.'
+    """
+    
+    try:
+      toks = key.split('@')
+      device_id = toks[0]
+      api_key = toks[1]
 
-        # Check if the device id is valid
-        if 'error' in self.sync.misc.device_id(id=device_id):
-            return 'Invalid Key.'
-        try:
-            config = self.get_config()
+    except IndexError as e:
+      return 'Invalid Key.'
 
-            if not self.device_exists(device_id):
-                self.new_device(config=config, device_id=device_id)
-                self.set_config(config)
-                self.restart()
-            
-            host = self.devid_to_ip(device_id)
+    # Check if the device id is valid
+    if 'error' in self.sync.misc.device_id(id=device_id):
+      return 'Invalid Key.'
 
-            # Request remote to share its folder with us
-            remote = SyncthingProxy(device_id, host, api_key)
-            remote_config = remote.request_folder(
-                self.hostname(),    
-                self.get_device_id()
-            )
-            
-            # Save the folder data into syncthing config
-            self.acknowledge(
-                remote.hostname(remote_config), 
-                device_id,
-                remote_config['folders'][0], 
-                local_path
-            )
+    try:
+      config = self.get_config()
 
-            self.restart()
-            
-            # Save folder data into kdr config
-            config = self.adapter.update_config({
-                'device_id' : device_id,
-                'api_key' : api_key,
-                'name' : name,
-                'path' : local_path,
-            })
+      if not self.device_exists(device_id):
+        self.new_device(config=config, device_id=device_id)
+        self.set_config(config)
+        self.restart()
+      
+      host = self.devid_to_ip(device_id)
 
-            return 'Success'
-        except IOError as e:
-           return e.message
+      # Request remote to share its folder with us
+      remote = SyncthingProxy(device_id, host, api_key)
+      remote_config = remote.request_folder(
+        self.hostname(),    
+        self.get_device_id()
+      )
+      
+      # Save the folder data into syncthing config
+      self.acknowledge(
+        remote.hostname(remote_config), 
+        device_id,
+        remote_config['folders'][0], 
+        local_path
+      )
 
-    def acknowledge(self, hostname, devid, remote_folder, local_path):
+      self.restart()
+      
+      # Save folder data into kdr config
+      config = self.adapter.update_config({
+        'device_id' : device_id,
+        'api_key' : api_key,
+        'name' : name,
+        'path' : local_path,
+      })
 
-        """
+      return 'Success'
 
-            Commit the shared remote folder data into local config.xml file
-                1. Update the remote_folder path and label
-                2. Append the remote_folder to config folders list
+    except IOError as e:
+      return e.message
 
-            Args:
-                remote_folder(folder): syncthing folder object
-                local_path: existing local path
+  def acknowledge(self, hostname, devid, remote_folder, local_path):
 
-        """
+    """
 
-        config = self.get_config()
+      Commit the shared remote folder data into local config.xml file
+        1. Update the remote_folder path and label
+        2. Append the remote_folder to config folders list
 
-        if self.folder_exists({
-            'id' : remote_folder['id']
-        }, config):
-            # TODO: maybe tell user where they are synchronizing the dev
-            raise ValueError('You are already synchronizing this device.')
+      Args:
+        remote_folder(folder): syncthing folder object
+        local_path: existing local path
 
-        remote_folder['path'] = local_path
-        remote_folder['label'] = 'sync'
-        config['folders'].append(remote_folder)
-               
-        device = self.find_device(devid, config)
-        
-        if device:
-            device['name'] = hostname
-       
-        return self.set_config(config)
+    """
 
-    def hostname(self):
-        return socket.gethostname()
+    config = self.get_config()
 
+    if self.folder_exists({
+      'id' : remote_folder['id']
+    }, config):
+      # TODO: maybe tell user where they are synchronizing the dev
+      raise ValueError('You are already synchronizing this device.')
 
-    def unlink(self, local_path):
-        config = self.get_config()
-        success = self.delete_folder(local_path, config)
+    remote_folder['path'] = local_path
+    remote_folder['label'] = 'sync'
+    config['folders'].append(remote_folder)
+           
+    device = self.find_device(devid, config)
+    
+    if device:
+      device['name'] = hostname
+   
+    return self.set_config(config)
 
-        if success or True:
-        	self.set_config(config)
-        	self.restart()
-			
-					# Process remote
-        	dir_config = self.adapter.get_dir_config(local_path)
-        	print dir_config
-        	r_api_key = dir_config['api_key']
-        	r_device_id = dir_config['device_id']
-        	host = self.devid_to_ip(r_device_id)
-        	
-        	remote = SyncthingProxy(r_device_id, host, r_api_key)
-        	r_config = remote.get_config()
-        	remote.delete_folder(path, r_config)
-        	remote.set_config(r_config)
-        	remote.restart()
+  def hostname(self):
+    return socket.gethostname()
 
-        	return True
-        else:
-        	raise FileNotFoundError("%s is not being synchronized" % local_path)
- 
-    def test(self, arg): 
+  def unlink(self, local_path):
+    config = self.get_config()
+    success = self.delete_folder(local_path, config)
 
-        toks = arg.split('@')
-        device_id = toks[0]
-        api_key = toks[1]
-        host = self.devid_to_ip(device_id)
+    if success or True:
+    	self.set_config(config)
+    	self.restart()
+	
+			# Process remote
+    	dir_config = self.adapter.get_dir_config(local_path)
+    	print dir_config
+    	r_api_key = dir_config['api_key']
+    	r_device_id = dir_config['device_id']
+    	host = self.devid_to_ip(r_device_id)
+    	
+    	remote = SyncthingProxy(r_device_id, host, r_api_key)
+    	r_config = remote.get_config()
+    	remote.delete_folder(path, r_config)
+    	remote.set_config(r_config)
+    	remote.restart()
 
-        print self.get_device_id()
-        remote = SyncthingProxy(device_id, host, api_key)
-        #print self.sync._interface.options
-        print self.get_device_id()
-        return
+    	return True
 
-        '''
-        print self.sync.sys.status()['myID']
-        return
-        print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
-        print dir(self.sync.sys.set.config)
-        print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
-        return self.sync.sys.ping()
-        '''
+    else:
+    	raise FileNotFoundError("%s is not being synchronized" % local_path)
+
+  def test(self, arg): 
+
+    toks = arg.split('@')
+    device_id = toks[0]
+    api_key = toks[1]
+    host = self.devid_to_ip(device_id)
+
+    print self.get_device_id()
+    remote = SyncthingProxy(device_id, host, api_key)
+    #print self.sync._interface.options
+    print self.get_device_id()
+    return
+
+    '''
+    print self.sync.sys.status()['myID']
+    return
+    print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
+    print dir(self.sync.sys.set.config)
+    print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
+    return self.sync.sys.ping()
+    '''
 
 class SyncthingProxy(SyncthingFacade):
 
-    remote_port = 8384
+  remote_port = 8384
 
-    def __init__(self, device_id, host, api_key):
-        SyncthingFacade.__init__(self)
-        
-        self.device_id = device_id
-        self.host = host
-        self.api_key = api_key
-        self.sync = Syncthing(
-            api_key=api_key, 
-            port=self.remote_port, 
-            host=host
-        )
+  def __init__(self, device_id, host, api_key):
+    SyncthingFacade.__init__(self)
+    
+    self.device_id = device_id
+    self.host = host
+    self.api_key = api_key
+    self.sync = Syncthing(
+      api_key=api_key, 
+      port=self.remote_port, 
+      host=host
+    )
 
-        # If remote host can't be detected, throw a tantrum >:/
-        if not self.ping():
-            raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
+    # If remote host can't be detected, throw a tantrum >:/
+    if not self.ping():
+      raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
 
-    def hostname(self, config = None):
+  def hostname(self, config = None):
 
-        if not config:
-            config = self.get_config()
+    if not config:
+      config = self.get_config()
 
-        devices = config['devices']
-        
-        for d in devices:
-            if d['deviceID'] == self.device_id:
-                return d['name']
+    devices = config['devices']
+    
+    for d in devices:
+      if d['deviceID'] == self.device_id:
+        return d['name']
 
-    def request_folder(self, client_hostname, client_devid):
-        config = self.get_config()       
-        
-        self.new_device(
-            config = config,
-            hostname = client_hostname,
-            device_id = client_devid
-        )
+  def request_folder(self, client_hostname, client_devid):
+    config = self.get_config()       
+    
+    self.new_device(
+      config = config,
+      hostname = client_hostname,
+      device_id = client_devid
+    )
 
-        config['folders'][0]['devices'].append({
-            'deviceID' : client_devid
-        })
-        
-        self.set_config(config)
-        self.restart()
+    config['folders'][0]['devices'].append({
+      'deviceID' : client_devid
+    })
+    
+    self.set_config(config)
+    self.restart()
 
-        return config
+    return config
 
-    def disconnect(self):
-        return
+  def disconnect(self):
+    return
 
 syncthing_linux = None
 syncthing_mac = None
 syncthing_win = None
 
 if platform.system() == "Linux" or platform.system() == "Linux2":
-    syncthing_linux = SyncthingClient(
-        platform_adapter.SyncthingLinux64()
-    ) # Linux
+  syncthing_linux = SyncthingClient(
+    platform_adapter.SyncthingLinux64()
+  ) # Linux
 elif platform.system() == "Darwin":
-    syncthing_mac = SyncthingClient(
-        platform_adapter.SyncthingMac64()
-    ) # MacOSX
+  syncthing_mac = SyncthingClient(
+    platform_adapter.SyncthingMac64()
+  ) # MacOSX
 elif platform.system() == "Windows":
-    syncthing_win = SyncthingClient(
-        platform_adapter.SyncthingWin64()
-    ) # TODO: Windows
+  syncthing_win = SyncthingClient(
+    platform_adapter.SyncthingWin64()
+  ) # TODO: Windows
 
 def get_handler():
-    handler = {
-        'Linux' : syncthing_linux,
-        'Darwin' : syncthing_mac,
-        'Windows' : syncthing_win
-    }.get(platform.system(), None)
+  handler = {
+    'Linux' : syncthing_linux,
+    'Darwin' : syncthing_mac,
+    'Windows' : syncthing_win
+  }.get(platform.system(), None)
 
-    if not handler:
-        raise Exception("%s is not currently supported." % platform.system())
+  if not handler:
+    raise Exception("%s is not currently supported." % platform.system())
 
-    return handler
+  return handler

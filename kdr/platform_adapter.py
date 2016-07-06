@@ -7,149 +7,151 @@ import urllib
 
 class PlatformBase():
 
-	binary = 'syncthing'
-  	config = 'config.json'
+  binary = 'syncthing'
+  config = 'config.json'
 
-	def update_platform_config(self, folder_path, object):
+  def update_platform_config(self, folder_path, object):
 
-		# If config file does not exist, create it
-		# And then add the new directory data into it
-		if not os.path.exists(folder_path):
-		  os.makedirs(folder_path)
+    # If config file does not exist, create it
+    # And then add the new directory data into it
+    if not os.path.exists(folder_path):
+      os.makedirs(folder_path)
 
-		  metadata = self.create_dir_metadata(object)
-		  record = self.create_dir_record(object, metadata)
+      metadata = self.create_dir_metadata(object)
+      record = self.create_dir_record(object, metadata)
 
-		  self.create_config(folder_path, record) 
-		else:
-		  config_path = os.path.join(folder_path, self.config)
-		  self.append_dir_metadata(config_path, object)
-	
-	def create_config(self, folder, record):
-		config_path = os.path.join(folder, self.config) 
-		config = {
-			'directories' : record
-		}
+      self.create_config(folder_path, record) 
 
-		fp = open(config_path, 'w')
-		fp.write(json.dumps(config))
-		fp.close
+    else:
+      config_path = os.path.join(folder_path, self.config)
+      self.append_dir_metadata(config_path, object)
+  
+  def create_config(self, folder, record):
+    config_path = os.path.join(folder, self.config) 
+    config = {
+      'directories' : record
+    }
 
-		# What happens if write fails?
+    fp = open(config_path, 'w')
+    fp.write(json.dumps(config))
+    fp.close
 
-		return config
+    # What happens if write fails?
 
-	def create_dir_metadata(self, object):
-		device_id = object['device_id']
+    return config
 
-		return {
-			'local_path' : object['path'],
-			'device_id' : device_id,
-			'api_key' : object['api_key']
-		}
+  def create_dir_metadata(self, object):
+    device_id = object['device_id']
 
-	def create_dir_record(self, object, metadata):
-		name = object['name']
+    return {
+      'local_path' : object['path'],
+      'device_id' : device_id,
+      'api_key' : object['api_key']
+    }
 
-		if not name:
-			device_id = object['device_id']
-			name = hashlib.sha1(device_id).hexdigest() 
+  def create_dir_record(self, object, metadata):
+    name = object['name']
 
-		record = {name : metadata}
+    if not name:
+      device_id = object['device_id']
+      name = hashlib.sha1(device_id).hexdigest() 
 
-		return record
+    record = {name : metadata}
 
-	def append_dir_metadata(self, config_path, object):
+    return record
 
-		metadata = self.create_dir_metadata(object)
-		record = self.create_dir_record(object, metadata)
+  def append_dir_metadata(self, config_path, object):
 
-		with open(config_path, "r+") as f:
-			raw = f.read()
-			f.seek(0)
-			  
-			if len(raw) > 0:
-			  config = json.loads(raw)
-			  name = object['name']
-			  config['directories'][name] = metadata
+    metadata = self.create_dir_metadata(object)
+    record = self.create_dir_record(object, metadata)
 
-			  f.write(json.dumps(config))
-			  f.truncate()
-			  
-			  # TODO: Should handle corrupt config files later
-			else:
-			  config = self.create_config(folder_path, record)
+    with open(config_path, "r+") as f:
+      raw = f.read()
+      f.seek(0)
+        
+      if len(raw) > 0:
+        config = json.loads(raw)
+        name = object['name']
+        config['directories'][name] = metadata
 
-	def get_dir_id(self, local_path):
-		return hashlib.sha1(local_path).hexdigest() 
+        f.write(json.dumps(config))
+        f.truncate()
+        
+        # TODO: Should handle corrupt config files later
+
+      else:
+        config = self.create_config(folder_path, record)
+
+  def get_dir_id(self, local_path):
+    return hashlib.sha1(local_path).hexdigest() 
 
 class SyncthingLinux64(PlatformBase): 
 
-	def update_config(self, object):
-		home_dir = os.path.expanduser('~')
-		folder_path = os.path.join(home_dir, '.config/kdr')
+  def update_config(self, object):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
 
-		self.update_platform_config(folder_path, object)
+    self.update_platform_config(folder_path, object)
 
-	def get_dir_config(self, local_path):
-		home_dir = os.path.expanduser('~')
-		folder_path = os.path.join(home_dir, '.config/kdr')
-		config_path = os.path.join(folder_path, self.config) 
-		
-		try:
-			with open(config_path, "r") as f:
-				raw = f.read()
-				config = json.loads(raw)
-				dir_id = self.get_dir_id(local_path)
+  def get_dir_config(self, local_path):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+    config_path = os.path.join(folder_path, self.config) 
+    
+    try:
+      with open(config_path, "r") as f:
+        raw = f.read()
+        config = json.loads(raw)
+        dir_id = self.get_dir_id(local_path)
 
-				return config[dir_id]
-		except Exception as e:
-			print e.message
-			return None
+        return config[dir_id]
+    except Exception as e:
+      print e.message
+      return None
 
-	def get_gui_hook(self):
-		home_dir = os.path.expanduser('~')
-		tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
-		api_key = tree.find('gui').find('apikey').text
-		address = tree.find('gui').find('address').text
-		port = address.split(':')[1]
+  def get_gui_hook(self):
+    home_dir = os.path.expanduser('~')
+    tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
+    api_key = tree.find('gui').find('apikey').text
+    address = tree.find('gui').find('address').text
+    port = address.split(':')[1]
 
-		return Syncthing(api_key=api_key, port=int(port))
+    return Syncthing(api_key=api_key, port=int(port))
 
-	def get_device_id(self):
-		home_dir = os.path.expanduser('~')
-		tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
-		return tree.find('device').items()[0][1]
+  def get_device_id(self):
+    home_dir = os.path.expanduser('~')
+    tree = ET.parse(os.path.join(home_dir, '.config/syncthing/config.xml'))
+    return tree.find('device').items()[0][1]
 
-	def get_path(self):
-		dest = '/var/opt'
-		linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
-		syncthing_path = os.path.join(dest, linux_64_bit_file)
+  def get_path(self):
+    dest = '/var/opt'
+    linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
+    syncthing_path = os.path.join(dest, linux_64_bit_file)
 
-		# If syncthing doesn't exist, install it
-		if not os.path.exists(syncthing_path):
-			dest_tmp = '/tmp'
-			linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
-			linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
+    # If syncthing doesn't exist, install it
+    if not os.path.exists(syncthing_path):
+      dest_tmp = '/tmp'
+      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
+      linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
 
-			command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
-			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+      command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
+      subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-			src = dest_tmp
-			command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
-			subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+      src = dest_tmp
+      command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
+      subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-		return syncthing_path
+    return syncthing_path
 
-	def start(self, folder_path):   
+  def start(self, folder_path):   
       
-		command = os.path.join(folder_path, self.binary)
+    command = os.path.join(folder_path, self.binary)
 
-		DEVNULL = open(os.devnull, 'w') 
-		process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
-		is_success = (process.stderr == None)
+    DEVNULL = open(os.devnull, 'w') 
+    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+    is_success = (process.stderr == None)
 
-		return is_success
+    return is_success
 
 
 class SyncthingMac64(): 
@@ -191,6 +193,7 @@ class SyncthingMac64():
         if len(raw) > 0:
           config = json.loads(raw)
           # Should handle corrupt config files later
+
         else:
           config = self.create_config(folder_path, record)
         
@@ -200,6 +203,7 @@ class SyncthingMac64():
           directories.append({
             name : record
           })
+          
         else:
           # Add a more specific message later
           raise KeyError('This device already exists.')
@@ -208,65 +212,65 @@ class SyncthingMac64():
         f.truncate()
 
   def create_config(self, folder, record):
-      config_path = os.path.join(folder, self.config) 
-      config = {
-          'directories' : record
-      }
+    config_path = os.path.join(folder, self.config) 
+    config = {
+      'directories' : record
+    }
 
-      fp = open(config_path, 'w')
-      fp.write(json.dumps(config))
-      fp.close
+    fp = open(config_path, 'w')
+    fp.write(json.dumps(config))
+    fp.close
 
-      # What happens if write fails?
+    # What happens if write fails?
 
-      return config
+    return config
 
   def get_gui_hook(self):
-      home_dir = os.path.expanduser('~')
-      tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
-      api_key = tree.find('gui').find('apikey').text
-      address = tree.find('gui').find('address').text
-      port = address.split(':')[1]
+    home_dir = os.path.expanduser('~')
+    tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
+    api_key = tree.find('gui').find('apikey').text
+    address = tree.find('gui').find('address').text
+    port = address.split(':')[1]
 
-      return Syncthing(api_key=api_key, port=int(port))
+    return Syncthing(api_key=api_key, port=int(port))
 
   def get_device_id(self):
-      home_dir = os.path.expanduser('~')
-      tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
-      return tree.find('device').items()[0][1]
+    home_dir = os.path.expanduser('~')
+    tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
+    return tree.find('device').items()[0][1]
 
   def get_path(self):
-      dest = '/usr/local' # external applications folder
-      mac_64_bit_file = 'syncthing-macosx-amd64-v0.13.9'
-      syncthing_path = os.path.join(dest, mac_64_bit_file)
-      
-      # If syncthing doesn't exist, install it
-      if not os.path.exists(syncthing_path):
-          dest_tmp = '/tmp'
-          mac_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
-          mac_64_bit_tar = 'syncthing-macosx-amd64-v0.13.9.tar.gz'
+    dest = '/usr/local' # external applications folder
+    mac_64_bit_file = 'syncthing-macosx-amd64-v0.13.9'
+    syncthing_path = os.path.join(dest, mac_64_bit_file)
+    
+    # If syncthing doesn't exist, install it
+    if not os.path.exists(syncthing_path):
+      dest_tmp = '/tmp'
+      mac_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
+      mac_64_bit_tar = 'syncthing-macosx-amd64-v0.13.9.tar.gz'
 
-          link = mac_64_bit_repo + '/' + mac_64_bit_tar
-          urllib.urlretrieve(link, mac_64_bit_tar)
-          # Download from site
+      link = mac_64_bit_repo + '/' + mac_64_bit_tar
+      urllib.urlretrieve(link, mac_64_bit_tar)
+      # Download from site
 
-          src = dest_tmp
-          command = "tar -zxvf %s/%s --directory %s" % (src, mac_64_bit_tar, dest)
-          subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+      src = dest_tmp
+      command = "tar -zxvf %s/%s --directory %s" % (src, mac_64_bit_tar, dest)
+      subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-      return syncthing_path
+    return syncthing_path
 
   def start(self, folder_path):   
-      
-      command = os.path.join(folder_path, self.binary)
-      
-      DEVNULL = open(os.devnull, 'w') 
-      process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
-      is_success = (process.stderr == None)
+    
+    command = os.path.join(folder_path, self.binary)
+    
+    DEVNULL = open(os.devnull, 'w') 
+    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+    is_success = (process.stderr == None)
 
-      return is_success
+    return is_success
 
 
 # class SyncthingWin64():
-    # TODO
+  # TODO
 
