@@ -6,14 +6,13 @@ Synchronize remote files with local directory.
 # Installation
 
 If you don't have `pipsi` installed, you can find 
-the instructions to install it [here](https://github.com/mitsuhiko/pipsi#readme).
+the instructions to install it [here](https://github.com/mitsuhiko/pipsi#readme) .
 
 Otherwise, simply run:
 
     $ pipsi install .
 
 Note: `pipsi` depends on [pip](https://github.com/pypa/pip) and [virtualenv](https://github.com/pypa/virtualenv) which may need to be installed.
-
 
 # Getting Started
 
@@ -33,3 +32,7 @@ It will be up to the users to resolve conflicts and update their files in this c
 
 Please note that if users modify conflict files, it is possible to end up with conflicting conflict files.
 Those will be named as 'sync-conflict-...sync-conflict -...-sync-conflict' files.
+
+
+# Dependencies
+	- Python 2.7
