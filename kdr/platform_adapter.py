@@ -23,8 +23,7 @@ class PlatformBase():
       self.create_config(folder_path, record) 
 
     else:
-      config_path = os.path.join(folder_path, self.config)
-      self.append_dir_metadata(config_path, object)
+      self.append_dir_metadata(folder_path, object)
   
   def create_config(self, folder, record):
     config_path = os.path.join(folder, self.config) 
@@ -44,26 +43,23 @@ class PlatformBase():
     device_id = object['device_id']
 
     return {
-      'local_path' : object['path'],
       'device_id' : device_id,
-      'api_key' : object['api_key']
+      'api_key' : object['api_key'],
+      'label' : object['label'],
+      'local_path' : object['local_path'],
+      'remote_path' : object['remote_path']
     }
 
   def create_dir_record(self, object, metadata):
-    name = object['name']
+    
+    name = self.get_dir_id(object)
+    return {name : metadata}
 
-    if not name:
-      device_id = object['device_id']
-      name = hashlib.sha1(device_id).hexdigest() 
-
-    record = {name : metadata}
-
-    return record
-
-  def append_dir_metadata(self, config_path, object):
+  def append_dir_metadata(self, folder_path, object):
 
     metadata = self.create_dir_metadata(object)
     record = self.create_dir_record(object, metadata)
+    config_path = os.path.join(folder_path, self.config)
 
     with open(config_path, "r+") as f:
       raw = f.read()
@@ -71,7 +67,8 @@ class PlatformBase():
         
       if len(raw) > 0:
         config = json.loads(raw)
-        name = object['name']
+
+        name = self.get_dir_id(object)
         config['directories'][name] = metadata
 
         f.write(json.dumps(config))
@@ -82,8 +79,11 @@ class PlatformBase():
       else:
         config = self.create_config(folder_path, record)
 
-  def get_dir_id(self, local_path):
-    return hashlib.sha1(local_path).hexdigest() 
+  def get_dir_id(self, object):
+    if 'name' in object and not object['name'] == None:
+        return object['name']
+    else:
+        return hashlib.sha1(object['local_path']).hexdigest()
 
 class SyncthingLinux64(PlatformBase): 
 
@@ -102,9 +102,12 @@ class SyncthingLinux64(PlatformBase):
       with open(config_path, "r") as f:
         raw = f.read()
         config = json.loads(raw)
-        dir_id = self.get_dir_id(local_path)
+        dir_id = self.get_dir_id({
+            'local_path' : local_path
+        })
+        print config
 
-        return config[dir_id]
+        return config['directories'][dir_id]
     except Exception as e:
       print e.message
       return None
@@ -163,20 +166,18 @@ class SyncthingMac64():
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
     
-    name = object['name']
     device_id = object['device_id']
-    local_path = object['path']
+    local_path = object['local_path']
 
     metadata = {
         'local_path' : local_path,
         'device_id' : device_id,
         'api_key' : object['api_key']
     }
+    print local_path
+    dir_id = self.get_dir_id(local_path)
 
-    if not name:
-      name = self.get_dir_id(local_path)
-
-    record = {name : metadata}
+    record = {dir_id : metadata}
 
     # If config file does not exist, create it
     # And then add the new directory data into it
