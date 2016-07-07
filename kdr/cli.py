@@ -230,7 +230,7 @@ def mv(cur, new):
 
             path = value[key]['local_path']
             path = path[:-len(cur)]
-            value[key]['local_path'] = os.path.join(path, new) #path + '/' + new
+            value[key]['local_path'] = os.path.join(path, new)
             # changes path to go to new directory
 
             with open(folder_path + "/config.json", 'w') as fp:
@@ -273,8 +273,8 @@ def mv(cur, new):
     new_path = os.path.join(path, new)
 
     for child in root:
-      if child.attrib.get('path') and child.attrib['path'] == os.path.join(old_path, '/'):
-        child.attrib['path'] = os.path.join(new_path, '/')
+      if child.attrib.get('path') == old_path + '/':
+        child.attrib['path'] = new_path + '/'
         break
 
     tree.write(xml_path)
