@@ -117,7 +117,7 @@ def link(key, tag, path):
   ''' Synchronize remote/local directory. '''
 
   if click.confirm("Are you sure you want to link to %s?" % path):
-    output = cli_syncthing_adapter.init(key, tag, path)
+    output = cli_syncthing_adapter.link(key, tag, path)
     click.echo("%s" % output)
 
 ''' 

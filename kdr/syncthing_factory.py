@@ -2,16 +2,11 @@ from py_syncthing_adapter import Syncthing
 
 # Self-defined
 import platform_adapter
+import custom_errors
 
 # Standard library
 import sys, platform, time
 import socket, json, base64
-
-class FileNotFoundError(Exception):
-  pass
-
-class DeviceNotFoundError(Exception):
-  pass
 
 class SyncthingFacade():
     
@@ -125,22 +120,22 @@ class SyncthingFacade():
         return None
 
     else:
-      count = 0
+      count = 1
       host = None
 
       # Wait for changes to take effect
-      while count <= 5:
-        
-        print "Attempt %i to discover device." % count
+      while count <= 10:
 
         host = self.devid_to_ip(devid, False)           
 
         if not host:
-          time.sleep(1.5)
+          print "Attempt %i to discover device." % count
+          time.sleep(1)
           count += 1
-
         else:
-          print 'Device successfully discovered!'
+          if count > 1:
+            print 'Device successfully discovered!'
+          
           return host
 
       return None
@@ -185,7 +180,7 @@ class SyncthingFacade():
     for i, d in enumerate(devices):
       device_id = d['deviceID']
       
-      if device_id == client_devid:
+      if device_id == devid:
         del devices[i]
         return True
 
@@ -199,12 +194,10 @@ class SyncthingFacade():
     folders = config['folders']
 		
     for i, f in enumerate(folders):
-      print f
       if path == f['path']:
-        for n, d in enumerate(folders['devices']):
-          print d
+        for n, d in enumerate(f['devices']):
           if d['deviceID'] == devid:
-            del f[i]['devices'][n]
+            del folders[i]['devices'][n]
             return True
 
     return False
@@ -265,7 +258,7 @@ class SyncthingClient(SyncthingFacade):
     except Exception:
       pass
 
-  def init(self, key, name, local_path):
+  def link(self, key, name, local_path):
 
     """
 
@@ -291,58 +284,55 @@ class SyncthingClient(SyncthingFacade):
       toks = key.split('@')
       device_id = toks[0]
       api_key = toks[1]
-
     except IndexError as e:
-      return 'Invalid Key.'
+      raise KeyError('Invalid Key.')
 
     # Check if the device id is valid
     if 'error' in self.sync.misc.device_id(id=device_id):
-      return 'Invalid Key.'
+      raise KeyError('Invalid Key.')
 
-    try:
-      config = self.get_config()
+    config = self.get_config()
 
-      if not self.device_exists(device_id):
-        self.new_device(config=config, device_id=device_id)
-        self.set_config(config)
-        self.restart()
-      
-      host = self.devid_to_ip(device_id)
-
-      # Request remote to share its folder with us
-      remote = SyncthingProxy(device_id, host, api_key)
-      remote_config = remote.request_folder(
-        self.hostname(),    
-        self.get_device_id()
-      )
-      # *** Should be more dynamic in the future
-      remote_folder = remote_config['folders'][0] 
-
-      # Save folder data into kdr config
-      config = self.adapter.update_config({
-        'device_id' : device_id,
-        'api_key' : api_key,
-        'label' : name,
-        'local_path' : local_path,
-        'remote_path': remote_folder['path'] 
-      }) 
-
-      # Save the folder data into syncthing config
-      self.acknowledge(
-        remote.hostname(remote_config), 
-        device_id,
-        remote_folder, 
-        name or self.adapter.get_dir_id({'local_path': local_path}), 
-        local_path
-      )
-
+    if not self.device_exists(device_id):
+      self.new_device(config=config, device_id=device_id)
+      self.set_config(config)
       self.restart()
+    
+    host = self.devid_to_ip(device_id)
 
-      return 'Success'
-    except IOError as e:
-      return e.message
+    # Request remote to share its folder with us
+    remote = SyncthingProxy(device_id, host, api_key)
+    remote_config = remote.request_folder(
+      self.hostname(),    
+      self.get_device_id()
+    )
+    # *** Should be more dynamic in the future
+    remote_folder = remote_config['folders'][0] 
+    name = name or remote_folder['label']
 
-  def acknowledge(self, hostname, devid, remote_folder, name, local_path):
+    # Save folder data into kdr config
+    config = self.adapter.update_config({
+      'device_id' : device_id,
+      'api_key' : api_key,
+      'label' : name,
+      'local_path' : local_path,
+      'remote_path': remote_folder['path'] 
+    }) 
+
+    # Save the folder data into syncthing config
+    self.acknowledge(
+      hostname=remote.hostname(remote_config), 
+      devid=device_id,
+      folder_obj=remote_folder, 
+      tag=name,
+      local_path=local_path
+    )
+
+    self.restart()
+
+    return name
+
+  def acknowledge(self, **kwargs):
 
     """
 
@@ -357,6 +347,7 @@ class SyncthingClient(SyncthingFacade):
     """
 
     config = self.get_config()
+    remote_folder = kwargs['folder_obj']
 
     if self.folder_exists({
       'id' : remote_folder['id']
@@ -364,15 +355,15 @@ class SyncthingClient(SyncthingFacade):
       # TODO: maybe tell user where they are synchronizing the dev
       raise ValueError('You are already synchronizing this device.')
 
-    remote_folder['path'] = local_path
+    remote_folder['path'] = kwargs['local_path']
     config['folders'].append(remote_folder)
-    if name:
-      config['lablel'] = name
+    if kwargs['tag']:
+      config['lablel'] = kwargs['tag']
            
-    device = self.find_device(devid, config)
+    device = self.find_device(kwargs['devid'], config)
     
     if device:
-      device['name'] = hostname
+      device['name'] = kwargs['hostname']
    
     return self.set_config(config)
 
@@ -383,10 +374,13 @@ class SyncthingClient(SyncthingFacade):
 
     # Process remote
     dir_config = self.adapter.get_dir_config(local_path)
+
+    if not dir_config:
+      raise custom_errors.FileNotInConfig(local_path)
     
     r_api_key = dir_config['api_key']
     r_device_id = dir_config['device_id']
-    host = self.devid_to_ip(r_device_id)
+    host = self.devid_to_ip(r_device_id, False)
     
     remote = SyncthingProxy(r_device_id, host, r_api_key)
     r_config = remote.get_config()
@@ -396,21 +390,20 @@ class SyncthingClient(SyncthingFacade):
       self.get_device_id(), 
       r_config
     )
-    #print r_config
 
     if not del_device:
-      raise FileNotFoundError("This device could not be found on %s." % remote.hostname())
+      raise custom_errors.DeviceNotFoundError(remote.hostname())
       
     config = self.get_config()
     del_folder = self.delete_folder(local_path, config)
 
     if not del_folder:
-      raise FileNotFoundError("%s could not be found on this device." % local_path)
+      raise custom_errors.FileNotInConfig(local_path)
 
     del_device = self.delete_device(r_device_id, config)
 
     if not del_device:
-      raise DeviceNotFoundError("%s could not be found on this device." % remote.hostname())
+      raise DeviceNotFoundError(remote.hostname())
     
     # All good, commit
     remote.set_config(r_config)
@@ -450,7 +443,7 @@ class SyncthingProxy(SyncthingFacade):
     SyncthingFacade.__init__(self)
 
     if not host:
-        raise IOError('Unkown host.')
+      raise IOError('Could not find remote host.')
     
     self.device_id = device_id
     self.host = host
@@ -525,3 +518,4 @@ def get_handler():
     raise Exception("%s is not currently supported." % platform.system())
 
   return handler
+

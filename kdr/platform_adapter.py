@@ -105,11 +105,9 @@ class SyncthingLinux64(PlatformBase):
         dir_id = self.get_dir_id({
             'local_path' : local_path
         })
-        print config
 
         return config['directories'][dir_id]
     except Exception as e:
-      print e.message
       return None
 
   def get_gui_hook(self):

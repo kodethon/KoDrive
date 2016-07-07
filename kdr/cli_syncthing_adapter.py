@@ -36,9 +36,14 @@ def stop():
 
   return handler.shutdown()
 
-def init(key, name, path):
+def link(key, name, path):
   handler = factory.get_handler()
-  return handler.init(key, name, path)
+  
+  try:
+    name = handler.link(key, name, path)
+    return "%s (%s) is now being synchronized." % (path, name)
+  except Exception as e:
+    return e.message
 
 def info(**kwargs):
   handler = factory.get_handler()
@@ -69,8 +74,13 @@ def refresh(**kwargs):
 
 def unlink(path):
   handler = factory.get_handler()
-  return handler.unlink(path)
 
+  try:
+    handler.unlink(path)
+    return "%s is no longer being synchronized." % path
+  except Exception as e:
+    return e.message
+    
 def test(arg):
   handler = factory.get_handler()
   return handler.test(arg)
