@@ -84,8 +84,8 @@ def ls(path):
   home_dir = os.path.expanduser('~')
   folder_path = os.path.join(home_dir, '.config/kdr')
 
-  with open(folder_path + "/config.json") as fp:
-    data = json.load(fp)
+  with open(folder_path + "/config.json") as f:
+    data = json.load(f)
     # data is a dictionary containing a list of dictionaries
 
   dirs = data['directories'] # type: list
@@ -208,46 +208,45 @@ def retag(cur, new):
 
     return
 
-@main.command()
-@click.argument('cur', nargs=1)
-@click.argument('new', nargs=1)
-def mv(cur, new):
-  ''' Rename directory. '''
-
+def rename(source, target):
   home_dir = os.path.expanduser('~')
   folder_path = os.path.join(home_dir, '.config/kdr')
   found = False
 
-  with open(folder_path + "/config.json") as fp:
-    data = json.load(fp)
+  with open(folder_path + "/config.json", "r+") as f:
+    data = json.load(f)
+    dirs = data['directories']
 
-  dirs = data['directories']
+    for i, val in enumerate(dirs):         # for each item in the list
+      if not found:                        # if found, terminate all for loops
+        for key, value in val.iteritems(): # for each dictionary in each item
+          try:
+            if value[key]['local_path'] == os.path.abspath(source): # if source found
 
-  for i, val in enumerate(dirs): # for each item in the list
-    for key, value in val.iteritems(): # for each dictionary in each item
-        try:
-          if value[key]['local_path'] == os.path.abspath(cur): # if cur found
+              path = value[key]['local_path']
+              path = path[:-len(source)]
+              value[key]['local_path'] = os.path.join(path, target)
+              # changes path to go to new directory
 
-            path = value[key]['local_path']
-            path = path[:-len(cur)]
-            value[key]['local_path'] = os.path.join(path, new)
-            # changes path to go to new directory
+              f.seek(0)
+              json.dump(data, f)
+              f.truncate()
+              # write to config.json from beginning, truncate if data is smaller than original json
 
-            with open(folder_path + "/config.json", 'w') as fp:
-              fp.write(json.dumps(data))
-              # write to config.json
+              os.rename(os.path.join(path, source), os.path.join(path, target))
+              # renames directories in local environment
 
-            os.rename(os.path.join(path, cur), os.path.join(path, new))
-            # renames directories in local environment
+              found = True
+              break
 
-            found = True
-            break
-
-        except:
-          pass
+          except:
+            pass
+            
+      else:
+        break
 
   if not found:
-    raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(cur))
+    raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(source))
 
   """
     config.json modification above
@@ -269,8 +268,8 @@ def mv(cur, new):
 
   try:
     root = tree.getroot()
-    old_path = os.path.abspath(cur)
-    new_path = os.path.join(path, new)
+    old_path = os.path.abspath(source)
+    new_path = os.path.join(path, target)
 
     for child in root:
       if child.attrib.get('path') == old_path + '/':
@@ -281,6 +280,22 @@ def mv(cur, new):
 
   except:
     raise ValueError('fatal: %s not found' % xml_path)
+
+def move(source, target):
+  pass
+
+@main.command()
+@click.argument('source', nargs=1)
+@click.argument('target', nargs=1)
+def mv(source, target):
+  ''' Rename directory. '''
+
+  if os.path.isdir(target) or os.path.islink(target):
+    move(source, target)
+    # if target is an existing directory or symbolic link then move()
+
+  else:
+    rename(source, target)
 
   return
 
