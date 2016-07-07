@@ -155,7 +155,7 @@ class SyncthingLinux64(PlatformBase):
     return is_success
 
 
-class SyncthingMac64(): 
+class SyncthingMac64(PlatformBase): 
     
   binary = 'syncthing'
   config = 'config.json'
@@ -163,52 +163,8 @@ class SyncthingMac64():
   def update_config(self, object):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
-    
-    device_id = object['device_id']
-    local_path = object['local_path']
 
-    metadata = {
-        'local_path' : local_path,
-        'device_id' : device_id,
-        'api_key' : object['api_key']
-    }
-    print local_path
-    dir_id = self.get_dir_id(local_path)
-
-    record = {dir_id : metadata}
-
-    # If config file does not exist, create it
-    # And then add the new directory data into it
-    if not os.path.exists(folder_path):
-      os.makedirs(folder_path)
-      self.create_config(folder_path, record) 
-    else:
-      config_path = os.path.join(folder_path, self.config)
-
-      with open(config_path, "r+") as f:
-        raw = f.read()
-        f.seek(0)
-          
-        if len(raw) > 0:
-          config = json.loads(raw)
-          # Should handle corrupt config files later
-
-        else:
-          config = self.create_config(folder_path, record)
-        
-        directories = config['directories']
-
-        if name not in directories:
-          directories.append({
-            name : record
-          })
-          
-        else:
-          # Add a more specific message later
-          raise KeyError('This device already exists.')
-
-        f.write(json.dumps(config))
-        f.truncate()
+    self.update_platform_config(folder_path, object)
 
   def create_config(self, folder, record):
     config_path = os.path.join(folder, self.config) 
