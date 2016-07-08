@@ -280,7 +280,7 @@ class SyncthingClient(SyncthingFacade):
         name(str): user defined name associating key 
         path(str): path to folder user wants to sync
     
-      returns success or failure
+      returns tag
 
     """
     
@@ -296,7 +296,7 @@ class SyncthingClient(SyncthingFacade):
     # Check if the device id is valid
     if 'error' in self.sync.misc.device_id(id=device_id):
       raise KeyError('Invalid Key.')
-
+    
     config = self.get_config()
 
     if not self.device_exists(device_id):
@@ -381,7 +381,7 @@ class SyncthingClient(SyncthingFacade):
 
     # Process remote
     dir_config = self.adapter.get_dir_config(local_path)
-
+    
     if not dir_config:
       raise custom_errors.FileNotInConfig(local_path)
     

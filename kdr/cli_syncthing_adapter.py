@@ -38,7 +38,10 @@ def stop():
 
 def link(key, name, path):
   handler = factory.get_handler()
-  
+
+  if not handler.ping():
+    return 'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
+
   try:
     name = handler.link(key, name, path)
     return "%s (%s) is now being synchronized." % (path, name)
@@ -74,6 +77,9 @@ def refresh(**kwargs):
 
 def unlink(path):
   handler = factory.get_handler()
+  
+  if not handler.ping():
+     return 'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
 
   try:
     handler.unlink(path)

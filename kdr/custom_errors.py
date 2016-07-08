@@ -12,7 +12,13 @@ class DeviceNotFound(KodeDriveError):
 
   def __init__(self, hostname):
      
-    super(ValidationError, self).__init__(
-        "%s could not finde %s." % (self.applicatio, hostname)
+    super(KodeDriveError, self).__init__(
+        "%s could not finde %s." % (self.application, hostname)
     )
 
+class CannotConnect(KodeDriveError):
+
+  def __init__(self):
+    super(KodeDriveError, self).__init__(
+    	'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
+    )

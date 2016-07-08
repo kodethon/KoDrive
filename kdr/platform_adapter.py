@@ -52,7 +52,7 @@ class PlatformBase():
 
   def create_dir_record(self, object, metadata):
     
-    name = self.get_dir_id(object)
+    name = self.get_dir_id(object['local_path'])
     return {name : metadata}
 
   def append_dir_metadata(self, folder_path, object):
@@ -68,7 +68,7 @@ class PlatformBase():
       if len(raw) > 0:
         config = json.loads(raw)
 
-        name = self.get_dir_id(object)
+        name = self.get_dir_id(object['local_path'])
         config['directories'][name] = metadata
 
         f.write(json.dumps(config))
@@ -79,11 +79,8 @@ class PlatformBase():
       else:
         config = self.create_config(folder_path, record)
 
-  def get_dir_id(self, object):
-    if 'name' in object and not object['name'] == None:
-        return object['name']
-    else:
-        return hashlib.sha1(object['local_path']).hexdigest()
+  def get_dir_id(self, local_path):
+  	return hashlib.sha1(local_path).hexdigest()
 
 class SyncthingLinux64(PlatformBase): 
 
@@ -102,9 +99,7 @@ class SyncthingLinux64(PlatformBase):
       with open(config_path, "r") as f:
         raw = f.read()
         config = json.loads(raw)
-        dir_id = self.get_dir_id({
-            'local_path' : local_path
-        })
+        dir_id = self.get_dir_id(local_path)
 
         return config['directories'][dir_id]
     except Exception as e:
