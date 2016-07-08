@@ -7,6 +7,7 @@ import custom_errors
 # Standard library
 import sys, platform, time
 import socket, json, base64
+import os
 
 class SyncthingFacade():
     
@@ -247,7 +248,10 @@ class SyncthingFacade():
     return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
-    
+   
+  global_name = None
+  global_remote_folder = None  
+
   def __init__(self, adapter):
     SyncthingFacade.__init__(self)
 
@@ -280,6 +284,8 @@ class SyncthingClient(SyncthingFacade):
 
     """
     
+    global_name = name
+
     try:
       toks = key.split('@')
       device_id = toks[0]
@@ -309,6 +315,7 @@ class SyncthingClient(SyncthingFacade):
     # *** Should be more dynamic in the future
     remote_folder = remote_config['folders'][0] 
     name = name or remote_folder['label']
+    global_remote_folder = remote_folder['path']
 
     # Save folder data into kdr config
     config = self.adapter.update_config({
@@ -412,6 +419,49 @@ class SyncthingClient(SyncthingFacade):
     self.restart()
 
     return True
+
+
+  def rename(self, source, target):
+    source_path = os.path.abspath(source)
+    config = self.get_config()
+
+    folders = config['folders']
+    found = False
+
+    for f in folders:
+      if source_path == os.path.abspath(f['path']):
+
+        path = source_path[:-len(source)]
+        f['path'] = os.path.join(path, target)
+
+        if not f['path'][len(f['path']) - 1] == '/':
+          f['path'] += '/'
+
+        self.adapter.update_config({
+          'device_id' : self.get_device_id(),
+          'api_key' : config['gui']['apiKey'],
+          'label' : self.global_name,
+          'local_path' : f['path'],
+          'remote_path': self.global_remote_folder
+        }) 
+
+        found = True
+        break
+
+    if not found:
+      raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(source))
+
+    os.rename(os.path.join(path, source), os.path.join(path, target))
+    # renames directories in client's local environment
+
+    # TODO: remote directory
+
+    # remote.set_config(r_config)
+    self.set_config(config)
+    # remote.restart()
+    self.restart()
+
+    return
 
   def test(self, arg): 
   

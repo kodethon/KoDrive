@@ -208,82 +208,6 @@ def retag(cur, new):
 
     return
 
-def rename(source, target):
-  home_dir = os.path.expanduser('~')
-  folder_path = os.path.join(home_dir, '.config/kdr')
-  found = False
-
-  with open(folder_path + "/config.json", "r+") as f:
-    data = json.load(f)
-    dirs = data['directories']
-
-    for i, val in enumerate(dirs):         # for each item in the list
-      if not found:                        # if found, terminate all for loops
-        for key, value in val.iteritems(): # for each dictionary in each item
-          try:
-            if value[key]['local_path'] == os.path.abspath(source): # if source found
-
-              path = value[key]['local_path']
-              path = path[:-len(source)]
-              value[key]['local_path'] = os.path.join(path, target)
-              # changes path to go to new directory
-
-              f.seek(0)
-              json.dump(data, f)
-              f.truncate()
-              # write to config.json from beginning, truncate if data is smaller than original json
-
-              os.rename(os.path.join(path, source), os.path.join(path, target))
-              # renames directories in local environment
-
-              found = True
-              break
-
-          except:
-            pass
-            
-      else:
-        break
-
-  if not found:
-    raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(source))
-
-  """
-    config.json modification above
-    config.xml modification below
-  """
-
-  if platform.system() == "Linux" or platform.system() == "Linux2":
-    xml_path = os.path.join(home_dir, '.config/syncthing/config.xml')
-    tree = ET.parse(xml_path)
-    # Linux
-
-  elif platform.system() == "Darwin":
-    xml_path = os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml')
-    tree = ET.parse(xml_path)
-    # MacOSX
-
-  # elif platform.system() == "Windows":
-    # TODO: Windows
-
-  try:
-    root = tree.getroot()
-    old_path = os.path.abspath(source)
-    new_path = os.path.join(path, target)
-
-    for child in root:
-      if child.attrib.get('path') == old_path + '/':
-        child.attrib['path'] = new_path + '/'
-        break
-
-    tree.write(xml_path)
-
-  except:
-    raise ValueError('fatal: %s not found' % xml_path)
-
-def move(source, target):
-  pass
-
 @main.command()
 @click.argument('source', nargs=1)
 @click.argument('target', nargs=1)
@@ -295,7 +219,7 @@ def mv(source, target):
     # if target is an existing directory or symbolic link then move()
 
   else:
-    rename(source, target)
+    cli_syncthing_adapter.rename(source, target)
 
   return
 

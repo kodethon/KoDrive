@@ -80,6 +80,15 @@ def unlink(path):
     return "%s is no longer being synchronized." % path
   except Exception as e:
     return e.message
+
+def rename(source, target):
+  handler = factory.get_handler()
+
+  # try:
+  return handler.rename(source, target)
+  # except Exception as e:
+    # return e.message
+
     
 def test(arg):
   handler = factory.get_handler()
