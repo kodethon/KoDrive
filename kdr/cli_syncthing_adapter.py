@@ -1,4 +1,6 @@
+import custom_errors
 import syncthing_factory as factory
+
 import json
 
 def start():
@@ -39,10 +41,11 @@ def stop():
 def link(key, name, path):
   handler = factory.get_handler()
 
-  if not handler.ping():
-    return 'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
-
   try:
+
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+
     name = handler.link(key, name, path)
     return "%s (%s) is now being synchronized." % (path, name)
   except Exception as e:
@@ -78,10 +81,10 @@ def refresh(**kwargs):
 def unlink(path):
   handler = factory.get_handler()
   
-  if not handler.ping():
-     return 'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
-
   try:
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+
     handler.unlink(path)
     return "%s is no longer being synchronized." % path
   except Exception as e:

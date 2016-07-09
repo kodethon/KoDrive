@@ -66,7 +66,11 @@ class PlatformBase():
       f.seek(0)
         
       if len(raw) > 0:
-        config = json.loads(raw)
+
+        try:
+            config = json.loads(raw)
+        except Exception as e:
+            raise IOError("Corrupted config.json file in %s" % folder_path)
 
         name = self.get_dir_id(object['local_path'])
         config['directories'][name] = metadata

@@ -388,6 +388,9 @@ class SyncthingClient(SyncthingFacade):
     r_api_key = dir_config['api_key']
     r_device_id = dir_config['device_id']
     host = self.devid_to_ip(r_device_id, False)
+
+    if not host:
+      raise custom_errors.FileNotInConfig(local_path)
     
     remote = SyncthingProxy(r_device_id, host, r_api_key)
     r_config = remote.get_config()
@@ -419,7 +422,6 @@ class SyncthingClient(SyncthingFacade):
     self.restart()
 
     return True
-
 
   def rename(self, source, target):
     source_path = os.path.abspath(source)
