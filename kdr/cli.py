@@ -60,24 +60,47 @@ def inspect(path):
 def ls(path):
   ''' List synchronized directories. '''
 
-  home_dir = os.path.expanduser('~')
-  folder_path = os.path.join(home_dir, '.config/kdr')
+  metadata = cli_syncthing_adapter.ls(path)
+  
+  headers = []
+  lengths = []
+  
+  # Preprocess
 
-  with open(folder_path + "/config.json") as f:
-    data = json.load(f)
-    # data is a dictionary containing a list of dictionaries
+  # Iterate through list
+  for i, record in enumerate(metadata):
+    lengths.append(0)
 
-  dirs = data['directories'] # type: list
+    # Iterate through dictionary
+    for header in record:
+      headers.append(header)
+      num_data = len(record[header])
 
-  click.echo("{:<50}".format('Directory Names:') + 'Paths:')
+      for data in record[header]:
+        cur = len(data)
+        prev = lengths[i] 
 
-  for key, value in dirs.iteritems(): # for each dictionary in each item
-    try:
-      click.echo("{:<50}".format(key) + value['local_path'])
-    except:
-      click.echo("{:<50}".format(key) + value[key]['local_path'])
+        lengths[i] = cur if cur > prev else prev
+  
+  # Process
+  body = str()
+  for i in range(0, num_data):
+    for n in range(0, len(metadata)):
+      value = metadata[n][headers[n]][i]
+      s = "{:<%i}" % (lengths[n] + 5)
+      body += s.format(value.strip())
 
-  return
+  heading = str()
+  # Iterate through list
+  for i, record in enumerate(metadata):
+    # Iterate through dictionary
+    for header in record:
+      s = "{:<%i}" % (lengths[i] + 5)
+      heading += s.format(header)
+  
+  # Postprocess
+  click.echo(heading)
+  click.echo(body)
 
 @main.command()
 @click.argument('key', nargs=1)
@@ -133,11 +156,17 @@ def unlink(**kwargs):
   click.echo("%s" % output)
 
 @main.command()
-@click.argument('cur', nargs=1)
-@click.argument('new', nargs=1)
-def tag(cur, new):
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+@click.argument('name', nargs=1)
+def tag(path, name):
   ''' Change tag associated with directory. '''
-  return
+
+  output = cli_syncthing_adapter.tag(path, name)
+  click.echo("%s" % output)
 
 @main.command()
 @click.argument('source', nargs=1)

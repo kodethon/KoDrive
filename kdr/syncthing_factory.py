@@ -68,7 +68,8 @@ class SyncthingFacade():
 	
   def start(self):    
     path = self.adapter.get_path()
-    return self.adapter.start(path);
+    self.adapter.start(path)
+    return self.ping();
 
   def shutdown(self):
     return self.sync.sys.set.shutdown()
@@ -78,25 +79,34 @@ class SyncthingFacade():
     # Run command
     try:
       t = type(self.sync.sys.ping()) 
-
-    except:
+    except Exception as e:
       return False
 
     return t == dict
 
 # UTILS
+  
+  def wait(self, callback=None, tick=10):
+    count = 0
+
+    while not self.ping() and count <= tick:
+      if callback:
+        callback()
+
+      time.sleep(1)
+      count += 1
 
   def encode_key(self):
-  	config = self.get_config()
-  	api_key = config['gui']['apiKey']
-  	devid = self.get_device_id()
-  	key = "%s@%s" % (devid, api_key)
+    config = self.get_config()
+    api_key = config['gui']['apiKey']
+    devid = self.get_device_id()
+    key = "%s@%s" % (devid, api_key)
 
-  	return base64.b64encode(key)
+    return base64.b64encode(key)
   	
   def decode_key(self, encoded_key):
-  	base64_key = "".join(encoded_key.split())
-  	return base64.b64.decode(base64_key)
+    base64_key = "".join(encoded_key.split())
+    return base64.b64.decode(base64_key)
 
   def devid_to_ip(self, devid, wait = True):
 
@@ -378,6 +388,9 @@ class SyncthingClient(SyncthingFacade):
     return socket.gethostname()
 
   def unlink(self, local_path):
+    '''
+      Stop synchroinzation of local_path
+    '''
 
     # Process remote
     dir_config = self.adapter.get_dir_config(local_path)
@@ -422,6 +435,49 @@ class SyncthingClient(SyncthingFacade):
     self.restart()
 
     return True
+
+  def tag(self, path, name):
+    '''
+      Change name associated with path
+    '''
+
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    config = self.get_config()
+    folder = self.find_folder({
+      'path' : path
+    }, config)
+
+    if not folder:
+      raise custom_errors.FileNotInConfig(path)
+
+    old_name = folder['label']
+    folder['label'] = name
+    
+    dir_config = self.adapter.get_dir_config(path)
+    dir_config['label'] = name
+    self.adapter.update_config(dir_config)
+
+    self.set_config(config)
+    self.restart
+
+    return old_name
+  
+  def ls(self, path):
+    config = self.adapter.get_config()
+    dirs = config['directories']
+    metadata = [
+      {'Tag' : [],},
+      {'Path' : []}
+    ]
+
+    # For each directory 
+    for key, value in dirs.iteritems(): 
+      metadata[0]['Tag'].append(value['label'])
+      metadata[1]['Path'].append(value['local_path'])
+
+    return metadata
 
   def rename(self, source, target):
     source_path = os.path.abspath(source)

@@ -3,41 +3,6 @@ import syncthing_factory as factory
 
 import json
 
-def start():
-
-  try:
-    handler = factory.get_handler()
-    alive = handler.ping()
-  except Exception as e:
-    alive = False
-  
-  if not alive:
-    success = handler.start()   
-
-    if not success:
-      return e if e else 'KodeDrive could not be started.'
-
-    else:
-      return 'KodeDrive has successfully started.'
-
-  else:
-    return 'KodeDrive has already been started.' 
-
-def stop():
-        
-  handler = factory.get_handler()
-
-  try:
-    alive = handler.ping()
-
-  except:
-    alive = False
-
-  if not alive:
-    return 'KodeDrive has already exited.'
-
-  return handler.shutdown()
-
 def link(key, name, path):
   handler = factory.get_handler()
 
@@ -66,7 +31,7 @@ def sys(**kwargs):
       success = handler.start()   
 
       if not success:
-        return e if e else 'KodeDrive could not be started.'
+        return 'KodeDrive could not be started.'
       else:
         return 'KodeDrive has successfully started.'
     else:
@@ -128,6 +93,24 @@ def unlink(path):
   except Exception as e:
     return e.message
 
+def tag(path, name):
+  handler = factory.get_handler()
+
+  try:
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+
+    prev_name = handler.tag(path, name)
+    
+    return "%s has been changed to %s" % (prev_name, name)
+  except Exception as e:
+    return e.message
+
+def ls(path): 
+  handler = factory.get_handler()
+
+  return handler.ls(path)
+
 def rename(source, target):
   handler = factory.get_handler()
 
@@ -136,3 +119,41 @@ def rename(source, target):
   # except Exception as e:
     # return e.message
 
+"""
+
+def start():
+
+  try:
+    handler = factory.get_handler()
+    alive = handler.ping()
+  except Exception as e:
+    alive = False
+  
+  if not alive:
+    success = handler.start()   
+
+    if not success:
+      return e if e else 'KodeDrive could not be started.'
+
+    else:
+      return 'KodeDrive has successfully started.'
+
+  else:
+    return 'KodeDrive has already been started.' 
+
+def stop():
+        
+  handler = factory.get_handler()
+
+  try:
+    alive = handler.ping()
+
+  except:
+    alive = False
+
+  if not alive:
+    return 'KodeDrive has already exited.'
+
+  return handler.shutdown()
+
+"""
