@@ -184,43 +184,40 @@ class SyncthingLinux64(PlatformBase):
 
 class SyncthingMac64(PlatformBase): 
     
-  binary = 'syncthing'
-  config = 'config.json'
-
+  @property
+  def config_path(self):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+    config_path = os.path.join(folder_path, self.config)
+    return config_path
+    
   def update_config(self, object):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
 
     self.update_platform_config(folder_path, object)
 
+  def get_config(self):
+    return self.get_platform_config(self.config_path)
+
   def get_dir_config(self, local_path):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
     config_path = os.path.join(folder_path, self.config) 
-
-    try:
-      with open(config_path, "r") as f:
-        raw = f.read()
-        config = json.loads(raw)
-        dir_id = self.get_dir_id(local_path)
-        
-        return config['directories'][dir_id]
-    except Exception as e:
-      return None
+    
+    return self.get_platform_dir_config(config_path, local_path)
 
   def get_gui_hook(self):
     home_dir = os.path.expanduser('~')
-    tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
-    api_key = tree.find('gui').find('apikey').text
-    address = tree.find('gui').find('address').text
-    port = address.split(':')[1]
+    config_path = os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml')
 
-    return Syncthing(api_key=api_key, port=int(port))
+    return self.get_platform_gui_hook(config_path)
 
   def get_device_id(self):
     home_dir = os.path.expanduser('~')
-    tree = ET.parse(os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml'))
-    return tree.find('device').items()[0][1]
+    config_path = os.path.join(home_dir, 'Library/Application Support/Syncthing/config.xml')
+
+    return self.get_platform_device_id(config_path)
 
   def get_path(self):
     dest = '/usr/local' # external applications folder
