@@ -24,15 +24,16 @@ setup(
             'kdr = kdr.cli:main',
         ],
     },
+    data_files=get_data_files(),
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        # 'Development Status :: 1 - Planning',
+        #'Development Status :: 1 - Planning',
         #'Development Status :: 2 - Pre-Alpha',
          'Development Status :: 3 - Alpha',
         #'Development Status :: 4 - Beta',
-        # 'Development Status :: 5 - Production/Stable',
-        # 'Development Status :: 6 - Mature',
-        # 'Development Status :: 7 - Inactive',
+        #'Development Status :: 5 - Production/Stable',
+        #'Development Status :: 6 - Mature',
+        #'Development Status :: 7 - Inactive',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
@@ -46,3 +47,18 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 )
+
+def get_data_files():
+    """ Return data_files in a platform dependent manner """
+
+    if sys.platform.startswith('linux'):
+        return [
+            ('/etc/init.d', ['install/linux/kdr'])
+        ]
+    elif os.name == 'nt':
+        data_files = []
+    else:
+        data_files = []
+
+    return data_files
+

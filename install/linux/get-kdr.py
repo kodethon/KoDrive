@@ -17,7 +17,8 @@ else:
     KDR = '/Scripts/kdr.exe'
 
 DEFAULT_KDR_HOME = os.path.expanduser('~/.local/venvs')
-DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
+#DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
+DEFAULT_KDR_BIN_DIR = '/usr/local/bin'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
@@ -46,14 +47,14 @@ def command_exists(cmd):
 
 
 def publish_script(venv, bin_dir):
+
+    echo('Installing kdr binary to ' + bin_dir)
     if IS_WIN:
         for name in os.listdir(venv + '/Scripts'):
             if 'kdr' in name.lower():
                 shutil.copy(venv + '/Scripts/' + name, bin_dir)
     else:
         os.symlink(venv + '/bin/kdr', bin_dir + '/kdr')
-    echo('Installed kdr binary in ' + bin_dir)
-
 
 def install_files(venv, bin_dir, install):
     try:
