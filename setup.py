@@ -2,6 +2,22 @@
 Synchronize remote files with local directory.
 """
 from setuptools import find_packages, setup
+import sys
+
+def get_data_files():
+    """ Return data_files in a platform dependent manner """
+
+    if sys.platform.startswith('linux'):
+        return [
+            ('/etc/init.d', ['static/linux/kdr'])
+        ]
+    elif os.name == 'nt':
+        data_files = []
+    else:
+        data_files = []
+
+    return data_files
+
 
 dependencies = ['click', 'requests']
 
@@ -48,17 +64,4 @@ setup(
     ]
 )
 
-def get_data_files():
-    """ Return data_files in a platform dependent manner """
-
-    if sys.platform.startswith('linux'):
-        return [
-            ('/etc/init.d', ['install/linux/kdr'])
-        ]
-    elif os.name == 'nt':
-        data_files = []
-    else:
-        data_files = []
-
-    return data_files
 

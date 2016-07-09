@@ -13,7 +13,7 @@ class DeviceNotFound(KodeDriveError):
   def __init__(self, hostname):
      
     super(KodeDriveError, self).__init__(
-        "%s could not finde %s." % (self.application, hostname)
+        "%s could not find %s." % (self.application, hostname)
     )
 
 class CannotConnect(KodeDriveError):

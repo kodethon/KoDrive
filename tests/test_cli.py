@@ -6,8 +6,11 @@ from kdr import cli
 def runner():
     return CliRunner()
 
-def test_tox(runner):
-    assert True
+def test_status(runner):
+    result = runner.invoke(cli.info, ['-s'])
+    print dir(cli)
+    print result.output
+    assert False
 
 '''
 def test_cli(runner):

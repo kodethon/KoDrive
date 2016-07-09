@@ -1,0 +1,17 @@
+#!/bin/sh
+
+#Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+		kdr start
+    ;;
+  stop)
+		kdr stop
+    ;;
+  *)
+    echo "Usage: /etc/init.d/kdr {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0

@@ -51,17 +51,55 @@ def link(key, name, path):
   except Exception as e:
     return e.message
 
-def info(**kwargs):
+def sys(**kwargs):
   handler = factory.get_handler()
 
-  if kwargs['status']:
-    info = 'Running' if handler.ping() else 'Exited'
+  if kwargs['start']:
 
-  elif kwargs['key']:
-    key = handler.encode_key()
-    info = handler.encode_key()
+    try:
+      handler = factory.get_handler()
+      alive = handler.ping()
+    except Exception as e:
+      alive = False
+    
+    if not alive:
+      success = handler.start()   
 
-  return info
+      if not success:
+        return e if e else 'KodeDrive could not be started.'
+      else:
+        return 'KodeDrive has successfully started.'
+    else:
+      return 'KodeDrive has already been started.' 
+  
+  if kwargs['check']:
+    return 'Running' if handler.ping() else 'Exited'
+
+  if kwargs['key']:
+    
+    try:
+
+      if not handler.ping():
+        raise custom_errors.CannotConnect()
+
+      key = handler.encode_key()
+      return handler.encode_key()
+    except Exception as e:
+      return e.message
+
+  if kwargs['test']:
+    return handler.test(kwargs['test'])
+
+  if kwargs['exit']:
+    try:
+      alive = handler.ping()
+    except:
+      alive = False
+
+    if not alive:
+      return 'KodeDrive has already exited.'
+
+    return handler.shutdown()
 
 def refresh(**kwargs):
   handler = factory.get_handler()
@@ -98,7 +136,3 @@ def rename(source, target):
   # except Exception as e:
     # return e.message
 
-    
-def test(arg):
-  handler = factory.get_handler()
-  return handler.test(arg)

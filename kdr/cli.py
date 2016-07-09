@@ -2,9 +2,10 @@ import click
 import cli_syncthing_adapter
 import os
 import json
-import platform
-import xml.etree.ElementTree as ET
-from time import sleep
+
+#import platform
+#import xml.etree.ElementTree as ET
+#from time import sleep
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -12,8 +13,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.group(
   epilog="Run 'kdr COMMAND --help' for more information on a command.", 
   context_settings=CONTEXT_SETTINGS
-  #add_help_option=False, 
-  #options_metavar="\b",
 )
 
 @click.pass_context
@@ -26,39 +25,20 @@ def main(ctx):
 #
 
 @main.command()
-def start():
-  ''' Start KodeDrive daemon. '''
-
-  output = cli_syncthing_adapter.start()
-  click.echo("%s" % output)
-
-@main.command()
-def stop():
-  ''' Stop KodeDrive daemon. '''
-
-  output = cli_syncthing_adapter.stop()
-  output = output.strip()
-  click.echo("%s" % output)
-
-@main.command()
-@click.option('-a', '--all', is_flag=True, help="Display all application information.")
-@click.option('-s', '--status', is_flag=True, help="Return daemon status.")
+@click.option('-c', '--check', is_flag=True, help="Check daemon status.")
 @click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
-def info(**kwargs):
-  ''' Display application information. '''
+@click.option('-s', '--start', is_flag=True, help="Start KodeDrive daemon.")
+@click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
+@click.option('-t', '--test', help="Test random functions :)")
+def sys(**kwargs):
+  ''' Manage application administration. '''
 
-  is_default = True
-  
-  for opt in kwargs:
-    if kwargs[opt]:
-      is_default = False
+  output = cli_syncthing_adapter.sys(**kwargs)
 
-  if is_default:
-    click.echo(click.get_current_context().get_help())
-
-  else:
-    output = cli_syncthing_adapter.info(**kwargs)
+  if output:
     click.echo("%s" % output)
+  else:
+    click.echo(click.get_current_context().get_help())
 
 @main.command()
 @click.argument(
@@ -77,7 +57,6 @@ def inspect(path):
   default=".", nargs=1, metavar="<PATH>",
   help="Specify a folder."
 )
-
 def ls(path):
   ''' List synchronized directories. '''
 
@@ -90,14 +69,13 @@ def ls(path):
 
   dirs = data['directories'] # type: list
 
-  click.echo("{:<50}".format('Directory names:') + 'Paths:')
+  click.echo("{:<50}".format('Directory Names:') + 'Paths:')
 
-  for i, val in enumerate(dirs): # for each item in the list
-    for key, value in val.iteritems(): # for each dictionary in each item
-      try:
-        click.echo("{:<50}".format(key) + value['local_path'])
-      except:
-        click.echo("{:<50}".format(key) + value[key]['local_path'])
+  for key, value in dirs.iteritems(): # for each dictionary in each item
+    try:
+      click.echo("{:<50}".format(key) + value['local_path'])
+    except:
+      click.echo("{:<50}".format(key) + value[key]['local_path'])
 
   return
 
@@ -154,13 +132,28 @@ def unlink(**kwargs):
   output = cli_syncthing_adapter.unlink(kwargs['path'])
   click.echo("%s" % output)
 
-
 @main.command()
 @click.argument('cur', nargs=1)
 @click.argument('new', nargs=1)
-def retag(cur, new):
+def tag(cur, new):
   ''' Change tag associated with directory. '''
   return
+
+@main.command()
+@click.argument('source', nargs=1)
+@click.argument('target', nargs=1)
+def mv(source, target):
+  ''' Move synchronized directory. '''
+
+  if os.path.isdir(target) or os.path.islink(target):
+    move(source, target)
+    # if target is an existing directory or symbolic link then move()
+
+  else:
+    cli_syncthing_adapter.rename(source, target)
+
+"""
+REFERENCE
 
 @main.command()
 @click.argument('arg', nargs=1)
@@ -169,7 +162,42 @@ def test(arg):
 
   cli_syncthing_adapter.test(arg)
 
-"""
+@cli.command()
+@click.argument('src', type=click.Path(exists=True), nargs=1)
+@click.argument('dest', nargs=1)
+def connect(src, dest):
+  ''' Connect to remote server. '''
+    
+  output = cli_syncthing_adapter.connect()
+  click.echo("%s" % output)
+
+@click.group(invoke_without_command=True)
+@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
+click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
+click.echo("See 'kodedrive --help'.")
+
+@main.command()
+def start():
+  ''' Start KodeDrive daemon. '''
+
+  output = cli_syncthing_adapter.start()
+  click.echo("%s" % output)
+
+@main.command()
+def stop():
+  ''' Stop KodeDrive daemon. '''
+
+  output = cli_syncthing_adapter.stop()
+  output = output.strip()
+  click.echo("%s" % output)
+
+@main.command()
+@click.argument('arg', nargs=1)
+def test(arg):
+  ''' Test random functions :) '''
+
+  cli_syncthing_adapter.test(arg)
+
 Syncthing's scan currently seems buggy
 
 @main.command()
@@ -198,54 +226,5 @@ def refresh(**kwargs):
 
       while not progress == 100:
         progress = cli_syncthing_adapter.refresh(progress=True)
-"""
-
-@main.command()
-@click.argument('cur', nargs=1)
-@click.argument('new', nargs=1)
-def retag(cur, new):
-    ''' Change tag associated with directory. '''
-
-    return
-
-@main.command()
-@click.argument('source', nargs=1)
-@click.argument('target', nargs=1)
-def mv(source, target):
-  ''' Rename directory. '''
-
-  if os.path.isdir(target) or os.path.islink(target):
-    move(source, target)
-    # if target is an existing directory or symbolic link then move()
-
-  else:
-    cli_syncthing_adapter.rename(source, target)
-
-  return
-
-@main.command()
-@click.argument('arg', nargs=1)
-def test(arg):
-  ''' Test random functions :) '''
-
-  cli_syncthing_adapter.test(arg)
-
-"""
-
-REFERENCE
-
-@cli.command()
-@click.argument('src', type=click.Path(exists=True), nargs=1)
-@click.argument('dest', nargs=1)
-def connect(src, dest):
-  ''' Connect to remote server. '''
-    
-  output = cli_syncthing_adapter.connect()
-  click.echo("%s" % output)
-
-@click.group(invoke_without_command=True)
-@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
-click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
-click.echo("See 'kodedrive --help'.")
 
 """
