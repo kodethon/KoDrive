@@ -161,19 +161,20 @@ class SyncthingMac64(PlatformBase):
 
     self.update_platform_config(folder_path, object)
 
-  def create_config(self, folder, record):
-    config_path = os.path.join(folder, self.config) 
-    config = {
-      'directories' : record
-    }
+  def get_dir_config(self, local_path):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+    config_path = os.path.join(folder_path, self.config) 
+    
+    try:
+      with open(config_path, "r") as f:
+        raw = f.read()
+        config = json.loads(raw)
+        dir_id = self.get_dir_id(local_path)
 
-    fp = open(config_path, 'w')
-    fp.write(json.dumps(config))
-    fp.close
-
-    # What happens if write fails?
-
-    return config
+        return config['directories'][dir_id]
+    except Exception as e:
+      return None
 
   def get_gui_hook(self):
     home_dir = os.path.expanduser('~')
