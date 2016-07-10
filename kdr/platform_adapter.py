@@ -14,6 +14,7 @@ class PlatformBase():
 
     # If config file does not exist, create it
     # And then add the new directory data into it
+
     if not os.path.exists(folder_path):
       os.makedirs(folder_path)
 
@@ -114,6 +115,37 @@ class PlatformBase():
 
   def get_dir_id(self, local_path):
   	return hashlib.sha1(local_path).hexdigest()
+
+  def rename_dir(self, object, source_path, target_path):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, '.config/kdr')
+    metadata = self.create_dir_metadata(object)
+    record = self.create_dir_record(object, metadata)
+    config_path = os.path.join(folder_path, self.config)
+
+    with open(config_path, "r+") as f:
+      raw = f.read()
+      f.seek(0)
+        
+      if len(raw) > 0:
+
+        try:
+            config = json.loads(raw)
+        except Exception as e:
+            raise IOError("Corrupted config.json file in %s" % folder_path)
+
+        del config['directories'][self.get_dir_id(source_path)]
+        name = self.get_dir_id(target_path)
+        config['directories'][name] = metadata
+        # deletes old element, adds new element with different name and path
+
+        f.write(json.dumps(config))
+        f.truncate()
+        
+        # TODO: Should handle corrupt config files later
+
+      else:
+        config = self.create_config(folder_path, record)
 
 class SyncthingLinux64(PlatformBase): 
   

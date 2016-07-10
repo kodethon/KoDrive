@@ -267,9 +267,6 @@ class SyncthingFacade():
 
 class SyncthingClient(SyncthingFacade):
    
-  global_name = None
-  global_remote_folder = None  
-
   def __init__(self, adapter):
     SyncthingFacade.__init__(self)
 
@@ -489,10 +486,29 @@ class SyncthingClient(SyncthingFacade):
 
   def rename(self, source, target):
     source_path = os.path.abspath(source)
+    target_path = os.path.abspath(target)
     config = self.get_config()
 
     folders = config['folders']
     found = False
+
+
+    # Get remote config.json
+    dir_config = self.adapter.get_dir_config(source_path)
+    
+    if not dir_config:
+      raise custom_errors.FileNotInConfig(source_path)
+    
+    r_api_key = dir_config['api_key']
+    r_device_id = dir_config['device_id']
+    host = self.devid_to_ip(r_device_id, False)
+
+    if not host:
+      raise custom_errors.FileNotInConfig(source_path)
+    
+    remote = SyncthingProxy(r_device_id, host, r_api_key)
+    r_config = remote.get_config()
+
 
     for f in folders:
       if source_path == os.path.abspath(f['path']):
@@ -503,13 +519,13 @@ class SyncthingClient(SyncthingFacade):
         if not f['path'][len(f['path']) - 1] == '/':
           f['path'] += '/'
 
-        self.adapter.update_config({
-          'device_id' : self.get_device_id(),
-          'api_key' : config['gui']['apiKey'],
-          'label' : self.global_name,
+        self.adapter.rename_dir({
+          'device_id' : r_device_id,
+          'api_key' : r_api_key,
+          'label' : r_config['folders'][0]['label'],
           'local_path' : f['path'],
-          'remote_path': self.global_remote_folder
-        }) 
+          'remote_path': r_config['folders'][0]['path']
+        }, source_path, target_path) 
 
         found = True
         break
@@ -520,11 +536,7 @@ class SyncthingClient(SyncthingFacade):
     os.rename(os.path.join(path, source), os.path.join(path, target))
     # renames directories in client's local environment
 
-    # TODO: remote directory
-
-    # remote.set_config(r_config)
     self.set_config(config)
-    # remote.restart()
     self.restart()
 
     return
