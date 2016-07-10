@@ -40,16 +40,7 @@ def sys(**kwargs):
   else:
     click.echo(click.get_current_context().get_help())
 
-@main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
-)
-def inspect(path):
-  ''' Return information regarding directory. '''
 
-  return
 
 @main.command()
 @click.option(
@@ -149,7 +140,7 @@ def link(key, tag, path):
   type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
-def unlink(**kwargs):
+def free(**kwargs):
   ''' Stop synchronization of directory. '''
 
   output = cli_syncthing_adapter.unlink(kwargs['path'])
@@ -169,6 +160,18 @@ def tag(path, name):
   click.echo("%s" % output)
 
 @main.command()
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def key(path):
+  ''' Displays synchronization key for directories. '''
+
+  output = cli_syncthing_adapter.key(path)
+  click.echo("%s" % output)
+
+@main.command()
 @click.argument('source', nargs=1)
 @click.argument('target', nargs=1)
 def mv(source, target):
@@ -183,6 +186,17 @@ def mv(source, target):
 
 """
 REFERENCE
+
+@main.command()
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def inspect(path):
+  ''' Return information regarding directory. '''
+
+  return
 
 @main.command()
 @click.argument('arg', nargs=1)

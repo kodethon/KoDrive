@@ -111,6 +111,17 @@ def ls(path):
 
   return handler.ls(path)
 
+def key(path):
+  handler = factory.get_handler()
+  if not path[len(path) - 1] == '/':
+    path += '/'
+
+  if not handler.folder_exists({
+    'path': path
+  }):
+    
+  return handler.encode_key(path)
+
 def rename(source, target):
   handler = factory.get_handler()
 

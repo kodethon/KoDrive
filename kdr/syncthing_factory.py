@@ -96,17 +96,25 @@ class SyncthingFacade():
       time.sleep(1)
       count += 1
 
-  def encode_key(self):
+  def encode_key(self, path):
     config = self.get_config()
     api_key = config['gui']['apiKey']
     devid = self.get_device_id()
-    key = "%s@%s" % (devid, api_key)
+    key = "%s@%s@%s" % (devid, path, api_key)
+    encoded_key = key.encode('base64')
 
-    return base64.b64encode(key)
+    return "".join(encoded_key.split())
+    #return base64.b64encode(key)
   	
   def decode_key(self, encoded_key):
     base64_key = "".join(encoded_key.split())
-    return base64.b64.decode(base64_key)
+    s = base64.b64.decode(base64_key)
+    toks = s.split('@')
+    return {
+      'devid' : toks[0],
+      'path' : toks[1],
+      'api_key' : toks[2]
+    }
 
   def devid_to_ip(self, devid, wait = True):
 
