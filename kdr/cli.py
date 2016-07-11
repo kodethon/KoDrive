@@ -26,7 +26,6 @@ def main(ctx):
 
 @main.command()
 @click.option('-c', '--check', is_flag=True, help="Check daemon status.")
-@click.option('-k', '--key', is_flag=True, help="Display KodeDrive key.")
 @click.option('-s', '--start', is_flag=True, help="Start KodeDrive daemon.")
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
 @click.option('-t', '--test', help="Test random functions :)")
@@ -166,7 +165,7 @@ def tag(path, name):
   nargs=1, metavar="PATH",
 )
 def key(path):
-  ''' Displays synchronization key for directories. '''
+  ''' Display synchronization key for directories. '''
 
   output = cli_syncthing_adapter.key(path)
   click.echo("%s" % output)

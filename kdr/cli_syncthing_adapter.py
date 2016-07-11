@@ -40,18 +40,6 @@ def sys(**kwargs):
   if kwargs['check']:
     return 'Running' if handler.ping() else 'Exited'
 
-  if kwargs['key']:
-    
-    try:
-
-      if not handler.ping():
-        raise custom_errors.CannotConnect()
-
-      key = handler.encode_key()
-      return handler.encode_key()
-    except Exception as e:
-      return e.message
-
   if kwargs['test']:
     return handler.test(kwargs['test'])
 
@@ -112,15 +100,21 @@ def ls(path):
   return handler.ls(path)
 
 def key(path):
-  handler = factory.get_handler()
+
   if not path[len(path) - 1] == '/':
     path += '/'
 
-  if not handler.folder_exists({
-    'path': path
-  }):
+  handler = factory.get_handler()
     
-  return handler.encode_key(path)
+  try:
+    if not handler.folder_exists({
+      'path': path
+    }):
+      raise custom_errors.FileNotInConfig(path)
+      
+    return handler.encode_key(path)
+  except Exception as e:
+    return e.message
 
 def rename(source, target):
   handler = factory.get_handler()
