@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import os, subprocess
 import json, hashlib
 import urllib
+import custom_errors
 
 class PlatformBase():
 
@@ -39,9 +40,14 @@ class PlatformBase():
 
     if not config:
       return None
+      
     else:
       dir_id = self.get_dir_id(local_path.rstrip('/'))
-      return config['directories'][dir_id]
+
+      try:
+        return config['directories'][dir_id]
+      except:
+        custom_errors.FileNotInConfig(local_path)
 
   def get_platform_gui_hook(self, config_path):
     tree = ET.parse(config_path)

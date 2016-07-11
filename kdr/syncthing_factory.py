@@ -531,12 +531,19 @@ class SyncthingClient(SyncthingFacade):
         break
 
     if not found:
-      raise ValueError('fatal: renaming %s failed: No such directory' % os.path.abspath(source))
+      if os.path.exists(source_path):
+        custom_errors.FileNotInConfig(source_path)
+        # if not found in config.json, but exists
 
-    os.rename(os.path.join(path, source), os.path.join(path, target))
-    # renames directories in client's local environment
+      else:
+        raise ValueError('fatal: renaming %s failed: No such directory' % source_path)
 
-    self.set_config(config)
+    else:
+      os.rename(os.path.join(path, source), os.path.join(path, target))
+      # renames directories in client's local environment
+
+      self.set_config(config)
+    
     self.restart()
 
     return
