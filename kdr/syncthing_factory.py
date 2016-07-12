@@ -5,8 +5,9 @@ import platform_adapter
 import custom_errors
 
 # Standard library
-import os, sys, platform, time
-import socket, json, base64, hashlib
+import os, sys, platform
+import time, socket, json
+import base64, hashlib, shutil
 
 class SyncthingFacade():
     
@@ -530,6 +531,7 @@ class SyncthingClient(SyncthingFacade):
     return metadata
 
   def rename(self, source, target):
+    source = ''.join(source)
     source_path = os.path.abspath(source)
     target_path = os.path.abspath(target)
     config = self.get_config()
@@ -591,6 +593,59 @@ class SyncthingClient(SyncthingFacade):
     
     self.restart()
 
+    return
+
+  def move(self, source, target):
+    target_path = os.path.abspath(target)
+    config = self.get_config()
+    folders = config['folders']
+
+    for item in source:
+      item_path = os.path.abspath(item)
+
+      for f in folders:
+        if f['path'] == item_path + '/':
+
+          # Get remote config.json
+          source_path = item_path
+          dir_config = self.adapter.get_dir_config(source_path)
+
+          if not dir_config:
+            raise custom_errors.FileNotInConfig(source_path)
+
+          r_api_key = dir_config['api_key']
+          r_device_id = dir_config['device_id']
+          host = self.devid_to_ip(r_device_id, False)
+
+          if not host:
+            raise custom_errors.FileNotInConfig(source_path)
+
+          remote = SyncthingProxy(r_device_id, host, r_api_key)
+          r_config = remote.get_config()
+
+          final_path = os.path.join(target_path, item)
+          f['path'] = final_path
+
+          if not f['path'][len(f['path']) - 1] == '/':
+            f['path'] += '/'
+            # set config.xml
+
+          self.adapter.rename_dir ({
+            'device_id' : r_device_id,
+            'api_key' : r_api_key,
+            'label' : r_config['folders'][0]['label'],
+            'local_path' : final_path,
+            'remote_path': r_config['folders'][0]['path']
+          }, source_path, final_path) 
+          # set config.json
+
+          break
+
+      shutil.move(os.path.abspath(item), target_path)
+      # move into target
+
+    self.set_config(config)
+    self.restart()
     return
 
   def test(self, arg): 

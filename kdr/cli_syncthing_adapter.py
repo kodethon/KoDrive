@@ -1,7 +1,7 @@
 import custom_errors
 import syncthing_factory as factory
 
-import json
+import json, os
 
 def link(key, name, path):
   handler = factory.get_handler()
@@ -126,13 +126,19 @@ def add(**kwargs):
   except Exception as e:
     return e.message
 
-def rename(source, target):
+def mv(source, target):
   handler = factory.get_handler()
 
-  # try:
-  return handler.rename(source, target)
-  # except Exception as e:
-    # return e.message
+  try:
+    if os.path.isdir(target) or os.path.islink(target):
+      return handler.move(source, target)
+      # if target is an existing directory or symbolic link then move()
+
+    else:
+      return handler.rename(source, target)
+
+  except Exception as e:
+    return e.message
 
 """
 
