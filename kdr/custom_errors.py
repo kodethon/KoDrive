@@ -34,3 +34,10 @@ class FileExists(KodeDriveError):
     super(KodeDriveError, self).__init__(
 			"%s already exists." % f_path
     )
+
+class InvalidKey(KodeDriveError):
+
+  def __init__(self, key):
+    super(KodeDriveError, self).__init__(
+      "%s is not a valid key." % key 
+    )
