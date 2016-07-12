@@ -94,10 +94,10 @@ def tag(path, name):
   except Exception as e:
     return e.message
 
-def ls(path): 
+def ls(): 
   handler = factory.get_handler()
 
-  return handler.ls(path)
+  return handler.ls()
 
 def key(path):
 
@@ -113,6 +113,16 @@ def key(path):
       raise custom_errors.FileNotInConfig(path)
       
     return handler.encode_key(path)
+  except Exception as e:
+    return e.message
+
+def add(**kwargs):
+  
+  handler = factory.get_handler()
+
+  try:
+    handler.add(**kwargs)
+    return "You can now share %s" % kwargs['path']
   except Exception as e:
     return e.message
 

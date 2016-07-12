@@ -5,9 +5,8 @@ import platform_adapter
 import custom_errors
 
 # Standard library
-import sys, platform, time
-import socket, json, base64
-import os
+import os, sys, platform, time
+import socket, json, base64, hashlib
 
 class SyncthingFacade():
     
@@ -84,6 +83,24 @@ class SyncthingFacade():
 
     return t == dict
 
+  def encode_key(self, path):
+    kdr_config = self.adapter.get_config()
+    directories = kdr_config['directories']
+
+    for key in directories:
+      f = directories[key]
+      
+      if f['local_path']  == path.rstrip('/'):
+        raise custom_errors.PermissionDenied()
+
+    config = self.get_config()
+    api_key = config['gui']['apiKey']
+    devid = self.get_device_id()
+    key = "%s@%s@%s" % (devid, path, api_key)
+    encoded_key = key.encode('base64')
+
+    return "".join(encoded_key.split())
+  
 # UTILS
   
   def wait(self, callback=None, tick=10):
@@ -96,16 +113,6 @@ class SyncthingFacade():
       time.sleep(1)
       count += 1
 
-  def encode_key(self, path):
-    config = self.get_config()
-    api_key = config['gui']['apiKey']
-    devid = self.get_device_id()
-    key = "%s@%s@%s" % (devid, path, api_key)
-    encoded_key = key.encode('base64')
-
-    return "".join(encoded_key.split())
-    #return base64.b64encode(key)
-  	
   def decode_key(self, encoded_key):
     base64_key = "".join(encoded_key.split())
     s = base64.b64.decode(base64_key)
@@ -276,6 +283,44 @@ class SyncthingClient(SyncthingFacade):
       self.sync = self.adapter.get_gui_hook()
     except Exception:
       pass
+  
+  def add(self, **kwargs):
+    
+    config = self.get_config()
+    folders = config['folders']
+    print len(folders)
+    for f in folders:
+      if f['path'].rstrip('/') == kwargs['path'].rstrip('/'):
+        raise custom_errors.FileExists(kwargs['path'])
+
+    folders.append({
+      'rescanIntervalS' : 60,
+      'copiers' : 0,
+      'pullerPauseS' : 0,
+      'autoNormalize' : True,
+      'id' : hashlib.sha1(kwargs['path']).hexdigest(),
+      'scanProgressIntervalS' : 0,
+      'hashers' : 0,
+      'pullers' : 0,
+      'invalid' : '',
+      'label' : kwargs['tag'],
+      'minDiskFreePct' : 1,
+      'pullerSleepS' : 0,
+      'type' : 'readwrite',
+      'disableSparseFiles' : False,
+      'path' : kwargs['path'],
+      'ignoreDelete' : False,
+      'ignorePerms' : False,
+      'devices' : [{'deviceID' : self.get_device_id()}],
+      'disableTempIndexes' : False,
+      'maxConflicts' : 10,
+      'order' : 'random',
+      'versioning' : {'type': '', 'params': {}}
+    })
+    self.set_config(config)
+    self.restart()
+
+    return True
 
   def link(self, key, name, local_path):
 
@@ -469,7 +514,7 @@ class SyncthingClient(SyncthingFacade):
 
     return old_name
   
-  def ls(self, path):
+  def ls(self):
     config = self.adapter.get_config()
     dirs = config['directories']
     metadata = [
@@ -554,7 +599,9 @@ class SyncthingClient(SyncthingFacade):
     device_id = toks[0]
     api_key = toks[1]
     host = self.devid_to_ip(device_id)
-
+    
+    print self.get_config()
+    return
     print self.get_device_id()
     remote = SyncthingProxy(device_id, host, api_key)
     #print self.sync._interface.options

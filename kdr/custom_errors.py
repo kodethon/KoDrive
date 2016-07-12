@@ -23,4 +23,14 @@ class CannotConnect(KodeDriveError):
     	'Cannot connect to KodeDrive. Is KodeDrive running on this host?'
     )
 
+class PermissionDenied(KodeDriveError):
+  def __init__(self):
+    super(KodeDriveError, self).__init__(
+    	'This folder does not belong to you. Did you add this folder?'
+    )
 
+class FileExists(KodeDriveError):
+  def __init__(self, f_path):
+    super(KodeDriveError, self).__init__(
+			"%s already exists." % f_path
+    )

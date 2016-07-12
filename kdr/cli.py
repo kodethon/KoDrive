@@ -1,12 +1,6 @@
 import click
 import cli_syncthing_adapter
 import os
-import json
-
-#import platform
-#import xml.etree.ElementTree as ET
-#from time import sleep
-
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
@@ -39,22 +33,15 @@ def sys(**kwargs):
   else:
     click.echo(click.get_current_context().get_help())
 
-
-
 @main.command()
-@click.option(
-  '--path', type=click.Path(exists=True), 
-  default=".", nargs=1, metavar="<PATH>",
-  help="Specify a folder."
-)
-def ls(path):
+def ls():
   ''' List synchronized directories. '''
 
-  metadata = cli_syncthing_adapter.ls(path)
+  metadata = cli_syncthing_adapter.ls()
   
   headers = []
   lengths = []
-  
+
   # Preprocess
 
   # Iterate through list
@@ -80,6 +67,8 @@ def ls(path):
       s = "{:<%i}" % (lengths[n] + 5)
       body += s.format(value.strip())
 
+    body += "\n"
+
   heading = str()
   # Iterate through list
   for i, record in enumerate(metadata):
@@ -90,7 +79,7 @@ def ls(path):
   
   # Postprocess
   click.echo(heading)
-  click.echo(body)
+  click.echo(body.strip())
 
 @main.command()
 @click.argument('key', nargs=1)
@@ -132,6 +121,23 @@ def link(key, tag, path):
       if output:
         click.echo("%s" % output)
 '''
+
+@main.command()
+@click.option(
+  '-t', '--tag', nargs=1, metavar="<TEXT>", 
+  default="my-sync",
+  help="Associate this folder with a tag."
+)
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def add(**kwargs):
+  ''' Make a folder shareable. '''
+
+  output = cli_syncthing_adapter.add(**kwargs)
+  click.echo("%s" % output)
 
 @main.command()
 @click.argument(
