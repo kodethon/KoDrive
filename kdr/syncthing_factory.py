@@ -648,6 +648,11 @@ class SyncthingClient(SyncthingFacade):
     self.restart()
     return
 
+  def mv_edge_case(self, source, target):
+    os.remove(target)
+    os.rename(''.join(source), target)
+    return
+
   def test(self, arg): 
   
     toks = arg.split('@')

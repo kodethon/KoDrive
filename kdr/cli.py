@@ -182,12 +182,21 @@ def key(path):
 def mv(source, target):
   ''' Move synchronized directory. '''
 
+  if os.path.isfile(target) and len(source) == 1:
+    if click.confirm("Are you sure you want to overwrite %s?" % target):
+
+      cli_syncthing_adapter.mv_edge_case(source, target)
+      # Edge case: to match Bash 'mv' behavior and overwrite file
+
+      return
+
   if len(source) > 1 and not os.path.isdir(target):
     click.echo(click.get_current_context().get_help())
     return
 
   else:
     cli_syncthing_adapter.mv(source, target)
+
 
 """
 REFERENCE

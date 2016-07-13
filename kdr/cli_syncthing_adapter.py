@@ -140,6 +140,11 @@ def mv(source, target):
   except Exception as e:
     return e.message
 
+def mv_edge_case(source, target):
+  handler = factory.get_handler()
+
+  return handler.mv_edge_case(source, target)
+
 """
 
 def start():
