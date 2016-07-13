@@ -41,3 +41,10 @@ class InvalidKey(KodeDriveError):
     super(KodeDriveError, self).__init__(
       "%s is not a valid key." % key 
     )
+
+class NoFileOrDirectory(KodeDriveError):
+
+  def __init__(self, source, target):
+    super(KodeDriveError, self).__init__(
+      "mv: rename %s to %s: No such file or directory" % (source, target)
+    )
