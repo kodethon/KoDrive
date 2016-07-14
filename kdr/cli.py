@@ -177,17 +177,26 @@ def key(path):
   click.echo("%s" % output)
 
 @main.command()
-@click.argument('source', nargs=1)
+@click.argument('source', nargs=-1, required=True)
 @click.argument('target', nargs=1)
 def mv(source, target):
   ''' Move synchronized directory. '''
 
-  if os.path.isdir(target) or os.path.islink(target):
-    move(source, target)
-    # if target is an existing directory or symbolic link then move()
+  if os.path.isfile(target) and len(source) == 1:
+    if click.confirm("Are you sure you want to overwrite %s?" % target):
+
+      cli_syncthing_adapter.mv_edge_case(source, target)
+      # Edge case: to match Bash 'mv' behavior and overwrite file
+
+      return
+
+  if len(source) > 1 and not os.path.isdir(target):
+    click.echo(click.get_current_context().get_help())
+    return
 
   else:
-    cli_syncthing_adapter.rename(source, target)
+    cli_syncthing_adapter.mv(source, target)
+
 
 """
 REFERENCE

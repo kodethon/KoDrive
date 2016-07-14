@@ -5,8 +5,9 @@ import platform_adapter
 import custom_errors
 
 # Standard library
-import os, sys, platform, time
-import socket, json, base64, hashlib
+import os, sys, platform
+import time, socket, json
+import base64, hashlib, shutil
 
 class SyncthingFacade():
     
@@ -532,7 +533,7 @@ class SyncthingClient(SyncthingFacade):
 
     return old_name
   
-  def ls(self):
+  def ls(self): 
     config = self.adapter.get_config()
     dirs = config['directories']
     metadata = [
@@ -548,13 +549,17 @@ class SyncthingClient(SyncthingFacade):
     return metadata
 
   def rename(self, source, target):
+    source = ''.join(source)
+
+    if not os.path.exists(source):
+      raise custom_errors.NoFileOrDirectory(source, target)
+
     source_path = os.path.abspath(source)
     target_path = os.path.abspath(target)
     config = self.get_config()
 
     folders = config['folders']
     found = False
-
 
     # Get remote config.json
     dir_config = self.adapter.get_dir_config(source_path)
@@ -572,7 +577,6 @@ class SyncthingClient(SyncthingFacade):
     remote = SyncthingProxy(r_device_id, host, r_api_key)
     r_config = remote.get_config()
 
-
     for f in folders:
       if source_path == os.path.abspath(f['path']):
 
@@ -586,20 +590,16 @@ class SyncthingClient(SyncthingFacade):
           'device_id' : r_device_id,
           'api_key' : r_api_key,
           'label' : r_config['folders'][0]['label'],
-          'local_path' : f['path'],
+          'local_path' : f['path'].rstrip('/'),
           'remote_path': r_config['folders'][0]['path']
         }, source_path, target_path) 
 
         found = True
         break
 
-    if not found:
-      if os.path.exists(source_path):
-        custom_errors.FileNotInConfig(source_path)
-        # if not found in config.json, but exists
-
-      else:
-        raise ValueError('fatal: renaming %s failed: No such directory' % source_path)
+    if not found and os.path.exists(source_path):
+      custom_errors.FileNotInConfig(source_path)
+      # if not found in config.json, but exists
 
     else:
       os.rename(os.path.join(path, source), os.path.join(path, target))
@@ -608,7 +608,68 @@ class SyncthingClient(SyncthingFacade):
       self.set_config(config)
     
     self.restart()
+    return
 
+  def move(self, source, target):
+    target_path = os.path.abspath(target)
+    config = self.get_config()
+    folders = config['folders']
+
+    for item in source:
+      item_path = os.path.abspath(item)
+      item_path.rstrip('/')
+
+      for f in folders:
+        if f['path'] == item_path + '/':
+
+          # Get remote config.json
+          source_path = item_path
+          dir_config = self.adapter.get_dir_config(source_path)
+
+          if not dir_config:
+            raise custom_errors.FileNotInConfig(source_path)
+
+          r_api_key = dir_config['api_key']
+          r_device_id = dir_config['device_id']
+          host = self.devid_to_ip(r_device_id, False)
+
+          if not host:
+            raise custom_errors.FileNotInConfig(source_path)
+
+          remote = SyncthingProxy(r_device_id, host, r_api_key)
+          r_config = remote.get_config()
+
+          reduced_item = item.rstrip('/')
+          reduced_item = os.path.basename(reduced_item)
+
+          final_path = os.path.join(target_path, reduced_item)
+          f['path'] = final_path
+
+          if not f['path'][len(f['path']) - 1] == '/':
+            f['path'] += '/'
+            # set config.xml
+
+          self.adapter.rename_dir ({
+            'device_id' : r_device_id,
+            'api_key' : r_api_key,
+            'label' : r_config['folders'][0]['label'],
+            'local_path' : final_path.rstrip('/'),
+            'remote_path': r_config['folders'][0]['path']
+          }, source_path, final_path) 
+          # set config.json
+
+          break
+
+      shutil.move(os.path.abspath(item), target_path)
+      # move into target
+
+    self.set_config(config)
+    self.restart()
+    return
+
+  def mv_edge_case(self, source, target):
+    os.remove(target)
+    os.rename(''.join(source), target)
     return
 
   def test(self, arg): 

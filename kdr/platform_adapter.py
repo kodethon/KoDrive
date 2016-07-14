@@ -12,7 +12,6 @@ class PlatformBase():
   config = 'config.json'
 
   def update_platform_config(self, folder_path, object):
-
     # If config file does not exist, create it
     # And then add the new directory data into it
 
@@ -124,6 +123,8 @@ class PlatformBase():
   	return hashlib.sha1(local_path).hexdigest()
 
   def rename_dir(self, object, source_path, target_path):
+    source_path = source_path.rstrip('/')
+    target_path = target_path.rstrip('/')
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, '.config/kdr')
     metadata = self.create_dir_metadata(object)
@@ -137,18 +138,22 @@ class PlatformBase():
       if len(raw) > 0:
 
         try:
-            config = json.loads(raw)
+          config = json.loads(raw)
         except Exception as e:
-            raise IOError("Corrupted config.json file in %s" % folder_path)
+          raise IOError("Corrupted config.json file in %s" % folder_path)
 
-        del config['directories'][self.get_dir_id(source_path)]
+        try:
+          del config['directories'][self.get_dir_id(source_path)]
+        except:
+          custom_errors.InvalidKey(self.get_dir_id(source_path))
+
         name = self.get_dir_id(target_path)
         config['directories'][name] = metadata
         # deletes old element, adds new element with different name and path
 
         f.write(json.dumps(config))
         f.truncate()
-        
+
         # TODO: Should handle corrupt config files later
 
       else:
