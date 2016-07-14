@@ -68,7 +68,12 @@ class SyncthingFacade():
   def start(self):    
     path = self.adapter.get_path()
     self.adapter.start(path)
-    return self.ping();
+    
+    for i in range(0, 5):
+      if(self.ping()):
+        return True
+
+    return False
 
   def shutdown(self):
     return self.sync.sys.set.shutdown()
@@ -91,7 +96,8 @@ class SyncthingFacade():
       f = directories[key]
       
       if f['local_path']  == path.rstrip('/'):
-        raise custom_errors.PermissionDenied()
+        if f['is_shared']:
+          raise custom_errors.PermissionDenied()
 
     config = self.get_config()
     api_key = config['gui']['apiKey']
@@ -266,10 +272,10 @@ class SyncthingFacade():
         return f 
 
   def folder_exists(self, object, config = None):
-
+    
     if not config:
       config = self.get_config()
-    
+    print config
     return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
@@ -283,12 +289,13 @@ class SyncthingClient(SyncthingFacade):
       self.sync = self.adapter.get_gui_hook()
     except Exception:
       pass
-  
+
   def add(self, **kwargs):
     
+    devid = self.get_device_id()
     config = self.get_config()
     folders = config['folders']
-    print len(folders)
+
     for f in folders:
       if f['path'].rstrip('/') == kwargs['path'].rstrip('/'):
         raise custom_errors.FileExists(kwargs['path'])
@@ -311,7 +318,7 @@ class SyncthingClient(SyncthingFacade):
       'path' : kwargs['path'],
       'ignoreDelete' : False,
       'ignorePerms' : False,
-      'devices' : [{'deviceID' : self.get_device_id()}],
+      'devices' : [{'deviceID' : devid}],
       'disableTempIndexes' : False,
       'maxConflicts' : 10,
       'order' : 'random',
@@ -319,6 +326,16 @@ class SyncthingClient(SyncthingFacade):
     })
     self.set_config(config)
     self.restart()
+
+    # Save folder data into kdr config
+    config = self.adapter.update_config({
+      'device_id' : devid,
+      'api_key' : hashlib.sha1(devid + kwargs['path']).hexdigest(),
+      'label' : kwargs['tag'],
+      'local_path' : kwargs['path'],
+      'remote_path': '',
+      'is_shared' : True
+    }) 
 
     return True
 
@@ -383,7 +400,8 @@ class SyncthingClient(SyncthingFacade):
       'api_key' : api_key,
       'label' : name,
       'local_path' : local_path,
-      'remote_path': remote_folder['path'] 
+      'remote_path': remote_folder['path'],
+      'is_shared' : True
     }) 
 
     # Save the folder data into syncthing config
@@ -594,18 +612,12 @@ class SyncthingClient(SyncthingFacade):
     return
 
   def test(self, arg): 
-  
-    toks = arg.split('@')
-    device_id = toks[0]
-    api_key = toks[1]
+    device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
-    
-    print self.get_config()
-    return
-    print self.get_device_id()
+    api_key = 'adgadf'
+
     remote = SyncthingProxy(device_id, host, api_key)
-    #print self.sync._interface.options
-    print self.get_device_id()
+    print remote.get_config()
     return
 
     '''

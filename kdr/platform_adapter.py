@@ -26,7 +26,7 @@ class PlatformBase():
 
     else:
       self.append_dir_metadata(folder_path, object)
-  
+
   def get_platform_config(self, config_path):
     try:
       with open(config_path, "r") as f:
@@ -83,7 +83,8 @@ class PlatformBase():
       'api_key' : object['api_key'],
       'label' : object['label'],
       'local_path' : object['local_path'],
-      'remote_path' : object['remote_path']
+      'remote_path' : object['remote_path'],
+      'is_shared' : object['is_shared']
     }
 
   def create_dir_record(self, object, metadata):
@@ -213,8 +214,9 @@ class SyncthingLinux64(PlatformBase):
   def start(self, folder_path):   
       
     command = os.path.join(folder_path, self.binary)
-
+    
     DEVNULL = open(os.devnull, 'w') 
+    os.environ['KDR_CONFIG_PATH'] = self.config_path
     process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
     is_success = (process.stderr == None)
 

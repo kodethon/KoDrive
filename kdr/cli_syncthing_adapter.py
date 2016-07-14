@@ -121,6 +121,9 @@ def add(**kwargs):
   handler = factory.get_handler()
 
   try:
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+
     handler.add(**kwargs)
     return "You can now share %s" % kwargs['path']
   except Exception as e:
