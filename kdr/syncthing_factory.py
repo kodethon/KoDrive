@@ -69,10 +69,11 @@ class SyncthingFacade():
   def start(self):    
     path = self.adapter.get_path()
     self.adapter.start(path)
-    
+     
     for i in range(0, 5):
-      if(self.ping()):
+      if self.ping():
         return True
+      time.sleep(1)
 
     return False
 
@@ -186,8 +187,13 @@ class SyncthingFacade():
       'certName' : '',
       'address' : ['dynamic']
     }
+    
+    config = kwargs['config']
 
-    kwargs['config']['devices'].append(record)
+    if not config['devices']:
+      config['devices'] = []
+    
+    config['devices'].append(record)
               
   def device_exists(self, client_devid, config=None):
 
@@ -337,6 +343,7 @@ class SyncthingClient(SyncthingFacade):
       'remote_path': '',
       'is_shared' : True
     }) 
+    open(os.path.join(path, '.stfolder'), 'w').close()
 
     return True
 
@@ -394,7 +401,7 @@ class SyncthingClient(SyncthingFacade):
     remote_folder = remote_config['folders'][0] 
     name = name or remote_folder['label']
     global_remote_folder = remote_folder['path']
-
+    
     # Save folder data into kdr config
     config = self.adapter.update_config({
       'device_id' : device_id,
@@ -675,7 +682,7 @@ class SyncthingClient(SyncthingFacade):
   def test(self, arg): 
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
-    api_key = 'adgadf'
+    api_key = '8854a1a83df049115054c2711a022a955a22abfa'
 
     remote = SyncthingProxy(device_id, host, api_key)
     print remote.get_config()
@@ -717,26 +724,31 @@ class SyncthingProxy(SyncthingFacade):
 
     if not config:
       config = self.get_config()
-
+    print config
     devices = config['devices']
     
     for d in devices:
-      if d['deviceID'] == self.device_id:
+      if d['deviceId'] == self.device_id:
         return d['name']
 
   def request_folder(self, client_hostname, client_devid):
     config = self.get_config()       
-    
+
     self.new_device(
       config = config,
       hostname = client_hostname,
       device_id = client_devid
     )
+    
+    folder = config['folders'][0]
 
-    config['folders'][0]['devices'].append({
+    if not folder['devices']:
+      folder['devices'] = []
+    
+    folder['devices'].append({
       'deviceID' : client_devid
     })
-    
+
     self.set_config(config)
     self.restart()
 

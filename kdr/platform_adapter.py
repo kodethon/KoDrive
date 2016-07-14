@@ -198,14 +198,14 @@ class SyncthingLinux64(PlatformBase):
 
   def get_path(self):
     dest = '/var/opt'
-    linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
+    linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
-      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
-      linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
+      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
+      linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
 
       command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
