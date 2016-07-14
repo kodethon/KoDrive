@@ -198,12 +198,15 @@ class SyncthingLinux64(PlatformBase):
 
   def get_path(self):
     dest = '/var/opt'
+    #linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
     linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
+      #linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
+      #linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
       linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
       linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
 
@@ -222,7 +225,10 @@ class SyncthingLinux64(PlatformBase):
     
     DEVNULL = open(os.devnull, 'w') 
     os.environ['KDR_CONFIG_PATH'] = self.config_path
-    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+    process = subprocess.Popen(
+      [command, '-no-browser'], 
+      stdout=DEVNULL
+    )
     is_success = (process.stderr == None)
 
     return is_success

@@ -6,15 +6,15 @@ import json, os
 def link(key, name, path):
   handler = factory.get_handler()
 
-  try:
+  #try:
 
-    if not handler.ping():
-      raise custom_errors.CannotConnect()
+  if not handler.ping():
+    raise custom_errors.CannotConnect()
 
-    name = handler.link(key, name, path)
-    return "%s (%s) is now being synchronized." % (path, name)
-  except Exception as e:
-    return e.message
+  name = handler.link(key, name, path)
+  return "%s (%s) is now being synchronized." % (path, name)
+  #except Exception as e:
+  #  return e.message
 
 def sys(**kwargs):
   handler = factory.get_handler()
