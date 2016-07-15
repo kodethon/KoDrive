@@ -226,7 +226,7 @@ class SyncthingLinux64(PlatformBase):
     DEVNULL = open(os.devnull, 'w') 
     os.environ['KDR_CONFIG_PATH'] = self.config_path
     process = subprocess.Popen(
-      [command, '-no-browser'], 
+      [command, '-no-browser', '-gui-address', '0.0.0.0:8384'], 
       stdout=DEVNULL
     )
     is_success = (process.stderr == None)

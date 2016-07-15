@@ -282,7 +282,7 @@ class SyncthingFacade():
     
     if not config:
       config = self.get_config()
-    print config
+
     return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
@@ -732,7 +732,7 @@ class SyncthingProxy(SyncthingFacade):
 
     if not config:
       config = self.get_config()
-    print config
+
     devices = config['devices']
     
     for d in devices:
