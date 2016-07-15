@@ -282,7 +282,7 @@ class SyncthingMac64(PlatformBase):
       mac_64_bit_tar = 'syncthing-macosx-amd64-v0.13.9.tar.gz'
 
       link = mac_64_bit_repo + '/' + mac_64_bit_tar
-      urllib.urlretrieve(link, mac_64_bit_tar)
+      urllib.urlretrieve(link, os.path.join(dest_tmp, mac_64_bit_tar))
       # Download from site
 
       src = dest_tmp
@@ -296,7 +296,11 @@ class SyncthingMac64(PlatformBase):
     command = os.path.join(folder_path, self.binary)
     
     DEVNULL = open(os.devnull, 'w') 
-    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+    os.environ['KDR_CONFIG_PATH'] = self.config_path
+    process = subprocess.Popen(
+      [command, '-no-browser', '-gui-address', '0.0.0.0:8384'], 
+      stdout=DEVNULL
+    )
     is_success = (process.stderr == None)
 
     return is_success
