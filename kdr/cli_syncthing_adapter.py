@@ -148,6 +148,14 @@ def mv_edge_case(source, target):
 
   return handler.mv_edge_case(source, target)
 
+def auth(path, key):
+  handler = factory.get_handler()
+  
+  # try:
+  handler.auth(path, key)
+  return "%s can now access %s." % (key, path)
+  # except Exception as e:
+    # return e.message
 """
 
 def start():

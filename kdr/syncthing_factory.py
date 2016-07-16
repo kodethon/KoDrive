@@ -462,7 +462,7 @@ class SyncthingClient(SyncthingFacade):
     remote_folder['path'] = kwargs['local_path']
     config['folders'].append(remote_folder)
     if kwargs['tag']:
-      config['lablel'] = kwargs['tag']
+      config['label'] = kwargs['tag']
            
     device = self.find_device(kwargs['devid'], config)
     
@@ -696,6 +696,35 @@ class SyncthingClient(SyncthingFacade):
   def mv_edge_case(self, source, target):
     os.remove(target)
     os.rename(''.join(source), target)
+    return
+
+  def auth(self, path, key):
+
+    path = os.path.abspath(path)
+    kdr_config = self.adapter.get_config()
+    directories = kdr_config['directories']
+    config = self.get_config()
+    devices = config['devices']
+    folders = config['folders']
+
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    if not self.folder_exists({
+      'path' : path
+    }, config):
+      raise custom_errors.FileNotInConfig(path)
+
+    if not self.device_exists(key):
+      raise custom_errors.DeviceNotFound(key)
+
+    for k in directories:
+      f = directories[k]
+      
+      if f['local_path']  == path.rstrip('/'):
+        if f['is_shared']:
+          raise custom_errors.PermissionDenied()
+      
     return
 
   def test(self, arg): 
