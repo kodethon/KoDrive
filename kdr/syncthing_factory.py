@@ -68,20 +68,31 @@ class SyncthingFacade():
 	
   def start(self):    
     path = self.adapter.get_path()
-    self.adapter.start(path)
-     
+    is_new = self.adapter.start(path)
+
     for i in range(0, 5):
       if self.ping():
+
+        if is_new:
+          self.adapter.delete_default_folder()
+          self.start()
+
         return True
+
       time.sleep(1)
+      self.sync = self.adapter.get_gui_hook()
 
     return False
 
   def shutdown(self):
-    return self.sync.sys.set.shutdown()
+    try:
+      status = json.loads(self.sync.sys.set.shutdown())
+      return status['ok'] == 'shutting down'
+    except Exception:
+      return False
       
   def ping(self):
-    
+
     # Run command
     try:
       t = type(self.sync.sys.ping()) 
@@ -283,7 +294,7 @@ class SyncthingFacade():
     
     if not config:
       config = self.get_config()
-    print config
+
     return self.find_folder(object, config) != None
 
 class SyncthingClient(SyncthingFacade):
@@ -452,7 +463,7 @@ class SyncthingClient(SyncthingFacade):
     remote_folder['path'] = kwargs['local_path']
     config['folders'].append(remote_folder)
     if kwargs['tag']:
-      config['lablel'] = kwargs['tag']
+      config['label'] = kwargs['tag']
            
     device = self.find_device(kwargs['devid'], config)
     
@@ -694,6 +705,35 @@ class SyncthingClient(SyncthingFacade):
     os.rename(''.join(source), target)
     return
 
+  def auth(self, path, key):
+
+    path = os.path.abspath(path)
+    kdr_config = self.adapter.get_config()
+    directories = kdr_config['directories']
+    config = self.get_config()
+    devices = config['devices']
+    folders = config['folders']
+
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    if not self.folder_exists({
+      'path' : path
+    }, config):
+      raise custom_errors.FileNotInConfig(path)
+
+    if not self.device_exists(key):
+      raise custom_errors.DeviceNotFound(key)
+
+    for k in directories:
+      f = directories[k]
+      
+      if f['local_path']  == path.rstrip('/'):
+        if f['is_shared']:
+          raise custom_errors.PermissionDenied()
+      
+    return
+
   def test(self, arg): 
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
@@ -739,7 +779,7 @@ class SyncthingProxy(SyncthingFacade):
 
     if not config:
       config = self.get_config()
-    print config
+
     devices = config['devices']
     
     for d in devices:

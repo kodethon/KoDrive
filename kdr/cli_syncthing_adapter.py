@@ -25,6 +25,7 @@ def sys(**kwargs):
       handler = factory.get_handler()
       alive = handler.ping()
     except Exception as e:
+      print e
       alive = False
     
     if not alive:
@@ -52,7 +53,10 @@ def sys(**kwargs):
     if not alive:
       return 'KodeDrive has already exited.'
 
-    return handler.shutdown()
+    if handler.shutdown():
+      return 'KodeDrive has now exited.'  
+    else: 
+      return 'KodeDrive could not be stopped.'
 
 def refresh(**kwargs):
   handler = factory.get_handler()
@@ -144,6 +148,14 @@ def mv_edge_case(source, target):
 
   return handler.mv_edge_case(source, target)
 
+def auth(path, key):
+  handler = factory.get_handler()
+  
+  # try:
+  handler.auth(path, key)
+  return "%s can now access %s." % (key, path)
+  # except Exception as e:
+    # return e.message
 """
 
 def start():
