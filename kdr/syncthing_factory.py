@@ -104,10 +104,11 @@ class SyncthingFacade():
     config = self.get_config()
     api_key = config['gui']['apiKey']
     devid = self.get_device_id()
-    key = "%s@%s@%s" % (devid, path, api_key)
-    encoded_key = key.encode('base64')
+    #key = "%s@%s@%s" % (devid, path, api_key)
+    key = "%s@%s" % (devid, api_key)
+    #key = key.encode('base64')
 
-    return "".join(encoded_key.split())
+    return "".join(key.split())
   
 # UTILS
   
@@ -541,12 +542,18 @@ class SyncthingClient(SyncthingFacade):
     return old_name
   
   def ls(self): 
-    config = self.adapter.get_config()
-    dirs = config['directories']
+
     metadata = [
       {'Tag' : [],},
       {'Path' : []}
     ]
+
+    config = self.adapter.get_config()
+
+    if not config:
+      return None
+
+    dirs = config['directories']
 
     # For each directory 
     for key, value in dirs.iteritems(): 
@@ -583,6 +590,9 @@ class SyncthingClient(SyncthingFacade):
     
     remote = SyncthingProxy(r_device_id, host, r_api_key)
     r_config = remote.get_config()
+    
+    if not 'is_shared' in dir_config:
+        dir_config['is_shared'] = False
 
     for f in folders:
       if source_path == os.path.abspath(f['path']):
@@ -598,7 +608,8 @@ class SyncthingClient(SyncthingFacade):
           'api_key' : r_api_key,
           'label' : r_config['folders'][0]['label'],
           'local_path' : f['path'].rstrip('/'),
-          'remote_path': r_config['folders'][0]['path']
+          'remote_path': r_config['folders'][0]['path'],
+          'is_shared' : dir_config['is_shared']
         }, source_path, target_path) 
 
         found = True
@@ -656,12 +667,16 @@ class SyncthingClient(SyncthingFacade):
             f['path'] += '/'
             # set config.xml
 
+          if not 'is_shared' in dir_config:
+            dir_config['is_shared'] = False
+
           self.adapter.rename_dir ({
             'device_id' : r_device_id,
             'api_key' : r_api_key,
             'label' : r_config['folders'][0]['label'],
             'local_path' : final_path.rstrip('/'),
-            'remote_path': r_config['folders'][0]['path']
+            'remote_path': r_config['folders'][0]['path'],
+            'is_shared' : dir_config['is_shared']
           }, source_path, final_path) 
           # set config.json
 

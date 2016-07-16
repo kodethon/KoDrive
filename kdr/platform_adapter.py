@@ -199,6 +199,7 @@ class SyncthingLinux64(PlatformBase):
   def get_path(self):
     dest = '/var/opt'
     linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
+    #linux_64_bit_file = 'syncthing-linux-amd64-v0.13.10'
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
@@ -206,6 +207,8 @@ class SyncthingLinux64(PlatformBase):
       dest_tmp = '/tmp'
       linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
       linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
+      #linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.10'
+      #linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.10.tar.gz'
 
       command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -217,14 +220,20 @@ class SyncthingLinux64(PlatformBase):
     return syncthing_path
 
   def start(self, folder_path):   
-      
+    
+    # Modify config so that gui is 0.0.0.0:8384
+    # Remove default folder if ~/.config/syncthing doesn't exist
+
     command = os.path.join(folder_path, self.binary)
     
     DEVNULL = open(os.devnull, 'w') 
     os.environ['KDR_CONFIG_PATH'] = self.config_path
-    process = subprocess.Popen([command, '-no-browser'], stdout=DEVNULL)
+    process = subprocess.Popen(
+      [command, '-no-browser', '-gui-address', '0.0.0.0:8384'], 
+      stdout=DEVNULL
+    )
     is_success = (process.stderr == None)
-
+    
     return is_success
 
 class SyncthingMac64(PlatformBase): 

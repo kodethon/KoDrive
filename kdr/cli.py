@@ -39,6 +39,9 @@ def ls():
 
   metadata = cli_syncthing_adapter.ls()
   
+  if not metadata:
+    return
+
   headers = []
   lengths = []
 
