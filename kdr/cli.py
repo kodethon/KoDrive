@@ -197,6 +197,31 @@ def mv(source, target):
   else:
     cli_syncthing_adapter.mv(source, target)
 
+@main.command()
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+@click.argument('key', nargs=1)
+def auth(path, key):
+  ''' Authorize device synchronization. '''
+
+  """
+    kdr auth <path> <device_id (client)>
+
+    1. make sure path has been added to config.xml, server
+    2. make sure path is not shared by someone
+    3. add device_id to folder in config.xml, server
+    4. add device to devices in config.xml, server
+
+  """
+
+  output = cli_syncthing_adapter.auth(path, key)
+  click.echo("%s" % output)  
+
+
+  return
 
 """
 REFERENCE
