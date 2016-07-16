@@ -68,20 +68,31 @@ class SyncthingFacade():
 	
   def start(self):    
     path = self.adapter.get_path()
-    self.adapter.start(path)
-     
+    is_new = self.adapter.start(path)
+
     for i in range(0, 5):
       if self.ping():
+
+        if is_new:
+          self.adapter.delete_default_folder()
+          self.start()
+
         return True
+
       time.sleep(1)
+      self.sync = self.adapter.get_gui_hook()
 
     return False
 
   def shutdown(self):
-    return self.sync.sys.set.shutdown()
+    try:
+      status = json.loads(self.sync.sys.set.shutdown())
+      return status['ok'] == 'shutting down'
+    except Exception:
+      return False
       
   def ping(self):
-    
+
     # Run command
     try:
       t = type(self.sync.sys.ping()) 
