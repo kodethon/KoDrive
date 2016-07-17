@@ -2,7 +2,7 @@
 Synchronize remote files with local directory.
 """
 from setuptools import find_packages, setup
-import sys
+import sys, os
 
 def get_data_files():
     """ Return data_files in a platform dependent manner """

@@ -13,10 +13,10 @@ class SyncthingFacade():
     
   def __init__(self, **kwargs):
     if 'sync' in kwargs:
-    	self.sync = kwargs['sync'] 
+      self.sync = kwargs['sync'] 
 
     if 'adapter' in kwargs:
-    	self.adapter = kwargs['adapter']
+      self.adapter = kwargs['adapter']
         
   def get_config(self):
     return self.sync.sys.config()
@@ -38,34 +38,34 @@ class SyncthingFacade():
     self.sync.sys.set.restart();
 
   def scan(self, path):
-	
+  
     if not path[len(path) - 1] == '/':
-    	path += '/'
+      path += '/'
 
     folder = self.find_folder({
-    	'path' : path
+      'path' : path
     }) 
 
     if not folder:
-    	raise IOError(path + ' is not being synchronized.')
+      raise IOError(path + ' is not being synchronized.')
 
     else:
-    	return self.sync.db.set.scan(folder=folder['id'])
+      return self.sync.db.set.scan(folder=folder['id'])
 
   def completion(self, path):
 
     if not path[len(path) - 1] == '/':
-    	path += '/'
+      path += '/'
 
     folder = self.find_folder({
-    	'path' : path
+      'path' : path
     })
 
     device_id = self.get_device_id()
     res = self.sync.db.completion(device=device_id, folder=folder)
 
     return res['completion']
-	
+  
   def start(self):    
     path = self.adapter.get_path()
     is_new = self.adapter.start(path)
@@ -74,6 +74,7 @@ class SyncthingFacade():
       if self.ping():
 
         if is_new:
+          self.adapter.tester()
           self.adapter.delete_default_folder()
           self.start()
 
@@ -243,7 +244,7 @@ class SyncthingFacade():
 
     # list of folders
     folders = config['folders']
-		
+    
     for i, f in enumerate(folders):
       if path == f['path']:
         for n, d in enumerate(f['devices']):
@@ -260,7 +261,7 @@ class SyncthingFacade():
 
     # list of folders
     folders = config['folders']
-		
+    
     for i, f in enumerate(folders):
       if path == f['path']:
         del folders[i]
@@ -269,13 +270,13 @@ class SyncthingFacade():
     return False
 
   def find_folder(self, object, config=None):
-		
+    
     if not config:
         config = self.get_config()
     
     # list of folders
     folders = config['folders']
-		
+    
     for f in folders:
       n = 0
       d = 0
@@ -783,7 +784,7 @@ class SyncthingProxy(SyncthingFacade):
     devices = config['devices']
     
     for d in devices:
-      if d['deviceId'] == self.device_id:
+      if d['deviceID'] == self.device_id:
         return d['name']
 
   def request_folder(self, client_hostname, client_devid):
