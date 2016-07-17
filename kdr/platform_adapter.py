@@ -18,7 +18,7 @@ class PlatformBase():
 
   def update_platform_config(self, folder_path, object):
 
-    config_path = os.path.join(folder, self.config) 
+    config_path = os.path.join(folder_path, self.config) 
 
     # If config file does not exist, create it
     # And then add the new directory data into it
@@ -96,7 +96,7 @@ class PlatformBase():
       'api_key' : object['api_key'],
       'label' : object['label'],
       'local_path' : object['local_path'],
-      'remote_path' : object['remote_path'],
+      #'remote_path' : object['remote_path'],
       'is_shared' : object['is_shared']
     }
 
@@ -237,17 +237,17 @@ class SyncthingLinux64(PlatformBase):
 
   def get_path(self):
     dest = '/var/opt'
-    linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
-    #linux_64_bit_file = 'syncthing-linux-amd64-v0.13.10'
+    #linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
+    linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
-      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
-      linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
-      #linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.10'
-      #linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.10.tar.gz'
+      #linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
+      #linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
+      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
+      linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
 
       command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
