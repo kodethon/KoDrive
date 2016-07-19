@@ -118,7 +118,7 @@ class PlatformBase():
       'api_key' : object['api_key'],
       'label' : object['label'],
       'local_path' : object['local_path'],
-      #'remote_path' : object['remote_path'],
+      'remote_path' : object['remote_path'] if 'remote_path' in object else '',
       'is_shared' : object['is_shared']
     }
 

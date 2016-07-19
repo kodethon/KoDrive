@@ -565,46 +565,54 @@ class SyncthingClient(SyncthingFacade):
       Stop synchroinzation of local_path
     '''
 
-    # Process remote
     dir_config = self.adapter.get_dir_config(local_path)
     
     if not dir_config:
       raise custom_errors.FileNotInConfig(local_path)
     
-    r_api_key = dir_config['api_key']
-    r_device_id = dir_config['device_id']
-    host = self.devid_to_ip(r_device_id, False)
+    # If the folder was shared, remove data from remote 
+    if dir_config['is_shared']:
 
-    if not host:
-      raise custom_errors.FileNotInConfig(local_path)
-    
-    remote = SyncthingProxy(r_device_id, host, r_api_key)
-    r_config = remote.get_config()
+      # Process remote
+      r_api_key = dir_config['api_key']
+      r_device_id = dir_config['device_id']
+      host = self.devid_to_ip(r_device_id, False)
 
-    del_device = remote.delete_device_from_folder(
-      dir_config['remote_path'],
-      self.get_device_id(), 
-      r_config
-    )
-
-    if not del_device:
-      raise custom_errors.DeviceNotFoundError(remote.hostname())
+      if not host:
+        raise custom_errors.FileNotInConfig(local_path)
       
+      remote = SyncthingProxy(r_device_id, host, r_api_key)
+      r_config = remote.get_config()
+
+      del_device = remote.delete_device_from_folder(
+        dir_config['remote_path'],
+        self.get_device_id(), 
+        r_config
+      )
+      remote.delete_device(self.get_device_id(), r_config)
+
+      remote.set_config(r_config)
+      remote.restart()
+    
+    # Process local
+
+    # Syncthing config
     config = self.get_config()
     del_folder = self.delete_folder(local_path, config)
-
-    if not del_folder:
-      raise custom_errors.FileNotInConfig(local_path)
-
     del_device = self.delete_device(r_device_id, config)
 
-    if not del_device:
-      raise DeviceNotFoundError(remote.hostname())
+    # App config
+    kdr_config = self.adapter.get_config()
+
+    for key in kdr_config['directories']: 
+      d = kdr_config['directories'][key]
+      if d['local_path'].rstrip('/') == local_path.rstrip('/'):
+        del kdr_config['directories'][key]
+        break
     
     # All good, commit
-    remote.set_config(r_config)
+    self.adapter.set_config(kdr_config)
     self.set_config(config)
-    remote.restart()
     self.restart()
 
     return True
