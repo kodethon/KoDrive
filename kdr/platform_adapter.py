@@ -351,26 +351,62 @@ class SyncthingMac64(PlatformBase):
   syncthing_conf = 'Library/Application Support/Syncthing/config.xml'
   app_conf  = '.config/kdr'
 
+  def __init__(self):
+    self.home_dir = os.path.expanduser('~')
+    self.app_conf_dir = os.path.join(self.home_dir, self.app_conf)
+    self.app_conf_file = os.path.join(self.app_conf_dir, self.config)
+    
+    if not os.path.exists(self.app_conf_file):
+      self.create_config(self.app_conf_file)
+    else:
+      # Ensure that all the sections are up to date
+      config = self.get_platform_config(self.app_conf_file)
+
+      if not config or len(config) == 0:
+        self.create_config(self.app_conf_file)
+      else:
+        updated = False
+
+        for key in self.default_config:
+          if key not in config:
+            config[key] = self.config_sect[key]
+            updated = True
+        
+        if updated:
+          self.set_platform_config(self.app_conf_file, config)
+
   @property
   def config_path(self):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
     config_path = os.path.join(folder_path, self.config)
     return config_path
-    
-  def update_config(self, object):
+  
+  def get_config(self):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
+    config_path = os.path.join(folder_path, self.config)
+    return self.get_platform_config(config_path)
 
-    self.update_platform_config(folder_path, object)
+  def set_config(self, config):
+    return self.set_platform_config(self.app_conf_file, config)
 
-  def get_dir_config(self, local_path):  
-
+  def get_dir_config(self, local_path):
+    '''
+      Return dir object specified by local path from config.json
+    '''
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
     config_path = os.path.join(folder_path, self.config) 
     
     return self.get_platform_dir_config(config_path, local_path)
+
+  # Should be changed to update_dir_config
+  def update_config(self, object):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, self.app_conf)
+
+    self.update_platform_config(folder_path, object)
 
   def get_gui_hook(self):
     home_dir = os.path.expanduser('~')
@@ -386,14 +422,14 @@ class SyncthingMac64(PlatformBase):
 
   def get_syncthing_path(self):
     dest = '/usr/local' # external applications folder
-    mac_64_bit_file = 'syncthing-macosx-amd64-v0.13.9'
+    mac_64_bit_file = "syncthing-macosx-amd64-v%s" % self.st_version
     syncthing_path = os.path.join(dest, mac_64_bit_file)
     
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
-      mac_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
-      mac_64_bit_tar = 'syncthing-macosx-amd64-v0.13.9.tar.gz'
+      mac_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
+      mac_64_bit_tar = "syncthing-macosx-amd64-v%s.tar.gz" % self.st_version
 
       link = mac_64_bit_repo + '/' + mac_64_bit_tar
       urllib.urlretrieve(link, os.path.join(dest_tmp, mac_64_bit_tar))
@@ -432,8 +468,11 @@ class SyncthingMac64(PlatformBase):
     home_dir = os.path.expanduser('~')
     sync_folder = os.path.join(home_dir, 'Sync')
     syncthing_conf_path = os.path.join(home_dir, self.syncthing_conf)
-    self.delete_platform_folder(folder_path=sync_folder, config_path=syncthing_conf_path)
-
+    self.delete_platform_folder(
+      folder_path=sync_folder, 
+      config_path=syncthing_conf_path,
+      force_config=True
+    )
 
 # class SyncthingWin64():
   # TODO
