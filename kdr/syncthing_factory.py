@@ -68,15 +68,16 @@ class SyncthingFacade():
     return res['completion']
   
   def start(self):    
-    path = self.adapter.get_path()
-    is_new = self.adapter.start(path)
+    path = self.adapter.get_syncthing_path()
+    is_new = self.adapter.start_syncthing(path)
 
     for i in range(0, 5):
       if self.ping():
 
         if is_new:
-          self.adapter.tester()
+          #self.adapter.tester()
           self.adapter.delete_default_folder()
+          self.make_client()
           self.start()
 
         return True
@@ -106,18 +107,29 @@ class SyncthingFacade():
   def encode_key(self, path):
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
-
+    system = kdr_config['system']
+  
+    # Check if the directory belongs to user
     for key in directories:
       f = directories[key]
       
       if f['local_path']  == path.rstrip('/'):
         if f['is_shared']:
           raise custom_errors.PermissionDenied()
-
+   
     config = self.get_config()
-    api_key = config['gui']['apiKey']
     devid = self.get_device_id()
-    key = "%s@%s@%s" % (devid, path, api_key)
+    if system['server']:
+      api_key = config['gui']['apiKey']
+      key = "%s@%s@%s" % (devid, path, api_key)
+    else:
+      folder_config = self.find_folder({
+        'path' : path
+      }, config)
+      folder_id = folder_config['id']
+      label = folder_config['label']
+      key = "%s#%s#%s#%s" % (devid, self.hostname(), folder_id, label)
+    
     #key = key.encode('base64')
 
     return "".join(key.split())
@@ -380,6 +392,16 @@ class SyncthingClient(SyncthingFacade):
     open(os.path.join(path, '.stfolder'), 'w').close()
 
     return True
+
+  def make_server(self):
+    kdr_config = self.adapter.get_config()
+    kdr_config['system']['server'] = True
+    self.adapter.set_config(kdr_config)
+
+  def make_client(self):
+    kdr_config = self.adapter.get_config()
+    kdr_config['system']['server'] = False
+    self.adapter.set_config(kdr_config)
 
   def link(self, **kwargs):
 

@@ -1,16 +1,45 @@
 import pytest
 from click.testing import CliRunner
 from kdr import cli
+from kdr import syncthing_factory as factory
+
+handler = factory.get_handler()
 
 @pytest.fixture
 def runner():
     return CliRunner()
 
-def test_status(runner):
-    result = runner.invoke(cli.info, ['-s'])
-    print dir(cli)
-    print result.output
+def test_system_client(runner):
+  result = runner.invoke(cli.sys, ['-c'])
+  kdr_config = handler.adapter.get_config()
+
+  if 'system' not in kdr_config:
     assert False
+
+  if 'server' not in kdr_config['system']:
+    assert False
+
+  if kdr_config['system']['server']:
+    assert False
+
+  assert True
+
+def test_system_server(runner):
+  result = runner.invoke(cli.sys, ['-s'])
+  kdr_config = handler.adapter.get_config()
+
+  if 'system' not in kdr_config:
+    assert False
+
+  if 'server' not in kdr_config['system']:
+    assert False
+
+  if not kdr_config['system']['server']:
+    assert False
+
+  assert True
+
+
 
 '''
 def test_cli(runner):

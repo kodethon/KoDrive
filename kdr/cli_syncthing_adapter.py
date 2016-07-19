@@ -3,6 +3,62 @@ import syncthing_factory as factory
 
 import json, os
 
+class SystemFactory:
+  
+  def __init__(self):
+    self.handler = factory.get_handler()
+
+  def init(self):
+    try:
+      alive = self.handler.ping()
+    except Exception as e:
+      print e
+      alive = False
+    
+    if not alive:
+      success = handler.start()   
+
+      if not success:
+        return 'KodeDrive could not be started.'
+      else:
+        return 'KodeDrive has successfully started.'
+    else:
+      return 'KodeDrive has already been started.' 
+  
+  def list(self):
+    kdr_config = self.handler.adapter.get_config()
+    is_server = kdr_config['system']['server']
+    
+    if self.handler.ping():
+      return 'Running as %s.' % ('server' if is_server else 'client')
+    else:
+      return 'Exited as %s.' % ('server' if is_server else 'client')
+  
+  def test(self, arg):
+    return self.handler.test(arg)
+
+  def exit(self):
+    try:
+      alive = self.handler.ping()
+    except:
+      alive = False
+
+    if not alive:
+      return 'KodeDrive has already exited.'
+
+    if self.handler.shutdown():
+      return 'KodeDrive has now exited.'  
+    else: 
+      return 'KodeDrive could not be stopped.'
+  
+  def server(self):
+    self.handler.make_server()
+    return 'KodeDrive now running in server mode.'
+
+  def client(self):
+    self.handler.make_client()
+    return 'KodeDrive now running in client mode.'
+
 def link(key, tag, path):
   handler = factory.get_handler()
 
@@ -46,48 +102,27 @@ def link(key, tag, path):
   #except Exception as e:
   #  return e.message
 
+SystemSingleton = SystemFactory()
 def sys(**kwargs):
-  handler = factory.get_handler()
-
-  if kwargs['start']:
-
-    try:
-      handler = factory.get_handler()
-      alive = handler.ping()
-    except Exception as e:
-      print e
-      alive = False
-    
-    if not alive:
-      success = handler.start()   
-
-      if not success:
-        return 'KodeDrive could not be started.'
-      else:
-        return 'KodeDrive has successfully started.'
-    else:
-      return 'KodeDrive has already been started.' 
   
-  if kwargs['check']:
-    return 'Running' if handler.ping() else 'Exited'
+  sub_handlers = {
+    'client' : SystemSingleton.client,
+    'exit' : SystemSingleton.exit,
+    'init' : SystemSingleton.init,
+    'list' : SystemSingleton.list,
+    'server' : SystemSingleton.server,
+    'test' : SystemSingleton.test
+  }
 
-  if kwargs['test']:
-    return handler.test(kwargs['test'])
+  for key in kwargs:
+    if(kwargs[key]):
+      sub_handler = sub_handlers[key]
 
-  if kwargs['exit']:
-    try:
-      alive = handler.ping()
-    except:
-      alive = False
-
-    if not alive:
-      return 'KodeDrive has already exited.'
-
-    if handler.shutdown():
-      return 'KodeDrive has now exited.'  
-    else: 
-      return 'KodeDrive could not be stopped.'
-
+      if type(kwargs[key]) == bool:
+        return sub_handler()
+      else:
+        return sub_handler(kwargs[key])
+  
 def refresh(**kwargs):
   handler = factory.get_handler()
 
@@ -186,6 +221,7 @@ def auth(path, key):
   return "%s can now access %s." % (key, path)
   # except Exception as e:
     # return e.message
+
 """
 
 def start():

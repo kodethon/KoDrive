@@ -19,8 +19,10 @@ def main(ctx):
 #
 
 @main.command()
-@click.option('-c', '--check', is_flag=True, help="Check daemon status.")
-@click.option('-s', '--start', is_flag=True, help="Start KodeDrive daemon.")
+@click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
+@click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
+@click.option('-l', '--list', is_flag=True, help="List KodeDrive status.")
+@click.option('-i', '--init', is_flag=True, help="Initialize KodeDrive daemon.")
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
 @click.option('-t', '--test', help="Test random functions :)")
 def sys(**kwargs):
@@ -71,6 +73,9 @@ def ls():
       body += s.format(value.strip())
 
     body += "\n"
+  
+  if len(body) == 0:
+    return
 
   heading = str()
   # Iterate through list

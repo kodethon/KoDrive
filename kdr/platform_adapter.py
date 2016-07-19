@@ -11,10 +11,20 @@ class PlatformBase():
   binary = 'syncthing'
   config = 'config.json'
   stfolder = '.stfolder'
+  st_version = '0.13.9'
+  #st_version = '0.14.0-beta.1'
+  config_sect = {
+    'directories',
+    'system'
+  }
 
   def get_gui_address(self, config_path):   
     tree = ET.parse(config_path)
     return tree.find('gui').find('address').text
+
+  def get_platform_app_config():
+    config_path = os.path.join(folder_path, self.config) 
+    return 
 
   def update_platform_config(self, folder_path, object):
 
@@ -41,6 +51,10 @@ class PlatformBase():
         return json.loads(raw)
     except Exception as e:
       return None
+
+  def set_platform_config(self, config_path, raw):
+    with open(config_path, "w") as f:
+      f.write(json.dumps(raw))
 
   def get_platform_dir_config(self, config_path, local_path):
     config = self.get_platform_config(config_path)
@@ -77,7 +91,8 @@ class PlatformBase():
   
   def create_config(self, config_path, record):
     config = {
-      'directories' : record
+      'directories' : record,
+      'system' : {}
     }
 
     fp = open(config_path, 'w')
@@ -199,6 +214,30 @@ class SyncthingLinux64(PlatformBase):
   
   syncthing_conf = '.config/syncthing/config.xml'
   app_conf  = '.config/kdr'
+  
+  def __init__(self):
+    self.home_dir = os.path.expanduser('~')
+    self.app_conf_dir = os.path.join(self.home_dir, self.app_conf)
+    self.app_conf_file = os.path.join(self.app_conf_dir, self.config)
+    
+    if not os.path.exists(self.app_conf_file):
+      self.create_config(self.app_conf_file, {})
+    else:
+      # Ensure that all the sections are up to date
+      config = self.get_platform_config(self.app_conf_file)
+
+      if not config or len(config) == 0:
+        self.create_config(self.app_conf_file, {})
+      else:
+        updated = False
+
+        for key in self.config_sect:
+          if key not in config:
+            config[key] = {}
+            updated = True
+        
+        if updated:
+          self.set_platform_config(self.app_conf_file)
 
   @property
   def config_path(self):
@@ -207,21 +246,31 @@ class SyncthingLinux64(PlatformBase):
     config_path = os.path.join(folder_path, self.config)
     return config_path
 
-  def update_config(self, object):
+  def get_config(self):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
+    config_path = os.path.join(folder_path, self.config)
+    return self.get_platform_config(config_path)
 
-    self.update_platform_config(folder_path, object)
-
-  def get_config(self):
-    return self.get_platform_config(self.config_path)
+  def set_config(self, config):
+    return self.set_platform_config(self.app_conf_file, config)
 
   def get_dir_config(self, local_path):
+    '''
+      Return dir object specified by local path from config.json
+    '''
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
     config_path = os.path.join(folder_path, self.config) 
     
     return self.get_platform_dir_config(config_path, local_path)
+  
+  # Should be changed to update_dir_config
+  def update_config(self, object):
+    home_dir = os.path.expanduser('~')
+    folder_path = os.path.join(home_dir, self.app_conf)
+
+    self.update_platform_config(folder_path, object)
 
   def get_gui_hook(self):
     home_dir = os.path.expanduser('~')
@@ -235,19 +284,16 @@ class SyncthingLinux64(PlatformBase):
 
     return self.get_platform_device_id(config_path)
 
-  def get_path(self):
+  def get_syncthing_path(self):
     dest = '/var/opt'
-    #linux_64_bit_file = 'syncthing-linux-amd64-v0.14.0-beta.1'
-    linux_64_bit_file = 'syncthing-linux-amd64-v0.13.9'
+    linux_64_bit_file = "syncthing-linux-amd64-v%s" % self.st_version
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
-      #linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.14.0-beta.1'
-      #linux_64_bit_tar = 'syncthing-linux-amd64-v0.14.0-beta.1.tar.gz'
-      linux_64_bit_repo = 'https://github.com/syncthing/syncthing/releases/download/v0.13.9'
-      linux_64_bit_tar = 'syncthing-linux-amd64-v0.13.9.tar.gz'
+      linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
+      linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
 
       command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -258,7 +304,7 @@ class SyncthingLinux64(PlatformBase):
 
     return syncthing_path
 
-  def start(self, folder_path):   
+  def start_syncthing(self, folder_path):   
     
     # Keep for reference
     #os.environ['KDR_CONFIG_PATH'] = self.config_path
@@ -305,10 +351,8 @@ class SyncthingMac64(PlatformBase):
 
     self.update_platform_config(folder_path, object)
 
-  def get_config(self):
-    return self.get_platform_config(self.config_path)
+  def get_dir_config(self, local_path):  
 
-  def get_dir_config(self, local_path):
     home_dir = os.path.expanduser('~')
     folder_path = os.path.join(home_dir, self.app_conf)
     config_path = os.path.join(folder_path, self.config) 
@@ -327,7 +371,7 @@ class SyncthingMac64(PlatformBase):
 
     return self.get_platform_device_id(config_path)
 
-  def get_path(self):
+  def get_syncthing_path(self):
     dest = '/usr/local' # external applications folder
     mac_64_bit_file = 'syncthing-macosx-amd64-v0.13.9'
     syncthing_path = os.path.join(dest, mac_64_bit_file)
@@ -348,7 +392,7 @@ class SyncthingMac64(PlatformBase):
 
     return syncthing_path
 
-  def start(self, folder_path):   
+  def start_syncthing(self, folder_path):   
     
     # Keep for reference
     #os.environ['KDR_CONFIG_PATH'] = self.config_path
