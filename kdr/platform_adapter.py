@@ -3,7 +3,7 @@ from py_syncthing_adapter import Syncthing
 import xml.etree.ElementTree as ET
 import os, subprocess
 import json, hashlib
-import urllib
+import urllib, copy
 import custom_errors
 
 class PlatformBase():
@@ -13,9 +13,11 @@ class PlatformBase():
   stfolder = '.stfolder'
   st_version = '0.13.9'
   #st_version = '0.14.0-beta.1'
-  config_sect = {
-    'directories',
-    'system'
+  default_config = {
+    'directories' : {},
+    'system' : {
+      'server' : False
+    }
   }
 
   def get_gui_address(self, config_path):   
@@ -40,7 +42,7 @@ class PlatformBase():
       metadata = self.create_dir_metadata(object)
       record = self.create_dir_record(object, metadata)
 
-      self.create_config(config_path, record) 
+      self.create_config(config_path, directories=record) 
     else:
       self.append_dir_metadata(config_path, object)
 
@@ -89,11 +91,16 @@ class PlatformBase():
     tree = ET.parse(config_path)
     return tree.find('device').items()[0][1]
   
-  def create_config(self, config_path, record):
-    config = {
-      'directories' : record,
-      'system' : {}
-    }
+  def create_config(self, config_path, **kwargs):
+    
+    conf_dir = os.path.dirname(config_path)
+    if not os.path.exists(conf_dir):
+      os.makedirs(conf_dir)
+    
+    config = copy.deepcopy(self.default_config)
+
+    for key in kwargs:
+      config[key] = kwargs[key]
 
     fp = open(config_path, 'w')
     fp.write(json.dumps(config))
@@ -145,27 +152,29 @@ class PlatformBase():
         # TODO: Should handle corrupt config files later
 
       else:
-        config = self.create_config(folder_path, record)
+        config = self.create_config(folder_path, directories=record)
 
   def get_dir_id(self, local_path):
     return hashlib.sha1(local_path).hexdigest()
 
   def delete_platform_folder(self, **kwargs):
     folder_path = kwargs['folder_path']
+    config_path = kwargs['config_path'] 
     files = os.listdir(folder_path)
+    deleted = False
 
     if 'force' in kwargs or (len(files) == 1 and files[0] == self.stfolder):
       os.remove(os.path.join(folder_path, self.stfolder))
       os.rmdir(folder_path)
-      config_path = kwargs['config_path'] 
-
+      deleted = True
+      
+    if deleted or 'force' in kwargs or 'force_config' in kwargs:
+      # Update syncthing config to reflect changes
       if os.path.exists(config_path):
         tree = ET.parse(config_path)
         folders = tree.findall('folder')
-
         for folder in folders:
           attrs = folder.attrib
-
           if attrs['path'].rstrip('/') == folder_path.rstrip('/'):
             root = tree.getroot()
             root.remove(folder)
@@ -208,7 +217,7 @@ class PlatformBase():
         # TODO: Should handle corrupt config files later
 
       else:
-        config = self.create_config(folder_path, record)
+        config = self.create_config(folder_path, directories=record)
 
 class SyncthingLinux64(PlatformBase): 
   
@@ -221,23 +230,23 @@ class SyncthingLinux64(PlatformBase):
     self.app_conf_file = os.path.join(self.app_conf_dir, self.config)
     
     if not os.path.exists(self.app_conf_file):
-      self.create_config(self.app_conf_file, {})
+      self.create_config(self.app_conf_file)
     else:
       # Ensure that all the sections are up to date
       config = self.get_platform_config(self.app_conf_file)
 
       if not config or len(config) == 0:
-        self.create_config(self.app_conf_file, {})
+        self.create_config(self.app_conf_file)
       else:
         updated = False
 
-        for key in self.config_sect:
+        for key in self.default_config:
           if key not in config:
-            config[key] = {}
+            config[key] = self.config_sect[key]
             updated = True
         
         if updated:
-          self.set_platform_config(self.app_conf_file)
+          self.set_platform_config(self.app_conf_file, config)
 
   @property
   def config_path(self):
@@ -331,7 +340,11 @@ class SyncthingLinux64(PlatformBase):
     home_dir = os.path.expanduser('~')
     sync_folder = os.path.join(home_dir, 'Sync')
     syncthing_conf_path = os.path.join(home_dir, self.syncthing_conf)
-    self.delete_platform_folder(folder_path=sync_folder, config_path=syncthing_conf_path)
+    self.delete_platform_folder(
+      folder_path=sync_folder, 
+      config_path=syncthing_conf_path,
+      force_config=True
+    )
 
 class SyncthingMac64(PlatformBase): 
 

@@ -72,18 +72,27 @@ class SyncthingFacade():
     is_new = self.adapter.start_syncthing(path)
 
     for i in range(0, 5):
-      if self.ping():
-
+      
+      try:
         if is_new:
-          #self.adapter.tester()
-          self.adapter.delete_default_folder()
+          # The order in which this is done is important!
+          # make_client can undo the changes of delete_default_folder
+          # if syncthing has not been restart :(
+          self.sync = self.adapter.get_gui_hook()
           self.make_client()
-          self.start()
-
-        return True
+          self.adapter.delete_default_folder()
+          is_new = False
+          break
+      except Exception as e:
+        pass
 
       time.sleep(1)
-      self.sync = self.adapter.get_gui_hook()
+
+    for i in range(0, 5):
+      if self.ping():
+        return True
+      else:
+        time.sleep(1)
 
     return False
 
@@ -387,9 +396,9 @@ class SyncthingClient(SyncthingFacade):
       'label' : kwargs['tag'],
       'local_path' : kwargs['path'],
       'remote_path': '',
-      'is_shared' : True
+      'is_shared' : False
     }) 
-    open(os.path.join(path, '.stfolder'), 'w').close()
+    open(os.path.join(kwargs['path'], '.stfolder'), 'w').close()
 
     return True
 
@@ -397,11 +406,21 @@ class SyncthingClient(SyncthingFacade):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = True
     self.adapter.set_config(kdr_config)
+    syncthing_config = self.get_config()
+    syncthing_config['gui']['address'] = '0.0.0.0:8384'
+    self.set_config(syncthing_config)
+    self.restart()
+    self.sync = self.adapter.get_gui_hook()
 
   def make_client(self):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
+    syncthing_config = self.get_config()
+    syncthing_config['gui']['address'] = '127.0.0.1:8384'
+    self.set_config(syncthing_config)
+    self.restart()
+    self.sync = self.adapter.get_gui_hook()
 
   def link(self, **kwargs):
 

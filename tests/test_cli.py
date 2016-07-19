@@ -22,6 +22,11 @@ def test_system_client(runner):
   if kdr_config['system']['server']:
     assert False
 
+  config = handler.get_config()
+
+  if config['gui']['address'] != '127.0.0.1:8384':
+    assert False
+
   assert True
 
 def test_system_server(runner):
@@ -35,6 +40,11 @@ def test_system_server(runner):
     assert False
 
   if not kdr_config['system']['server']:
+    assert False
+
+  config = handler.get_config()
+
+  if config['gui']['address'] != '127.0.0.1:8384':
     assert False
 
   assert True

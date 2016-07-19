@@ -9,16 +9,8 @@ class SystemFactory:
     self.handler = factory.get_handler()
 
   def init(self):
-    try:
-      alive = self.handler.ping()
-    except Exception as e:
-      print e
-      alive = False
-    
-    if not alive:
-      success = handler.start()   
-
-      if not success:
+    if not self.handler.ping():
+      if not self.handler.start():
         return 'KodeDrive could not be started.'
       else:
         return 'KodeDrive has successfully started.'
@@ -52,10 +44,18 @@ class SystemFactory:
       return 'KodeDrive could not be stopped.'
   
   def server(self):
+    
+    if not self.handler.ping():
+      raise custom_errors.CannotConnect()
+
     self.handler.make_server()
     return 'KodeDrive now running in server mode.'
 
   def client(self):
+
+    if not self.handler.ping():
+      raise custom_errors.CannotConnect()
+
     self.handler.make_client()
     return 'KodeDrive now running in client mode.'
 
@@ -113,15 +113,18 @@ def sys(**kwargs):
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test
   }
+    
+  try:
+    for key in kwargs:
+      if(kwargs[key]):
+        sub_handler = sub_handlers[key]
 
-  for key in kwargs:
-    if(kwargs[key]):
-      sub_handler = sub_handlers[key]
-
-      if type(kwargs[key]) == bool:
-        return sub_handler()
-      else:
-        return sub_handler(kwargs[key])
+        if type(kwargs[key]) == bool:
+          return sub_handler()
+        else:
+          return sub_handler(kwargs[key])
+  except Exception as e:
+    return e.message
   
 def refresh(**kwargs):
   handler = factory.get_handler()
