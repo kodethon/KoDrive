@@ -304,7 +304,7 @@ class SyncthingLinux64(PlatformBase):
     new_flag = False
 
     command = os.path.join(folder_path, self.st_binary)
-    opts = [command, '-no-browser', '-home', self.app_conf_dir]
+    opts = [command, '-no-browser', '-home', self.st_conf_dir]
 
     if not os.path.exists(self.st_conf_file):
       new_flag = True
