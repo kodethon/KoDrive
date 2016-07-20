@@ -815,15 +815,33 @@ class SyncthingClient(SyncthingFacade):
     }, config):
       raise custom_errors.FileNotInConfig(path)
 
-    if not self.device_exists(key):
-      raise custom_errors.DeviceNotFound(key)
-
     for k in directories:
       f = directories[k]
       
       if f['local_path']  == path.rstrip('/'):
         if f['is_shared']:
           raise custom_errors.PermissionDenied()
+
+    client_devid = {
+      u'deviceID' : key
+    }
+
+    for f in folders:
+      if f['path'] == path:
+        if client_devid not in f['devices']:
+          f['devices'].append(client_devid)
+        break
+    # add devid to folder if not already there
+
+    if not self.device_exists(key):
+      try:
+        self.new_device(config=config, device_id=key)
+      except:
+        raise custom_errors.DeviceNotFound(key)
+      # add device to devices
+
+    self.set_config(config)
+    self.restart()
       
     return
 
