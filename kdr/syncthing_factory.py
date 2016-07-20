@@ -2,8 +2,8 @@ from py_syncthing_adapter import Syncthing
 
 # Self-defined
 import platform_adapter
-import custom_errors
-import syncthing_adt
+from data import custom_errors
+from data import syncthing_adt
 
 # Standard library
 import os, sys, platform
@@ -281,14 +281,11 @@ class SyncthingFacade():
     return False
 
   def delete_device_from_folder(self, path, devid, config):
-    if not path[len(path) - 1] == '/':
-      path += '/'
-
     # list of folders
     folders = config['folders']
     
     for i, f in enumerate(folders):
-      if path == f['path']:
+      if path.rstrip('/') == f['path'].rstrip('/'):
         for n, d in enumerate(f['devices']):
           if d['deviceID'] == devid:
             del folders[i]['devices'][n]
@@ -297,15 +294,11 @@ class SyncthingFacade():
     return False
 
   def delete_folder(self, path, config):
-
-    if not path[len(path) - 1] == '/':
-      path += '/'
-
     # list of folders
     folders = config['folders']
     
     for i, f in enumerate(folders):
-      if path == f['path']:
+      if path.rstrip('/') == f['path'].rstrip('/'):
         del folders[i]
         return True
 
@@ -324,7 +317,6 @@ class SyncthingFacade():
       d = 0
 
       for k in object:
-
         if object[k] == f[k]:
           n += 1
 
@@ -344,7 +336,7 @@ class SyncthingClient(SyncthingFacade):
    
   def __init__(self, adapter):
     SyncthingFacade.__init__(self)
-
+    
     self.adapter = adapter
 
     try:
@@ -390,7 +382,7 @@ class SyncthingClient(SyncthingFacade):
     self.restart()
 
     # Save folder data into kdr config
-    config = self.adapter.update_config({
+    config = self.adapter.set_dir_config({
       'device_id' : devid,
       'api_key' : hashlib.sha1(devid + kwargs['path']).hexdigest(),
       'label' : kwargs['tag'],
@@ -406,8 +398,12 @@ class SyncthingClient(SyncthingFacade):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = True
     self.adapter.set_config(kdr_config)
+
     syncthing_config = self.get_config()
-    syncthing_config['gui']['address'] = '0.0.0.0:8384'
+    config_path = self.adapter.st_conf_file
+    address = self.adapter.get_gui_address(config_path)
+    port = address.split(':')[1]
+    syncthing_config['gui']['address'] = "0.0.0.0:%s" % port
     self.set_config(syncthing_config)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
@@ -416,8 +412,12 @@ class SyncthingClient(SyncthingFacade):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
+
     syncthing_config = self.get_config()
-    syncthing_config['gui']['address'] = '127.0.0.1:8384'
+    config_path = self.adapter.st_conf_file
+    address = self.adapter.get_gui_address(config_path)
+    port = address.split(':')[1]
+    syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
     self.set_config(syncthing_config)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
@@ -484,9 +484,6 @@ class SyncthingClient(SyncthingFacade):
       local_path=local_path,
       remote_path=remote_folder['path'] 
     )
-
-    self.restart()
-
     return label
 
   def acknowledge(self, **kwargs):
@@ -546,7 +543,7 @@ class SyncthingClient(SyncthingFacade):
       api_key = ''
 
     # Save folder data into kdr config
-    self.adapter.update_config({
+    self.adapter.set_dir_config({
       'device_id' : device_id,
       'api_key' : api_key,
       'label' : kwargs['label'],
@@ -555,12 +552,13 @@ class SyncthingClient(SyncthingFacade):
       'is_shared' : True
     }) 
 
-    return self.set_config(config)
+    self.set_config(config)
+    self.restart()
 
   def hostname(self):
     return socket.gethostname()
 
-  def unlink(self, local_path):
+  def free(self, local_path):
     '''
       Stop synchroinzation of local_path
     '''
@@ -638,7 +636,7 @@ class SyncthingClient(SyncthingFacade):
     
     dir_config = self.adapter.get_dir_config(path)
     dir_config['label'] = name
-    self.adapter.update_config(dir_config)
+    self.adapter.set_dir_config(dir_config)
 
     self.set_config(config)
     self.restart
@@ -910,32 +908,23 @@ class SyncthingProxy(SyncthingFacade):
   def disconnect(self):
     return
 
-syncthing_linux = None
-syncthing_mac = None
-syncthing_win = None
 
-if platform.system() == "Linux" or platform.system() == "Linux2":
-  syncthing_linux = SyncthingClient(
-    platform_adapter.SyncthingLinux64()
-  ) # Linux
-elif platform.system() == "Darwin":
-  syncthing_mac = SyncthingClient(
-    platform_adapter.SyncthingMac64()
-  ) # MacOSX
-elif platform.system() == "Windows":
-  syncthing_win = SyncthingClient(
-    platform_adapter.SyncthingWin64()
-  ) # TODO: Windows
+def get_handler(home=None):
+  
+  system = platform.system()
 
-def get_handler():
-  handler = {
-    'Linux' : syncthing_linux,
-    'Darwin' : syncthing_mac,
-    'Windows' : syncthing_win
-  }.get(platform.system(), None)
+  if system == "Linux":
+    return SyncthingClient(
+      platform_adapter.SyncthingLinux64(home)
+    ) # Linux
+  elif system == "Darwin":
+    return SyncthingClient(
+      platform_adapter.SyncthingMac64()
+    ) # MacOSX
+  elif system == "Windows":
+    return SyncthingClient(
+      platform_adapter.SyncthingWin64()
+    ) # TODO: Windows
 
-  if not handler:
-    raise Exception("%s is not currently supported." % platform.system())
-
-  return handler
+  raise Exception("%s is not currently supported." % system)
 

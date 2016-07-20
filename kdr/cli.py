@@ -21,12 +21,12 @@ def main(ctx):
 @main.command()
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
-@click.option('-l', '--list', is_flag=True, help="List KodeDrive status.")
-@click.option('-i', '--init', is_flag=True, help="Initialize KodeDrive daemon.")
+@click.option('-a', '--about', is_flag=True, help="List KodeDrive information.")
+@click.option('-i', '--init', is_flag=True, help="Init KodeDrive daemon.")
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
 @click.option('-t', '--test', help="Test random functions :)")
 def sys(**kwargs):
-  ''' Manage application administration. '''
+  ''' Manage application configuration. '''
 
   output = cli_syncthing_adapter.sys(**kwargs)
 
@@ -92,7 +92,8 @@ def ls():
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
-  '-t', '--tag', nargs=1, metavar="<TEXT>", 
+  '-t', '--tag', nargs=1, 
+  metavar=" <TEXT>", 
   help="Associate this folder with a tag."
 )
 @click.option(
@@ -101,12 +102,25 @@ def ls():
   default=".", nargs=1, metavar="<PATH>",
   help="Specify which folder to link."
 )
-def link(key, tag, path):
+@click.option(
+  '-y', '--yes', nargs=1, is_flag=True,
+  default=False,
+  help="Bypass confirmation step."
+)
+def link(**kwargs):
   ''' Synchronize remote/local directory. '''
-
-  if click.confirm("Are you sure you want to link %s?" % path):
+  
+  key = kwargs['key']
+  tag = kwargs['tag'] if 'tag' in kwargs else None
+  path = kwargs['path']
+  
+  if kwargs['yes']:
     output = cli_syncthing_adapter.link(key, tag, path)
     click.echo("%s" % output)
+  else:
+    if click.confirm("Are you sure you want to link %s?" % path):
+      output = cli_syncthing_adapter.link(key, tag, path)
+      click.echo("%s" % output)
 
 ''' 
   *** Make the catch more specific 
@@ -156,7 +170,7 @@ def add(**kwargs):
 def free(**kwargs):
   ''' Stop synchronization of directory. '''
 
-  output = cli_syncthing_adapter.unlink(kwargs['path'])
+  output = cli_syncthing_adapter.free(kwargs['path'])
   click.echo("%s" % output)
 
 @main.command()
@@ -228,11 +242,22 @@ def auth(path, key):
   output = cli_syncthing_adapter.auth(path, key)
   click.echo("%s" % output)  
 
-
-  return
-
 """
 REFERENCE
+
+@main.command()
+@click.option(
+  '-p', '--port', nargs=1, 
+  type=int
+)
+@click.option(
+  '-c', '--config', nargs=1, 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+)
+def start(**kwargs):
+  ''' Start a KodeDrive instance. '''
+  output = cli_syncthing_adapter.start(**kwargs)
+  click.echo("%s" % output)  
 
 @main.command()
 @click.argument(

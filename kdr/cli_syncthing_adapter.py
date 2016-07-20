@@ -1,4 +1,5 @@
-import custom_errors
+from data import custom_errors
+from utils import config_rollbacker as rb
 import syncthing_factory as factory
 
 import json, os
@@ -16,8 +17,8 @@ class SystemFactory:
         return 'KodeDrive has successfully started.'
     else:
       return 'KodeDrive has already been started.' 
-  
-  def list(self):
+
+  def about(self):
     kdr_config = self.handler.adapter.get_config()
     is_server = kdr_config['system']['server']
     
@@ -62,54 +63,62 @@ class SystemFactory:
 def link(key, tag, path):
   handler = factory.get_handler()
 
-  #try:
+  # Save application state in case of error
+  app_rb = rb.AppRollbacker(handler)
+  st_rb = rb.SyncthingRollbacker(handler)
 
-  if not handler.ping():
-    raise custom_errors.CannotConnect()
+  try:
 
-  md = handler.decode_key(key)
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+    
+    md = handler.decode_key(key)
 
-  if not md:
+    if not md:
       raise KeyError('Invalid Key.')
+    
+    device_id = md['devid']
 
-  device_id = md['devid']
+    if 'remote_path' in md and 'api_key' in md:
+      remote_path = md['remote_path']
+      api_key = md['api_key']
+      tag = handler.link(
+        device_id=device_id,
+        api_key=api_key, 
+        tag=tag, 
+        local_path=path,
+        remote_path=remote_path
+      )
+    elif 'label' in md and 'folder_id' in md and 'hostname' in md:
+      label = md['label']
+      hostname = md['hostname']
+      folder_id = md['folder_id']
+      tag = (tag or label)
 
-  if 'remote_path' in md and 'api_key' in md:
-    remote_path = md['remote_path']
-    api_key = md['api_key']
-    tag = handler.link(
-      device_id=device_id,
-      api_key=api_key, 
-      tag=tag, 
-      local_path=path,
-      remote_path=remote_path
-    )
-  elif 'label' in md and 'folder_id' in md and 'hostname' in md:
-    label = md['label']
-    hostname = md['hostname']
-    folder_id = md['folder_id']
-    tag = (tag or label)
+      handler.acknowledge(
+        device_id=device_id,
+        hostname=hostname,
+        label=tag,
+        r_folder_id=folder_id,
+        local_path=path
+      )
 
-    handler.acknowledge(
-      device_id=device_id,
-      hostname=hostname,
-      label=tag,
-      r_folder_id=folder_id,
-      local_path=path
-    )
-
-  return "%s (%s) is now being synchronized." % (path, tag)
-  #except Exception as e:
-  #  return e.message
+    return "%s (%s) is now being synchronized." % (path, tag)
+  except KeyError as e:
+    return e.message
+  except Exception as e:
+    app_rb.rollback_config()
+    st_rb.rollback_config()
+    return e.message
 
 SystemSingleton = SystemFactory()
 def sys(**kwargs):
   
   sub_handlers = {
+    'about' : SystemSingleton.about,
     'client' : SystemSingleton.client,
     'exit' : SystemSingleton.exit,
     'init' : SystemSingleton.init,
-    'list' : SystemSingleton.list,
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test
   }
@@ -141,16 +150,22 @@ def refresh(**kwargs):
   except IOError as e:
     return e.message
 
-def unlink(path):
+def free(path):
   handler = factory.get_handler()
-  
+
+  # Save application state in case of error
+  app_rb = rb.AppRollbacker(handler)
+  st_rb = rb.SyncthingRollbacker(handler)
+
   try:
     if not handler.ping():
       raise custom_errors.CannotConnect()
-
-    handler.unlink(path)
+    
+    handler.free(path)
     return "%s is no longer being synchronized." % path
   except Exception as e:
+    app_rb.rollback_config()
+    st_rb.rollback_config()
     return e.message
 
 def tag(path, name):
