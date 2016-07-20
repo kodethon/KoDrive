@@ -329,13 +329,21 @@ class SyncthingLinux64(PlatformBase):
 
 class SyncthingMac64(PlatformBase): 
 
-  syncthing_conf = 'Library/Application Support/Syncthing/config.xml'
-  app_conf_dir  = '.config/kdr'
+  rel_st_conf_dir = 'Library/Application Support/Syncthing'
+  rel_app_conf_dir  = '.config/kdr'
 
-  def __init__(self):
-    self.home_dir = os.path.expanduser('~')
-    self.app_conf_dir = os.path.join(self.home_dir, self.app_conf)
-    self.app_conf_file = os.path.join(self.app_conf_dir, self.config)
+  def __init__(self, home=None):
+    
+    if home:
+      self.home_dir = home
+    else:
+      self.home_dir = os.path.expanduser('~')
+
+    self.app_conf_dir = os.path.join(self.home_dir, self.rel_app_conf_dir)
+    self.app_conf_file = os.path.join(self.app_conf_dir, self.app_config)
+
+    self.st_conf_dir = os.path.join(self.home_dir, self.rel_st_conf_dir)
+    self.st_conf_file = os.path.join(self.st_conf_dir, self.st_config)
     
     if not os.path.exists(self.app_conf_file):
       self.create_config(self.app_conf_file)
@@ -350,7 +358,7 @@ class SyncthingMac64(PlatformBase):
 
         for key in self.default_config:
           if key not in config:
-            config[key] = self.config_sect[key]
+            config[key] = self.default_config[key]
             updated = True
         
         if updated:
@@ -358,51 +366,29 @@ class SyncthingMac64(PlatformBase):
 
   @property
   def config_path(self):
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, self.app_conf_dir)
-    config_path = os.path.join(folder_path, self.app_config)
-    return config_path
+    return self.app_conf_file
     
-  def set_dir_config(self, object):
-    self.set_platform_dir_config(self.app_conf_dir, object)
-
   def get_config(self):
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, self.app_conf)
-    config_path = os.path.join(folder_path, self.config)
-    return self.get_platform_config(config_path)
+    return self.get_platform_config(self.app_conf_file)
 
   def set_config(self, config):
     return self.set_platform_config(self.app_conf_file, config)
 
-  def get_dir_config(self, local_path):
+  def get_dir_config(self, object):
     '''
       Return dir object specified by local path from config.json
     '''
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, self.app_conf_dir)
-    config_path = os.path.join(folder_path, self.app_config) 
-    
-    return self.get_platform_dir_config(config_path, local_path)
+    return self.get_platform_dir_config(self.app_conf_file, local_path)
 
-  # Should be changed to update_dir_config
-  def update_config(self, object):
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, self.app_conf)
+  def set_dir_config(self, local_path):
+    self.set_platform_dir_config(self.app_conf_dir, object)
 
-    self.update_platform_config(folder_path, object)
-
+  # Syncthing methods
   def get_gui_hook(self):
-    home_dir = os.path.expanduser('~')
-    config_path = os.path.join(home_dir, self.syncthing_conf)
-    
-    return self.get_platform_gui_hook(config_path)
+    return self.get_platform_gui_hook(self.st_conf_file)
 
   def get_device_id(self):
-    home_dir = os.path.expanduser('~')
-    config_path = os.path.join(home_dir, self.syncthing_conf)
-
-    return self.get_platform_device_id(config_path)
+    return self.get_platform_device_id(self.st_conf_file)
 
   def get_syncthing_path(self):
     dest = '/usr/local' # external applications folder
@@ -427,34 +413,29 @@ class SyncthingMac64(PlatformBase):
 
   def start_syncthing(self, folder_path):   
     
-    # Keep for reference
-    #os.environ['KDR_CONFIG_PATH'] = self.config_path
-
-    home_dir = os.path.expanduser('~')
-    syncthing_conf_path = os.path.join(home_dir, self.syncthing_conf)
     new_flag = False
 
-    command = os.path.join(folder_path, self.binary)
-    opts = [command, '-no-browser']
+    command = os.path.join(folder_path, self.st_binary)
+    opts = [command, '-no-browser', '-home', self.st_conf_dir]
 
-    if not os.path.exists(syncthing_conf_path):
+    if not os.path.exists(self.st_conf_file):
       new_flag = True
     else:  
-      gui_address = self.get_gui_address(syncthing_conf_path)
-      opts = [command, '-no-browser', '-gui-address', gui_address]
+      gui_address = self.get_gui_address(self.st_conf_file)
+      opts.append('-gui-address')
+      opts.append(gui_address)
 
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
-
+    
     return new_flag
 
   def delete_default_folder(self):
     home_dir = os.path.expanduser('~')
     sync_folder = os.path.join(home_dir, 'Sync')
-    syncthing_conf_path = os.path.join(home_dir, self.syncthing_conf)
     self.delete_platform_folder(
       folder_path=sync_folder, 
-      config_path=syncthing_conf_path,
+      config_path=self.st_conf_file,
       force_config=True
     )
 
