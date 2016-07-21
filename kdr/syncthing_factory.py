@@ -564,6 +564,7 @@ class SyncthingClient(SyncthingFacade):
     '''
 
     dir_config = self.adapter.get_dir_config(local_path)
+    r_device_id = None
     
     if not dir_config:
       raise custom_errors.FileNotInConfig(local_path)
