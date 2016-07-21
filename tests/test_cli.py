@@ -18,6 +18,21 @@ mock = {
 def runner():
   return CliRunner()
 
+def wait_restart():
+  while not client.ping():  
+    time.sleep(0.5)
+  '''
+  for i in range(0,25):
+    if client.ping():
+      break
+    else:
+      if i == 24:
+        print 'Could not detect KDR.'
+        assert False
+      else:
+        time.sleep(0.5)
+  '''
+
 def test_system_init(runner):
   result = runner.invoke(cli.sys, ['-i'])
 
@@ -53,9 +68,8 @@ def test_system_server(runner):
   assert True 
 
 def test_system_client(runner):
-
-  while not client.ping():
-    time.sleep(0.5)
+      
+  wait_restart() 
 
   result = runner.invoke(cli.sys, ['-c'])
 
@@ -83,8 +97,7 @@ def test_system_client(runner):
 
 def test_link_server(runner):
   
-  while not client.ping():
-    time.sleep(0.5)
+  wait_restart() 
 
   if not os.path.exists(mock['src']):
     assert False
@@ -95,9 +108,7 @@ def test_link_server(runner):
     print result.exception
     assert False
 
-  while not client.ping():
-    time.sleep(0.5)
-  
+  wait_restart() 
   config = client.get_config()
 
   # Check if src metadata was inserted
@@ -107,6 +118,7 @@ def test_link_server(runner):
 
   if not folder:
     print "%s was not inserted into config['folders']" % mock['src']
+    print config
     assert False
   
   mock['folder_id'] = folder['id']
@@ -154,17 +166,18 @@ def test_link_server(runner):
 
 def test_free_server(runner):
 
-  while not client.ping():
-    time.sleep(0.25)
-  
+  wait_restart() 
   result = runner.invoke(cli.free, [mock['src']])
 
   if result.exception:
     print result.exception
     assert False
-
-  while not client.ping():
-    time.sleep(0.25) 
+    
+  for i in range(0,25):
+    if client.ping():
+      break
+    else:
+      time.sleep(0.5)
 
   config = client.get_config()
 
@@ -212,8 +225,6 @@ def test_free_server(runner):
     assert False
 
   assert True
-
-
 
 
 '''

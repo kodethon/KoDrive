@@ -34,9 +34,9 @@ class SyncthingFacade():
         
   def set_config(self, config):
     return self.sync.sys.set.config(config)
-
+    
   def restart(self):
-    self.sync.sys.set.restart();
+    self.sync.sys.set.restart()
 
   def scan(self, path):
   
@@ -71,28 +71,28 @@ class SyncthingFacade():
     path = self.adapter.get_syncthing_path()
     is_new = self.adapter.start_syncthing(path)
 
-    for i in range(0, 5):
-      
+    for i in range(0, 10):
+      if not is_new:
+        break
+
       try:
-        if is_new:
-          # The order in which this is done is important!
-          # make_client can undo the changes of delete_default_folder
-          # if syncthing has not been restart :(
-          self.sync = self.adapter.get_gui_hook()
-          self.make_client()
-          self.adapter.delete_default_folder()
-          is_new = False
-          break
+        # The order in which this is done is important!
+        # make_client can undo the changes of delete_default_folder
+        # if syncthing has not been restart :(
+        self.sync = self.adapter.get_gui_hook()
+        self.make_client()
+        self.adapter.delete_default_folder()
+        is_new = False
       except Exception as e:
         pass
 
-      time.sleep(1)
+      time.sleep(0.5)
 
-    for i in range(0, 5):
+    for i in range(0, 10):
       if self.ping():
         return True
       else:
-        time.sleep(1)
+        time.sleep(0.5)
 
     return False
 
@@ -568,12 +568,13 @@ class SyncthingClient(SyncthingFacade):
     if not dir_config:
       raise custom_errors.FileNotInConfig(local_path)
     
+    r_device_id = dir_config['device_id']
+
     # If the folder was shared, remove data from remote 
     if dir_config['is_shared']:
 
       # Process remote
       r_api_key = dir_config['api_key']
-      r_device_id = dir_config['device_id']
       host = self.devid_to_ip(r_device_id, False)
 
       if not host:
@@ -844,6 +845,8 @@ class SyncthingClient(SyncthingFacade):
     return
 
   def test(self, arg): 
+    self.restart()
+    return
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
     api_key = '8854a1a83df049115054c2711a022a955a22abfa'

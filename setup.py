@@ -40,7 +40,7 @@ setup(
             'kdr = kdr.cli:main',
         ],
     },
-    data_files=get_data_files(),
+    #data_files=get_data_files(),
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
         #'Development Status :: 1 - Planning',

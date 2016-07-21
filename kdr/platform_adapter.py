@@ -12,12 +12,13 @@ class PlatformBase(object):
   st_config = 'config.xml'
   st_binary = 'syncthing'
   stfolder = '.stfolder'
-  st_version = '0.13.9'
+  st_version = '0.13.10'
   #st_version = '0.14.0-beta.1'
   default_config = {
     'directories' : {},
     'system' : {
-      'server' : False
+      'server' : False,
+      'restarts' : 0
     }
   }
 
@@ -222,7 +223,7 @@ class SyncthingLinux64(PlatformBase):
   rel_app_conf_dir  = '.config/kdr'
   
   def __init__(self, home=None):
-    
+
     if home:
       self.home_dir = home
     else:
@@ -287,8 +288,10 @@ class SyncthingLinux64(PlatformBase):
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
-      linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
+      #linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
+
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
+      linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
 
       command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -304,7 +307,7 @@ class SyncthingLinux64(PlatformBase):
     new_flag = False
 
     command = os.path.join(folder_path, self.st_binary)
-    opts = [command, '-no-browser', '-home', self.st_conf_dir]
+    opts = [command, '-no-browser', '-home', self.st_conf_dir, '-logfile', '/home/jvlarble/log']
 
     if not os.path.exists(self.st_conf_file):
       new_flag = True
