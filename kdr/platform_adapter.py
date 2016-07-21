@@ -377,13 +377,13 @@ class SyncthingMac64(PlatformBase):
   def set_config(self, config):
     return self.set_platform_config(self.app_conf_file, config)
 
-  def get_dir_config(self, object):
+  def get_dir_config(self, local_path):
     '''
       Return dir object specified by local path from config.json
     '''
     return self.get_platform_dir_config(self.app_conf_file, local_path)
 
-  def set_dir_config(self, local_path):
+  def set_dir_config(self, object):
     self.set_platform_dir_config(self.app_conf_dir, object)
 
   # Syncthing methods
