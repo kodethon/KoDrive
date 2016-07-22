@@ -674,32 +674,19 @@ class SyncthingClient(SyncthingFacade):
 
     source_path = os.path.abspath(source)
     target_path = os.path.abspath(target)
-    config = self.get_config()
+    syncthing_config = self.get_config()
 
-    folders = config['folders']
+    folders = syncthing_config['folders']
+    old_key = self.adapter.get_dir_id(source_path)
+    new_key = self.adapter.get_dir_id(target_path)
     found = False
+    path = None
 
-    # Get remote config.json
-    dir_config = self.adapter.get_dir_config(source_path)
-    
-    if not dir_config:
-      raise custom_errors.FileNotInConfig(source_path)
-    
-    r_api_key = dir_config['api_key']
-    r_device_id = dir_config['device_id']
-    host = self.devid_to_ip(r_device_id, False)
-
-    if not host:
-      raise custom_errors.FileNotInConfig(source_path)
-    
-    remote = SyncthingProxy(r_device_id, host, r_api_key)
-    r_config = remote.get_config()
-    
-    if not 'is_shared' in dir_config:
-        dir_config['is_shared'] = False
-
+    # Modify config.xml
     for f in folders:
       if source_path == os.path.abspath(f['path']):
+
+        f['id'] = new_key
 
         path = source_path[:-len(source)]
         f['path'] = os.path.join(path, target)
@@ -707,89 +694,82 @@ class SyncthingClient(SyncthingFacade):
         if not f['path'][len(f['path']) - 1] == '/':
           f['path'] += '/'
 
-        self.adapter.rename_dir({
-          'device_id' : r_device_id,
-          'api_key' : r_api_key,
-          'label' : r_config['folders'][0]['label'],
-          'local_path' : f['path'].rstrip('/'),
-          'remote_path': r_config['folders'][0]['path'],
-          'is_shared' : dir_config['is_shared']
-        }, source_path, target_path) 
-
+        self.set_config(syncthing_config)
         found = True
         break
 
     if not found and os.path.exists(source_path):
-      custom_errors.FileNotInConfig(source_path)
-      # if not found in config.json, but exists
+      raise custom_errors.FileNotInConfig(source_path)
+      # if not found but exists
 
-    else:
-      os.rename(os.path.join(path, source), os.path.join(path, target))
+    #Modify config.json
+    kdr_config = self.adapter.get_config()
+    
+    try:
+      kdr_config['directories'][new_key] = kdr_config['directories'][old_key]
+      del kdr_config['directories'][old_key]
+    except:
+      raise custom_errors.InvalidKey(old_key)
+      
+    if kdr_config['directories'][new_key]['local_path'] == source_path:
+
+      kdr_config['directories'][new_key]['local_path'] = target_path
+      shutil.move(source_path, os.path.join(path, target))
+      shutil.rmtree(source_path, ignore_errors=True)
       # renames directories in client's local environment
 
-      self.set_config(config)
+      self.adapter.set_config(kdr_config)
     
     self.restart()
     return
 
   def move(self, source, target):
     target_path = os.path.abspath(target)
-    config = self.get_config()
-    folders = config['folders']
+    syncthing_config = self.get_config()
+    folders = syncthing_config['folders']
+    kdr_config = self.adapter.get_config()
+    found = False
 
+    # Modify config.xml
     for item in source:
       item_path = os.path.abspath(item)
       item_path.rstrip('/')
+      found = False
 
       for f in folders:
         if f['path'] == item_path + '/':
 
-          # Get remote config.json
-          source_path = item_path
-          dir_config = self.adapter.get_dir_config(source_path)
-
-          if not dir_config:
-            raise custom_errors.FileNotInConfig(source_path)
-
-          r_api_key = dir_config['api_key']
-          r_device_id = dir_config['device_id']
-          host = self.devid_to_ip(r_device_id, False)
-
-          if not host:
-            raise custom_errors.FileNotInConfig(source_path)
-
-          remote = SyncthingProxy(r_device_id, host, r_api_key)
-          r_config = remote.get_config()
-
+          old_key = self.adapter.get_dir_id(item_path)
           reduced_item = item.rstrip('/')
           reduced_item = os.path.basename(reduced_item)
-
           final_path = os.path.join(target_path, reduced_item)
           f['path'] = final_path
 
+          new_key = self.adapter.get_dir_id(final_path)
+          f['id'] = new_key
+
           if not f['path'][len(f['path']) - 1] == '/':
             f['path'] += '/'
-            # set config.xml
 
-          if not 'is_shared' in dir_config:
-            dir_config['is_shared'] = False
+          self.set_config(syncthing_config)
 
-          self.adapter.rename_dir ({
-            'device_id' : r_device_id,
-            'api_key' : r_api_key,
-            'label' : r_config['folders'][0]['label'],
-            'local_path' : final_path.rstrip('/'),
-            'remote_path': r_config['folders'][0]['path'],
-            'is_shared' : dir_config['is_shared']
-          }, source_path, final_path) 
-          # set config.json
+          # Modify config.json
+          try:
+            kdr_config['directories'][new_key] = kdr_config['directories'][old_key]
+            del kdr_config['directories'][old_key]
+          except:
+            raise custom_errors.InvalidKey(old_key)
 
+          if kdr_config['directories'][new_key]['local_path'] == item_path:
+            kdr_config['directories'][new_key]['local_path'] = final_path
+            self.adapter.set_config(kdr_config)
+
+          found = True
           break
 
-      shutil.move(os.path.abspath(item), target_path)
+      shutil.move(item_path, final_path)
       # move into target
 
-    self.set_config(config)
     self.restart()
     return
 

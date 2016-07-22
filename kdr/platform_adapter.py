@@ -180,43 +180,6 @@ class PlatformBase(object):
 
             return tree
 
-  def rename_dir(self, object, source_path, target_path):
-    source_path = source_path.rstrip('/')
-    target_path = target_path.rstrip('/')
-    home_dir = os.path.expanduser('~')
-    folder_path = os.path.join(home_dir, '.config/kdr')
-    metadata = self.create_dir_metadata(object)
-    record = self.create_dir_record(object, metadata)
-    config_path = os.path.join(folder_path, self.app_config)
-
-    with open(config_path, "r+") as f:
-      raw = f.read()
-      f.seek(0)
-        
-      if len(raw) > 0:
-
-        try:
-          config = json.loads(raw)
-        except Exception as e:
-          raise IOError("Corrupted config.json file in %s" % folder_path)
-
-        try:
-          del config['directories'][self.get_dir_id(source_path)]
-        except:
-          custom_errors.InvalidKey(self.get_dir_id(source_path))
-
-        name = self.get_dir_id(target_path)
-        config['directories'][name] = metadata
-        # deletes old element, adds new element with different name and path
-
-        f.write(json.dumps(config))
-        f.truncate()
-
-        # TODO: Should handle corrupt config files later
-
-      else:
-        config = self.create_config(folder_path, directories=record)
-
 class SyncthingLinux64(PlatformBase): 
   
   rel_st_conf_dir = '.config/syncthing'
