@@ -67,34 +67,27 @@ class SyncthingFacade():
 
     return res['completion']
   
-  def start(self):    
+  def start(self, port=None):    
     path = self.adapter.get_syncthing_path()
     is_new = self.adapter.start_syncthing(path)
+    
+    # If is new, initialize config file
+    if is_new:
+      for i in range(0, 10):
+        try:
+          # The order in which this is done is important!
+          # make_client can undo the changes of delete_default_folder
+          # if syncthing has not been restart :(
+          self.sync = self.adapter.get_gui_hook()
+          self.make_client(port)
+          self.adapter.delete_default_folder()
+          break
+        except Exception as e:
+          pass
 
-    for i in range(0, 10):
-      if not is_new:
-        break
-
-      try:
-        # The order in which this is done is important!
-        # make_client can undo the changes of delete_default_folder
-        # if syncthing has not been restart :(
-        self.sync = self.adapter.get_gui_hook()
-        self.make_client()
-        self.adapter.delete_default_folder()
-        is_new = False
-      except Exception as e:
-        pass
-
-      time.sleep(0.5)
-
-    for i in range(0, 10):
-      if self.ping():
-        return True
-      else:
         time.sleep(0.5)
 
-    return False
+    return True if self.wait_start(0.5, 10) else False
 
   def shutdown(self):
     try:
@@ -144,16 +137,21 @@ class SyncthingFacade():
     return "".join(key.split())
   
 # UTILS
-  
-  def wait(self, callback=None, tick=10):
+
+  def wait_start(self, t, intervals, callback=None):
     count = 0
 
-    while not self.ping() and count <= tick:
+    while not self.ping() and count < intervals:
+      time.sleep(t)
+      count += 1
+    
+    if count < intervals:
       if callback:
         callback()
 
-      time.sleep(1)
-      count += 1
+      return True
+    else:
+      return False
 
   def decode_key(self, encoded_key):
 
@@ -194,7 +192,7 @@ class SyncthingFacade():
 
         else:
           address = discovery[devid]['addresses']
-
+            
           for e in address:
             if 'tcp://' in e:
               href = e
@@ -264,7 +262,7 @@ class SyncthingFacade():
         device_id = d['deviceID']
       else:
         device_id = d['deviceId']
-      
+
       if device_id == client_devid:
         return d
 
@@ -300,6 +298,8 @@ class SyncthingFacade():
     for i, f in enumerate(folders):
       if path.rstrip('/') == f['path'].rstrip('/'):
         del folders[i]
+        print config['folders'] 
+        print 'UHHH WAT'
         return True
 
     return False
@@ -307,7 +307,7 @@ class SyncthingFacade():
   def find_folder(self, object, config=None):
     
     if not config:
-        config = self.get_config()
+      config = self.get_config()
     
     # list of folders
     folders = config['folders']
@@ -394,30 +394,38 @@ class SyncthingClient(SyncthingFacade):
 
     return True
 
-  def make_server(self):
+  def make_server(self, port=None):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = True
     self.adapter.set_config(kdr_config)
 
     syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
-    address = self.adapter.get_gui_address(config_path)
-    port = address.split(':')[1]
-    syncthing_config['gui']['address'] = "0.0.0.0:%s" % port
+
+    if not port:
+      address = self.adapter.get_gui_address(config_path)
+      port = address.split(':')[1]
+
+    syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
+
     self.set_config(syncthing_config)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
 
-  def make_client(self):
+  def make_client(self, port=None):
     kdr_config = self.adapter.get_config()
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
 
     syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
-    address = self.adapter.get_gui_address(config_path)
-    port = address.split(':')[1]
+
+    if not port:
+      address = self.adapter.get_gui_address(config_path)
+      port = address.split(':')[1]
+
     syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
+
     self.set_config(syncthing_config)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
@@ -436,17 +444,17 @@ class SyncthingClient(SyncthingFacade):
          wants to connect to it.
 
       Args:
-        key(str): remote deviceId@apiKey used to identify src
-        name(str): user defined name associating key 
-        path(str): path to folder user wants to sync
+        device_id(str): ID to uniquely identify remote device
+        api_key(str): key to access remote device API
+        local_path(str): path to folder user wants to sync to
+        remote_path(str): path to folder user wants to sync from
     
-      returns tag
+      returns label AKA tag
 
     """
     
     device_id = kwargs['device_id']
     api_key = kwargs['api_key']
-    label = kwargs['tag']
     local_path = kwargs['local_path']
     remote_path = kwargs['remote_path']
 
@@ -461,20 +469,28 @@ class SyncthingClient(SyncthingFacade):
       self.set_config(config)
       self.restart()
     
-    host = self.devid_to_ip(device_id)
+    if 'remote_host' in kwargs:
+      host = kwargs['remote_host']
+    else:
+      host = self.devid_to_ip(device_id)
 
     # Request remote to share its folder with us
-    remote = SyncthingProxy(device_id, host, api_key)
+    remote = SyncthingProxy(
+      device_id, host, api_key, 
+      port=kwargs['remote_port'] if 'remote_port' in kwargs else None
+    )
     remote_config = remote.request_folder(
       self.hostname(),    
       self.get_device_id()
     )
     # *** Should be more dynamic in the future
     remote_folder = remote_config['folders'][0] 
-    label = label or remote_folder['label']
+    label = kwargs['tag'] if 'tag' in kwargs else remote_folder['label']
     global_remote_folder = remote_folder['path']
     
     # Save the folder data into syncthing config
+
+    self.wait_start(0.5, 10) # Wait for the self.restart
     self.acknowledge(
       device_id=device_id,
       api_key = api_key,
@@ -482,7 +498,9 @@ class SyncthingClient(SyncthingFacade):
       folder_obj=remote_folder, 
       label=label,
       local_path=local_path,
-      remote_path=remote_folder['path'] 
+      remote_path=remote_folder['path'],
+      host=remote.host,
+      port=remote.port
     )
     return label
 
@@ -549,7 +567,9 @@ class SyncthingClient(SyncthingFacade):
       'label' : kwargs['label'],
       'local_path' : kwargs['local_path'],
       #'remote_path': kwargs['remote_path'],
-      'is_shared' : True
+      'is_shared' : True,
+      'host' : kwargs['host'] if 'host' in kwargs else None,
+      'port' : kwargs['port'] if 'port' in kwargs else None
     }) 
 
     self.set_config(config)
@@ -565,23 +585,27 @@ class SyncthingClient(SyncthingFacade):
 
     dir_config = self.adapter.get_dir_config(local_path)
     r_device_id = None
-    
+
     if not dir_config:
       raise custom_errors.FileNotInConfig(local_path)
     
     r_device_id = dir_config['device_id']
-
+  
     # If the folder was shared, remove data from remote 
     if dir_config['is_shared']:
-
+      
       # Process remote
       r_api_key = dir_config['api_key']
-      host = self.devid_to_ip(r_device_id, False)
-
-      if not host:
-        raise custom_errors.FileNotInConfig(local_path)
       
-      remote = SyncthingProxy(r_device_id, host, r_api_key)
+      if dir_config['host']:
+        host = dir_config['host']
+      else:
+        host = self.devid_to_ip(r_device_id, False)
+
+      remote = SyncthingProxy(
+        r_device_id, host, r_api_key,
+        port=dir_config['port'] if 'port' in dir_config else None
+      )
       r_config = remote.get_config()
 
       del_device = remote.delete_device_from_folder(
@@ -600,6 +624,11 @@ class SyncthingClient(SyncthingFacade):
     config = self.get_config()
     del_folder = self.delete_folder(local_path, config)
     del_device = self.delete_device(r_device_id, config)
+    print 'hi'
+    print local_path
+    print config['folders']
+    self.set_config(config)
+    self.restart()
 
     # App config
     kdr_config = self.adapter.get_config()
@@ -612,8 +641,6 @@ class SyncthingClient(SyncthingFacade):
     
     # All good, commit
     self.adapter.set_config(kdr_config)
-    self.set_config(config)
-    self.restart()
 
     return True
 
@@ -867,26 +894,30 @@ class SyncthingClient(SyncthingFacade):
 
 class SyncthingProxy(SyncthingFacade):
 
-  remote_port = 8384
+  port = 8384
 
-  def __init__(self, device_id, host, api_key):
+  def __init__(self, device_id, host, api_key, **kwargs):
     SyncthingFacade.__init__(self)
-
+    
     if not host:
-      raise IOError('Could not find remote host.')
+      host = '0.0.0.0' 
+
+    if 'port' in kwargs and kwargs['port']:
+      self.port = kwargs['port']   
     
     self.device_id = device_id
     self.host = host
     self.api_key = api_key
+   
     self.sync = Syncthing(
       api_key=api_key, 
-      port=self.remote_port, 
-      host=host
+      host=host,
+      port=self.port
     )
 
     # If remote host can't be detected, throw a tantrum >:/
     if not self.ping():
-      raise IOError('Could not connect to %s:%s.' % (host, self.remote_port))
+      raise IOError('Could not connect to %s:%s.' % (host, self.port))
 
   def hostname(self, config = None):
 

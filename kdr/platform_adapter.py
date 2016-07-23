@@ -17,8 +17,7 @@ class PlatformBase(object):
   default_config = {
     'directories' : {},
     'system' : {
-      'server' : False,
-      'restarts' : 0
+      'server' : False
     }
   }
 
@@ -63,7 +62,7 @@ class PlatformBase(object):
       return None
       
     else:
-      dir_id = self.get_dir_id(local_path.rstrip('/'))
+      dir_id = self.get_dir_id(local_path)
 
       try:
         return config['directories'][dir_id]
@@ -117,7 +116,9 @@ class PlatformBase(object):
       'label' : object['label'],
       'local_path' : object['local_path'],
       'remote_path' : object['remote_path'] if 'remote_path' in object else '',
-      'is_shared' : object['is_shared']
+      'is_shared' : object['is_shared'],
+      'host' : object['host'] if 'host' in object else '',
+      'port' : object['port'] if 'port' in object else ''
     }
 
   def create_dir_record(self, object, metadata):
@@ -153,6 +154,7 @@ class PlatformBase(object):
         config = self.create_config(folder_path, directories=record)
 
   def get_dir_id(self, local_path):
+    local_path = local_path.rstrip('/')
     return hashlib.sha1(local_path).hexdigest()
 
   def delete_platform_folder(self, **kwargs):
@@ -223,7 +225,6 @@ class SyncthingLinux64(PlatformBase):
   rel_app_conf_dir  = '.config/kdr'
   
   def __init__(self, home=None):
-
     if home:
       self.home_dir = home
     else:
@@ -307,15 +308,21 @@ class SyncthingLinux64(PlatformBase):
     new_flag = False
 
     command = os.path.join(folder_path, self.st_binary)
-    opts = [command, '-no-browser', '-home', self.st_conf_dir, '-logfile', '/home/jvlarble/log']
+    log_path = os.path.join(self.st_conf_dir, 'log')
+    opts = [
+        command, '-no-browser', '-logfile', log_path, 
+        '-home', os.path.join(self.st_conf_dir)
+    ]
 
     if not os.path.exists(self.st_conf_file):
       new_flag = True
-    else:  
+    else:
       gui_address = self.get_gui_address(self.st_conf_file)
       opts.append('-gui-address')
       opts.append(gui_address)
-
+    
+    os.environ['HOME'] = os.path.expanduser('~')
+    os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
     
