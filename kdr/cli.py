@@ -223,19 +223,19 @@ def mv(source, target):
 @click.option(
   '-a', '--add', 
   type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
-  default=(None, None), nargs=2, metavar="<PATH>",
+  default=(None, None), nargs=2, metavar="<PATH> <KEY>",
   help="Authorize a directory."
 )
 @click.option(
   '-r', '--remove', 
   type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
-  default=(None, None), nargs=2, metavar="<PATH>",
+  default=(None, None), nargs=2, metavar="<PATH> <KEY>",
   help="Deauthorize a directory."
 )
 @click.option(
   '-ls', '--list', 
   is_flag=True, 
-  help="List all directories that have granted authorization")
+  help="List all devices authorized")
 @click.option(
   '-y', '--yes', nargs=1, is_flag=True,
   default=False,
@@ -280,7 +280,7 @@ def auth(**kwargs):
 
       else:
         return
-        
+
     else:
       output = cli_syncthing_adapter.auth(option, path, device_id)
 

@@ -821,6 +821,7 @@ class SyncthingClient(SyncthingFacade):
       'path' : path
     }, config):
       raise custom_errors.FileNotInConfig(path)
+    # to check if user did 'kdr add <PATH>'
 
     for k in directories:
       f = directories[k]
@@ -853,10 +854,56 @@ class SyncthingClient(SyncthingFacade):
     return
 
   def deauth(self, path, key):
+    path = os.path.abspath(path)
+    kdr_config = self.adapter.get_config()
+    directories = kdr_config['directories']
+    config = self.get_config()
+    devices = config['devices']
+    folders = config['folders']
 
-    return 'deauth'
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    if not self.folder_exists({
+      'path' : path
+    }, config):
+      raise custom_errors.FileNotInConfig(path)
+    # to check if user did 'kdr add <PATH>'
+
+    for k in directories:
+      f = directories[k]
+      
+      if f['local_path']  == path.rstrip('/'):
+        if f['is_shared']:
+          raise custom_errors.PermissionDenied()
+
+    client_devid = {
+      u'deviceID' : key
+    }
+
+    for f in folders:
+      if f['path'] == path:
+        if client_devid in f['devices']:
+          f['devices'].remove(client_devid)
+        break
+    # remove devid from folder if there
+
+    if self.device_exists(key):
+      try:
+        self.delete_device(devid=key, config=config)
+      except:
+        raise custom_errors.DeviceNotFound(key)
+      # remove device to devices
+
+    self.set_config(config)
+    self.restart()
+
+    return
 
   def auth_ls(self, path, key):
+
+    
+
 
     return 'auth_ls'
 
