@@ -220,13 +220,28 @@ def mv(source, target):
     cli_syncthing_adapter.mv(source, target)
 
 @main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
+@click.option(
+  '-a', '--add', 
+  type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
+  default=(None, None), nargs=2, metavar="<PATH>",
+  help="Authorize a directory."
 )
-@click.argument('key', nargs=1)
-def auth(path, key):
+@click.option(
+  '-r', '--remove', 
+  type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
+  default=(None, None), nargs=2, metavar="<PATH>",
+  help="Deauthorize a directory."
+)
+@click.option(
+  '-ls', '--list', 
+  is_flag=True, 
+  help="List all directories that have granted authorization")
+@click.option(
+  '-y', '--yes', nargs=1, is_flag=True,
+  default=False,
+  help="Bypass confirmation step."
+)
+def auth(**kwargs):
   ''' Authorize device synchronization. '''
 
   """
@@ -238,9 +253,43 @@ def auth(path, key):
     4. add device to devices in config.xml, server
 
   """
+  output = None
+  option = None
+  path = None
+  device_id = None
 
-  output = cli_syncthing_adapter.auth(path, key)
-  click.echo("%s" % output)  
+  if all(kwargs['add']): # if tuple doesn't contain all Nones
+    (path, device_id) = kwargs['add']
+    option = 'add'
+
+  elif all(kwargs['remove']):
+    (path, device_id) = kwargs['remove']
+    option = 'remove'
+
+  elif kwargs['list']:
+    option = 'list'
+
+  if kwargs['yes']:
+    output = cli_syncthing_adapter.auth(option, path)
+    click.echo("%s" % output)
+
+  else:
+    if all(kwargs['add']): 
+      if click.confirm("Are you sure you want to authorize %s?" % path):
+        output = cli_syncthing_adapter.auth(option, path, device_id)
+
+      else:
+        return
+        
+    else:
+      output = cli_syncthing_adapter.auth(option, path, device_id)
+
+  if output:
+    click.echo("%s" % output)
+  
+  if not output or not option:
+    click.echo(click.get_current_context().get_help())
+
 
 """
 REFERENCE
