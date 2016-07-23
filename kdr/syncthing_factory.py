@@ -900,12 +900,44 @@ class SyncthingClient(SyncthingFacade):
 
     return
 
-  def auth_ls(self, path, key):
+  def auth_ls(self):
 
-    
+    kdr_config = self.adapter.get_config()
+    directories = kdr_config['directories']
+    config = self.get_config()
+    devices = config['devices']
+    folders = config['folders']
+    length = 0
+    body = str()
+    longest_path = str()
 
+    for f in folders:
+      if len(f['path']) > length:
+        length = len(f['path'])
+        longest_path = f['path']
 
-    return 'auth_ls'
+    length += 5
+
+    header = 'Directory'
+    header = ("{:<%s}" % length).format(header) + 'Devices\n'
+    body += header
+
+    for f in folders:
+      body += ("{:<%s}" % length).format(f['path'])
+
+      for i, val in enumerate(f['devices']):
+        if not val['deviceID'] == self.get_device_id():
+          if i == 0:
+            body += val['deviceID'] + '\n'
+            # if first line
+
+          else:
+            body += ''.ljust(length) + val['deviceID'] + '\n'
+
+    if body.endswith('\n'):
+      body = body[:-1]
+
+    return body
 
   def test(self, arg): 
     self.restart()
