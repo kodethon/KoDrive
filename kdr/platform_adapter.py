@@ -306,7 +306,6 @@ class SyncthingMac64(PlatformBase):
   rel_app_conf_dir  = '.config/kdr'
 
   def __init__(self, home=None):
-    
     if home:
       self.home_dir = home
     else:
@@ -371,6 +370,7 @@ class SyncthingMac64(PlatformBase):
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
+
       mac_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       mac_64_bit_tar = "syncthing-macosx-amd64-v%s.tar.gz" % self.st_version
 
@@ -389,7 +389,11 @@ class SyncthingMac64(PlatformBase):
     new_flag = False
 
     command = os.path.join(folder_path, self.st_binary)
-    opts = [command, '-no-browser', '-home', self.st_conf_dir]
+    log_path = os.path.join(self.st_conf_dir, 'log')
+    opts = [
+      command, '-no-browser', '-logfile', log_path, 
+      '-home', os.path.join(self.st_conf_dir)
+    ]
 
     if not os.path.exists(self.st_conf_file):
       new_flag = True
@@ -398,6 +402,8 @@ class SyncthingMac64(PlatformBase):
       opts.append('-gui-address')
       opts.append(gui_address)
 
+    os.environ['HOME'] = os.path.expanduser('~')
+    os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
     

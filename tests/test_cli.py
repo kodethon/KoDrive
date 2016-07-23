@@ -41,8 +41,11 @@ def test_mv_rename(runner):
     4. if worked, revert and 'kdr free', else False
   """
 
-  source_dir = os.path.join(client.adapter.home_dir, 'Downloads', 'THE_CHOSEN_ONE')
-  target_dir = os.path.join(client.adapter.home_dir, 'Downloads', 'NOT_THE_CHOSEN_ONE')
+  source_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'THE_CHOSEN_ONE')
+  target_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'NOT_THE_CHOSEN_ONE')
+
+  test_system_init(runner)
+  mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(source_dir):
     os.makedirs(source_dir)
@@ -57,24 +60,25 @@ def test_mv_rename(runner):
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
+
   result = runner.invoke(cli.mv, [source_dir, target_dir])
 
   if result.exception:
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(target_dir) or os.path.exists(source_dir):
     print "Failed to rename %s to %s" % (source_dir, target_dir)
     assert False
 
-  syncthing_config = client.get_config()
-  kdr_config = client.adapter.get_config()
+  syncthing_config = mock.client.get_config()
+  kdr_config = mock.client.adapter.get_config()
   folders = syncthing_config['folders']
-  old_key = client.adapter.get_dir_id(source_dir)
-  new_key = client.adapter.get_dir_id(target_dir)
+  old_key = mock.client.adapter.get_dir_id(source_dir)
+  new_key = mock.client.adapter.get_dir_id(target_dir)
   found = False
 
   for f in folders:
@@ -105,7 +109,7 @@ def test_mv_rename(runner):
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
 
   shutil.rmtree(source_dir, ignore_errors=True)
   shutil.rmtree(target_dir, ignore_errors=True)
@@ -120,9 +124,12 @@ def test_mv_move(runner):
     4. if worked, revert and 'kdr free', else False
   """
 
-  source_dir = os.path.join(client.adapter.home_dir, 'Downloads', 'child123123')
-  target_dir = os.path.join(client.adapter.home_dir, 'Downloads', 'parent123123')
-  final_dir = os.path.join(client.adapter.home_dir, 'Downloads', 'parent123123', 'child123123')
+  source_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'child123123')
+  target_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'parent123123')
+  final_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'parent123123', 'child123123')
+
+  test_system_init(runner)
+  mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(source_dir):
     os.makedirs(source_dir)
@@ -144,14 +151,14 @@ def test_mv_move(runner):
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
   result = runner.invoke(cli.mv, [source_dir, target_dir])
 
   if result.exception:
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
 
   if os.path.exists(source_dir):
     print source_dir
@@ -162,11 +169,11 @@ def test_mv_move(runner):
     print "Failed to move %s to %s, %s doesn't exist" % (source_dir, target_dir, final_dir)
     assert False
 
-  syncthing_config = client.get_config()
-  kdr_config = client.adapter.get_config()
+  syncthing_config = mock.client.get_config()
+  kdr_config = mock.client.adapter.get_config()
   folders = syncthing_config['folders']
-  old_key = client.adapter.get_dir_id(source_dir)
-  new_key = client.adapter.get_dir_id(final_dir)
+  old_key = mock.client.adapter.get_dir_id(source_dir)
+  new_key = mock.client.adapter.get_dir_id(final_dir)
   found = False
 
   for f in folders:
@@ -197,7 +204,7 @@ def test_mv_move(runner):
     print result.exception
     assert False
 
-  wait_restart()
+  mock.client.wait_start(0.5, 10)
 
   shutil.rmtree(source_dir, ignore_errors=True)
   shutil.rmtree(target_dir, ignore_errors=True)
