@@ -825,6 +825,14 @@ class SyncthingClient(SyncthingFacade):
       
     return
 
+  def deauth(self, path, key):
+
+    return 'deauth'
+
+  def auth_ls(self, path, key):
+
+    return 'auth_ls'
+
   def test(self, arg): 
     self.restart()
     return
