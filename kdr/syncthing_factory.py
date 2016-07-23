@@ -608,6 +608,10 @@ class SyncthingClient(SyncthingFacade):
       )
       r_config = remote.get_config()
 
+      print host
+      print r_api_key
+      print remote.port
+
       del_device = remote.delete_device_from_folder(
         dir_config['remote_path'],
         self.get_device_id(), 
@@ -975,7 +979,7 @@ class SyncthingProxy(SyncthingFacade):
     self.device_id = device_id
     self.host = host
     self.api_key = api_key
-   
+
     self.sync = Syncthing(
       api_key=api_key, 
       host=host,
@@ -984,6 +988,7 @@ class SyncthingProxy(SyncthingFacade):
 
     # If remote host can't be detected, throw a tantrum >:/
     if not self.ping():
+      print api_key
       raise IOError('Could not connect to %s:%s.' % (host, self.port))
 
   def hostname(self, config = None):

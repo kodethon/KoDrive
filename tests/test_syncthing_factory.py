@@ -135,6 +135,7 @@ def test_link_server():
 
   mock.server.make_server()
   mock.server.wait_start(0.5, 10)
+  mock.client.wait_start(0.5, 10)
   key = mock.server.encode_key(server_sync_dir)
   
   # Run command on mock.client
@@ -214,7 +215,6 @@ def test_free_server():
   mock.client.free(client_sync_dir)
 
   mock.client.wait_start(0.5, 10) 
-  mock.server.wait_start(0.5, 10) 
   config = mock.client.get_config()
 
   # Check if src metadata was deleted
@@ -223,7 +223,7 @@ def test_free_server():
   }, config)
 
   if folder:
-    print "%s was inserted into config['folders']" % client_sync_dir
+    print "%s is still in config['folders']" % client_sync_dir
     assert False
   
   # Check device metadata was deleted
@@ -235,27 +235,24 @@ def test_free_server():
   )
 
   if device:
-    print "This device was inserted into config['devices']."
+    print "This device is still in config['devices']."
     assert False
 
-  config_path = mock.server.adapter.st_conf_file
-  addr = mock.server.adapter.get_gui_address(config_path)
-  toks = addr.split(':')
   remote = factory.SyncthingProxy(
     md['devid'],
-    toks[0],
+    '0.0.0.0',
     md['api_key'],
-    port=toks[1]
+    port=mock.server_conf['port']
   )
 
-  # Check device metadata was inserted locally
+  # Check device metadata was deleted
   device = mock.client.find_device(
     remote.get_device_id(), 
     config
   )
 
-  if not device:
-    print "This device was not inserted into config['devices']."
+  if device:
+    print "This device is still in config['devices']."
     assert False
   
   # Check device metadata was inserted remotely
@@ -265,8 +262,8 @@ def test_free_server():
     r_config
   )
 
-  if not device:
-    print "This device was not inserted into r_config['devices']"
+  if device:
+    print "This device is still in r_config['devices']"
     assert False
   
   # Check device was inserted into folder metadata
@@ -275,8 +272,8 @@ def test_free_server():
   }, r_config)
   device = remote.find_device(mock.client.get_device_id(), r_folder)
   
-  if not device:
-    print "This device could not be found in r_config['folders']['devices']"
+  if device:
+    print "This device is still in r_config['folders']['devices']"
     assert False
 
   assert True
