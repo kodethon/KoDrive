@@ -298,8 +298,6 @@ class SyncthingFacade():
     for i, f in enumerate(folders):
       if path.rstrip('/') == f['path'].rstrip('/'):
         del folders[i]
-        print config['folders'] 
-        print 'UHHH WAT'
         return True
 
     return False
@@ -608,10 +606,6 @@ class SyncthingClient(SyncthingFacade):
       )
       r_config = remote.get_config()
 
-      print host
-      print r_api_key
-      print remote.port
-
       del_device = remote.delete_device_from_folder(
         dir_config['remote_path'],
         self.get_device_id(), 
@@ -628,9 +622,7 @@ class SyncthingClient(SyncthingFacade):
     config = self.get_config()
     del_folder = self.delete_folder(local_path, config)
     del_device = self.delete_device(r_device_id, config)
-    print 'hi'
-    print local_path
-    print config['folders']
+
     self.set_config(config)
     self.restart()
 
@@ -988,7 +980,6 @@ class SyncthingProxy(SyncthingFacade):
 
     # If remote host can't be detected, throw a tantrum >:/
     if not self.ping():
-      print api_key
       raise IOError('Could not connect to %s:%s.' % (host, self.port))
 
   def hostname(self, config = None):

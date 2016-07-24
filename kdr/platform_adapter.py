@@ -245,7 +245,11 @@ class SyncthingLinux64(PlatformBase):
     return self.get_platform_device_id(self.st_conf_file)
 
   def get_syncthing_path(self):
-    dest = '/var/opt'
+    dest = os.path.join(self.home_dir, '.st')
+
+    if not os.path.exists(dest):
+      os.makedirs(dest) 
+
     linux_64_bit_file = "syncthing-linux-amd64-v%s" % self.st_version
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
@@ -261,7 +265,7 @@ class SyncthingLinux64(PlatformBase):
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
       src = dest_tmp
-      command = "sudo tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
+      command = "tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
     return syncthing_path

@@ -146,7 +146,7 @@ def link(**kwargs):
 
 @main.command()
 @click.option(
-  '-t', '--tag', nargs=1, metavar="<TEXT>", 
+  '-t', '--tag', nargs=1, metavar=" <TEXT>", 
   default="my-sync",
   help="Associate this folder with a tag."
 )
@@ -223,7 +223,7 @@ def mv(source, target):
 @click.option(
   '-a', '--add', 
   type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
-  default=(None, None), nargs=2, metavar="<PATH> <KEY>",
+  default=(None, None), nargs=2, metavar="   <PATH> <KEY>",
   help="Authorize a directory."
 )
 @click.option(
@@ -233,7 +233,7 @@ def mv(source, target):
   help="Deauthorize a directory."
 )
 @click.option(
-  '-ls', '--list', 
+  '-l', '--list', 
   is_flag=True, 
   help="List all devices authorized")
 @click.option(

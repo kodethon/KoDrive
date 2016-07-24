@@ -151,17 +151,21 @@ def test_link_server():
   )
 
   mock.client.wait_start(0.5, 10) 
-  config = mock.client.get_config()
 
   # Check if src metadata was inserted
-  folder = mock.client.find_folder({
+  inserted = mock.client.folder_exists({
     'path' : client_sync_dir
-  }, config)
+  })
 
-  if folder == None:
+  if not inserted:
     print "%s was not inserted into config['folders']" % client_sync_dir
     assert False
-  
+
+  config = mock.client.get_config()
+  folder = mock.client.find_folder({
+    'path' : client_sync_dir
+  }, config) 
+
   Cache['folder_id'] = folder['id']
     
   mock.server.wait_start(0.5, 10) # Wait for link remote.restart
