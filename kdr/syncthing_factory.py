@@ -684,7 +684,20 @@ class SyncthingClient(SyncthingFacade):
 
     # For each directory 
     for key, value in dirs.iteritems(): 
-      metadata[0]['Tag'].append(value['label'])
+
+      if value['label']:
+        metadata[0]['Tag'].append(value['label'])
+
+      else:
+        syncthing_config = self.get_config()
+        folders = syncthing_config['folders']
+
+        for f in folders:
+          if value['local_path'] + '/' == f['path']:
+            value['label'] = f['label']
+            metadata[0]['Tag'].append(f['label'])
+      # Edge case: fails if label is None, get label from syncthing_config
+
       metadata[1]['Path'].append(value['local_path'])
 
     return metadata
@@ -821,7 +834,7 @@ class SyncthingClient(SyncthingFacade):
 
     for k in directories:
       f = directories[k]
-      
+
       if f['local_path']  == path.rstrip('/'):
         if f['is_shared']:
           raise custom_errors.PermissionDenied()
@@ -919,19 +932,23 @@ class SyncthingClient(SyncthingFacade):
     body += header
 
     for f in folders:
-      body += ("{:<%s}" % length).format(f['path'])
+      if len(f['devices']) > 1:
+        body += ("{:<%s}" % length).format(f['path'])
 
-      for i, val in enumerate(f['devices']):
-        if not val['deviceID'] == self.get_device_id():
-          if i == 0:
-            body += val['deviceID'] + '\n'
-            # if first line
+        for i, val in enumerate(f['devices']):
+          if not val['deviceID'] == self.get_device_id():
+            if i == 0:
+              body += val['deviceID'] + '\n'
+              # if first line
 
-          else:
-            body += ''.ljust(length) + val['deviceID'] + '\n'
+            else:
+              body += ''.ljust(length) + val['deviceID'] + '\n'
 
     if body.endswith('\n'):
       body = body[:-1]
+
+    if body == header:
+      return None
 
     return body
 

@@ -12,7 +12,7 @@ class PlatformBase(object):
   st_config = 'config.xml'
   st_binary = 'syncthing'
   stfolder = '.stfolder'
-  st_version = '0.13.10'
+  st_version = '0.14.0'
   #st_version = '0.14.0-beta.1'
   default_config = {
     'directories' : {},
@@ -367,7 +367,11 @@ class SyncthingMac64(PlatformBase):
     return self.get_platform_device_id(self.st_conf_file)
 
   def get_syncthing_path(self):
-    dest = '/usr/local' # external applications folder
+    dest = os.path.join(self.home_dir, '.st')
+
+    if not os.path.exists(dest):
+      os.makedirs(dest) 
+
     mac_64_bit_file = "syncthing-macosx-amd64-v%s" % self.st_version
     syncthing_path = os.path.join(dest, mac_64_bit_file)
     

@@ -268,6 +268,10 @@ def auth(**kwargs):
 
   elif kwargs['list']:
     option = 'list'
+    output = cli_syncthing_adapter.auth(option, path, device_id)
+    click.echo("%s" % output)
+
+    return
 
   if kwargs['yes']:
     output = cli_syncthing_adapter.auth(option, path)
