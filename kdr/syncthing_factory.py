@@ -540,7 +540,8 @@ class SyncthingClient(SyncthingFacade):
       local_path=local_path,
       remote_path=remote_folder['path'],
       host=remote.host,
-      port=remote.port
+      port=remote.port,
+      server=True
     )
     return label
 
@@ -609,7 +610,8 @@ class SyncthingClient(SyncthingFacade):
       #'remote_path': kwargs['remote_path'],
       'is_shared' : True,
       'host' : kwargs['host'] if 'host' in kwargs else None,
-      'port' : kwargs['port'] if 'port' in kwargs else None
+      'port' : kwargs['port'] if 'port' in kwargs else None,
+      'server' : kwargs['server'] if 'server' in kwargs else False
     }) 
 
     self.set_config(config)
@@ -632,7 +634,7 @@ class SyncthingClient(SyncthingFacade):
     r_device_id = dir_config['device_id']
   
     # If the folder was shared, remove data from remote 
-    if dir_config['is_shared']:
+    if dir_config['is_shared'] and dir_config['server']:
       
       # Process remote ~~~
       r_api_key = dir_config['api_key']

@@ -195,6 +195,7 @@ def test_link_server():
 
   if not inserted:
     print "This device was not inserted into r_config['devices']"
+    log_configs([r_config])
     assert False
   
   # Check device was inserted into folder metadata
@@ -306,6 +307,10 @@ def test_rollback():
     assert False
 
   assert True
+
+def log_configs(configs):
+  for c in configs:
+    print c
 
 '''
 def test_cli():

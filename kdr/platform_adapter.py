@@ -113,12 +113,21 @@ class PlatformBase(object):
     return {
       'device_id' : device_id,
       'api_key' : object['api_key'],
-      'label' : object['label'],
       'local_path' : object['local_path'],
       'remote_path' : object['remote_path'] if 'remote_path' in object else '',
-      'is_shared' : object['is_shared'],
       'host' : object['host'] if 'host' in object else '',
-      'port' : object['port'] if 'port' in object else ''
+      'port' : object['port'] if 'port' in object else '',
+      
+      # Tag provided by user to identify the dir
+      'label' : object['label'],
+
+      # Denotes whether the dir belongs to the user or 
+      # was linked from a remote device
+      'is_shared' : object['is_shared'],
+
+      # Denotes whether the dir was from a 
+      # device running in client or server mode
+      'server' : object['server'] if 'server' in object else False
     }
 
   def create_dir_record(self, object, metadata):
@@ -261,7 +270,7 @@ class SyncthingLinux64(PlatformBase):
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
       linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
       
-      if not os.path.exists(dest_tmp, linux_64_bit_tar):
+      if not os.path.exists(os.path.join(dest_tmp, linux_64_bit_tar)):
         command = "wget -P %s %s" % (dest_tmp, os.path.join(linux_64_bit_repo, linux_64_bit_tar))
         subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
