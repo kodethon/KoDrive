@@ -971,6 +971,7 @@ class SyncthingClient(SyncthingFacade):
     length = 0
     body = str()
     longest_path = str()
+    first = False
 
     for f in folders:
       if len(f['path']) > length:
@@ -980,26 +981,33 @@ class SyncthingClient(SyncthingFacade):
     length += 5
 
     header = 'Directory'
-    header = ("{:<%s}" % length).format(header) + 'Devices\n'
+    header = '{:<{}s}'.format(header, length) + 'Devices\n'
     body += header
 
     for f in folders:
+      first = False
+
       if len(f['devices']) > 1:
-        body += ("{:<%s}" % length).format(f['path'])
+        body += '{:<{}s}'.format(f['path'], length)
 
         for i, val in enumerate(f['devices']):
+          if i == 0:
+            first = True
+
           if not val['deviceID'] == self.get_device_id():
-            if i == 0:
+            if first:
               body += val['deviceID'] + '\n'
-              # if first line
+              first = False
+              # if first line that contains path
 
             else:
-              body += ''.ljust(length) + val['deviceID'] + '\n'
+              body += '{:>{}s}'.format(val['deviceID'], length + len(val['deviceID'])) + '\n'
+              # every other line, for multiple devices authenticated
 
     if body.endswith('\n'):
       body = body[:-1]
 
-    if body == header:
+    if body + '\n' == header:
       return None
 
     return body
