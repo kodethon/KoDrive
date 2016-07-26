@@ -33,7 +33,8 @@ def sys(**kwargs):
   if output:
     click.echo("%s" % output)
   else:
-    click.echo(click.get_current_context().get_help())
+    if not kwargs['init']:
+      click.echo(click.get_current_context().get_help())
 
 @main.command()
 def ls():

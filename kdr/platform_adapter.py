@@ -261,7 +261,7 @@ class SyncthingLinux64(PlatformBase):
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
       linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
 
-      command = "wget -P %s %s/%s" % (dest_tmp, linux_64_bit_repo, linux_64_bit_tar)
+      command = "wget -P %s %s" % (dest_tmp, os.path.join(linux_64_bit_repo, linux_64_bit_tar))
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
       src = dest_tmp

@@ -48,3 +48,9 @@ class NoFileOrDirectory(KodeDriveError):
     super(KodeDriveError, self).__init__(
       "mv: rename %s to %s: No such file or directory" % (source, target)
     )
+
+class AlreadyAdded(KodeDriveError):
+  def __init__(self):
+    super(KodeDriveError, self).__init__(
+    	'This folder has already been added.'
+    )

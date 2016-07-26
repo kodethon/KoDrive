@@ -285,7 +285,13 @@ class SyncthingFacade():
     for i, f in enumerate(folders):
       if path.rstrip('/') == f['path'].rstrip('/'):
         for n, d in enumerate(f['devices']):
-          if d['deviceID'] == devid:
+
+          if 'deviceID' in d:
+            device_id = d['deviceID']
+          else:
+            device_id = d['deviceId']
+
+          if device_id == devid:
             del folders[i]['devices'][n]
             return True
 
@@ -307,6 +313,12 @@ class SyncthingFacade():
     if not config:
       config = self.get_config()
     
+    if 'path' in object:
+      path = object['path']
+
+      if path[len(path) - 1] != '/':
+        object['path'] += '/'
+
     # list of folders
     folders = config['folders']
     
@@ -322,6 +334,31 @@ class SyncthingFacade():
 
       if n == d:
         return f 
+
+  def device_exists_in_folder(self, path, devid, config=None):
+
+    if not config:
+      config = self.get
+
+    folder = self.find_folder({
+      'path' : path
+    }, config)
+
+    if not folder:
+      return False
+
+    for d in folder['devices']:
+      if 'deviceID' in d:
+        device_id = d['deviceID']
+      else:
+        device_id = d['deviceId']
+
+      if device_id == devid:
+        return True
+
+    return False
+
+    
 
   def folder_exists(self, object, config = None):
     
@@ -459,9 +496,14 @@ class SyncthingClient(SyncthingFacade):
     # Check if the device id is valid
     if 'error' in self.sync.misc.device_id(id=device_id):
       raise KeyError('Invalid Key.')
-    
+
     config = self.get_config()
     
+    if self.folder_exists({
+      'path' : local_path
+    }):
+      raise custom_errors.AlreadyAdded()
+
     if not self.device_exists(device_id):
       self.new_device(config=config, device_id=device_id)
       self.set_config(config)
@@ -578,7 +620,7 @@ class SyncthingClient(SyncthingFacade):
 
   def free(self, local_path):
     '''
-      Stop synchroinzation of local_path
+      Stop synchronization of local_path
     '''
 
     dir_config = self.adapter.get_dir_config(local_path)
@@ -592,7 +634,7 @@ class SyncthingClient(SyncthingFacade):
     # If the folder was shared, remove data from remote 
     if dir_config['is_shared']:
       
-      # Process remote
+      # Process remote ~~~
       r_api_key = dir_config['api_key']
       
       if dir_config['host']:
@@ -616,17 +658,27 @@ class SyncthingClient(SyncthingFacade):
       remote.set_config(r_config)
       remote.restart()
     
-    # Process local
+    # Process local ~~~
 
-    # Syncthing config
+    # 1. Syncthing config
     config = self.get_config()
     del_folder = self.delete_folder(local_path, config)
-    del_device = self.delete_device(r_device_id, config)
 
+    # Check whether folders are still connected to this device 
+    device_exists = False
+
+    for f in config['folders']:
+      if self.device_exists(r_device_id, f):
+        device_exists = True
+    
+    if not device_exists:
+      del_device = self.delete_device(r_device_id, config)
+    
+    # Done processing st config, commit :)
     self.set_config(config)
     self.restart()
 
-    # App config
+    # 2. App config
     kdr_config = self.adapter.get_config()
 
     for key in kdr_config['directories']: 
@@ -635,7 +687,7 @@ class SyncthingClient(SyncthingFacade):
         del kdr_config['directories'][key]
         break
     
-    # All good, commit
+    # Done process app config, commit :)
     self.adapter.set_config(kdr_config)
 
     return True
