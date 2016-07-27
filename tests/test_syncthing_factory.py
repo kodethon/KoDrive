@@ -16,6 +16,7 @@ s_app_conf = json.dumps(mock.server.adapter.get_config())
 c_st_conf = json.dumps(mock.client.get_config())
 s_st_conf = json.dumps(mock.server.get_config())
 
+
 def test_make_server():
   ''' Ensure that kdr sys -s meets specs '''
 
@@ -195,6 +196,7 @@ def test_link_server():
 
   if not inserted:
     print "This device was not inserted into r_config['devices']"
+    log_configs([r_config])
     assert False
   
   # Check device was inserted into folder metadata
@@ -306,6 +308,136 @@ def test_rollback():
     assert False
 
   assert True
+
+def log_configs(configs):
+  for c in configs:
+    print c
+
+def test_auth():
+  ''' Ensure that kdr auth meets specs '''
+
+  mock.client.make_client()
+  mock.client.wait_start(0.5, 10)
+
+  mock.server.make_client()
+  mock.server.wait_start(0.5, 10)
+
+  syncthing_config = mock.client.get_config()
+  kdr_config = mock.client.adapter.get_config()
+
+  mock.client.wait_start(0.5, 10)
+  client_sync_dir = mock.client_conf['sync_dir']
+  test_device_id = mock.server.get_device_id()
+
+  if mock.client.folder_exists({
+    'path' : client_sync_dir
+  }):
+    mock.client.wait_start(0.5, 10)
+    mock.client.free(client_sync_dir)
+
+  mock.client.wait_start(0.5, 10)
+
+  if mock.client.device_exists(test_device_id):
+    mock.client.wait_start(0.5, 10)
+    mock.client.delete_device(test_device_id, syncthing_config)
+
+  mock.client.wait_start(0.5, 10)
+  
+  mock.client.add(
+    path=client_sync_dir,
+    tag='my-sync'
+  )
+
+  mock.client.wait_start(0.5, 10)
+
+  folder = mock.client.find_folder({
+    'path' : client_sync_dir
+  })
+
+  if not folder:
+    print "%s was not inserted into config['folders']" % client_sync_dir
+    c_app_rb.rollback_config()
+    c_st_rb.rollback_config()
+    assert False
+
+  for k in kdr_config['directories']:
+    f = kdr_config['directories'][k]
+
+    if f['local_path']  == client_sync_dir.rstrip('/'):
+      if f['is_shared']:
+        print 'This file is already shared.'
+        assert False
+
+  mock.client.wait_start(0.5, 10)
+  mock.client.auth(client_sync_dir, test_device_id)
+
+  mock.client.wait_start(0.5, 10)
+
+  if not mock.client.device_exists_in_folder(client_sync_dir, test_device_id):
+
+    print "%s was not added to the folder\n" % test_device_id
+    print "Devices authorized to access %s:" % client_sync_dir
+
+    for devid in folder['devices']:
+      print "\t%s" % devid['deviceID']
+
+    mock.client.wait_start(0.5, 10)
+    c_app_rb.rollback_config()
+    c_st_rb.rollback_config()
+    assert False
+
+  mock.client.wait_start(0.5, 10)
+
+  if not mock.client.device_exists(test_device_id):
+    print "%s was not added to the devices" % test_device_id
+    assert False
+
+  assert True
+
+def test_deauth():
+  ''' Ensure that kdr deauth meets specs '''
+
+  mock.client.wait_start(0.5, 10)
+  mock.client.make_client()
+
+  mock.client.wait_start(0.5, 10)
+  mock.server.make_client()
+
+  mock.client.wait_start(0.5, 10)
+  syncthing_config = mock.client.get_config()
+  kdr_config = mock.client.adapter.get_config()
+
+  client_sync_dir = mock.client_conf['sync_dir']
+  test_device_id = mock.server.get_device_id()
+
+  mock.client.wait_start(0.5, 10)
+  mock.client.deauth(client_sync_dir, test_device_id)
+
+  mock.client.wait_start(0.5, 10)
+
+  if mock.client.device_exists_in_folder(client_sync_dir, test_device_id):
+
+    print "%s was not removed from the folder." % test_device_id
+    mock.client.wait_start(0.5, 10)
+    c_app_rb.rollback_config()
+    c_st_rb.rollback_config()
+
+    assert False
+
+  if mock.client.device_exists(test_device_id):
+
+    print "%s was not removed from devices" % test_device_id
+    mock.client.wait_start(0.5, 10)
+    c_app_rb.rollback_config()
+    c_st_rb.rollback_config()
+
+    assert False
+
+  mock.client.wait_start(0.5, 10)
+  mock.client.free(client_sync_dir)
+
+  assert True
+
 
 '''
 def test_cli():
