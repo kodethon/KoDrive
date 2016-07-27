@@ -105,6 +105,26 @@ class SyncthingFacade():
       return False
 
     return t == dict
+  
+  def encode_device_key(self):
+    devid = self.get_device_id()
+    hostname = self.hostname()
+    key = "%s#%s" % (hostname, devid)
+    key = key.encode('base64')
+
+    return "".join(key.split())
+
+  def decode_device_key(self, key):
+    key = key.decode('base64')
+
+    try:
+      toks = key.split('#')
+      return {
+        'hostname' : toks[0],
+        'devid' : toks[1]
+      }
+    except ValueError: 
+      pass
 
   def encode_key(self, path):
     kdr_config = self.adapter.get_config()

@@ -19,11 +19,12 @@ def main(ctx):
 #
 
 @main.command()
-@click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
-@click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
+@click.option('-k', '--key', is_flag=True, help="Return device key.")
 @click.option('-a', '--about', is_flag=True, help="List KodeDrive information.")
 @click.option('-i', '--init', is_flag=True, help="Init KodeDrive daemon.")
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
+@click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
+@click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-t', '--test', help="Test random functions :)")
 def sys(**kwargs):
   ''' Manage application configuration. '''
