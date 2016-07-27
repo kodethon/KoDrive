@@ -334,8 +334,7 @@ class SyncthingFacade():
       d = 0
 
       for k in object:
-        print object[k]
-        print f[k]
+
         if k == 'path':
           if object[k].rstrip('/') == f[k].rstrip('/'):
             n += 1
@@ -546,7 +545,9 @@ class SyncthingClient(SyncthingFacade):
     
     # Find the remote folder
     if remote_path:
-      remote_folder = self.find_folder(remote_path, remote_config)
+      remote_folder = self.find_folder({
+        'path' : remote_path
+      }, remote_config)
     else:
       remote_folder = remote_config['folders'][0] 
     label = kwargs['tag'] if 'tag' in kwargs else remote_folder['label']
