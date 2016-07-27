@@ -328,6 +328,7 @@ def test_auth():
   mock.client.wait_start(0.5, 10)
   client_sync_dir = mock.client_conf['sync_dir']
   test_device_id = mock.server.get_device_id()
+  test_device_key = mock.server.encode_device_key()
 
   if mock.client.folder_exists({
     'path' : client_sync_dir
@@ -369,7 +370,7 @@ def test_auth():
         assert False
 
   mock.client.wait_start(0.5, 10)
-  mock.client.auth(client_sync_dir, test_device_id)
+  mock.client.auth(client_sync_dir, test_device_key)
 
   mock.client.wait_start(0.5, 10)
 
@@ -409,9 +410,10 @@ def test_deauth():
 
   client_sync_dir = mock.client_conf['sync_dir']
   test_device_id = mock.server.get_device_id()
+  test_device_key = mock.server.encode_device_key()
 
   mock.client.wait_start(0.5, 10)
-  mock.client.deauth(client_sync_dir, test_device_id)
+  mock.client.deauth(client_sync_dir, test_device_key)
 
   mock.client.wait_start(0.5, 10)
 
