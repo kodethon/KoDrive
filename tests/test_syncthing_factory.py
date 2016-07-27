@@ -157,11 +157,33 @@ def test_link_server():
   config = mock.client.get_config()
 
   # Check if src metadata was inserted
-  inserted = mock.client.folder_exists({
-    'path' : client_sync_dir
-  }, config)
+  #inserted = mock.client.folder_exists({
+  #  'path' : client_sync_dir
+  #}, config)
+  
+  folder = None
+  folders = config['folders']
+  
+  for f in folders:
+    n = 0
+    d = 0
 
-  if not inserted:
+    for k in object:
+
+      if k == 'path':
+        if object[k].rstrip('/') == f[k].rstrip('/'):
+          n += 1
+      else: 
+        if object[k] == f[k]:
+          n += 1
+
+      d += 1
+
+    if n == d:
+      folder = f
+      break
+
+  if not folder:
     print "%s was not inserted into config['folders']" % client_sync_dir
     log_config([config])
     assert False
