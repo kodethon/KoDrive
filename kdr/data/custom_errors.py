@@ -54,3 +54,15 @@ class AlreadyAdded(KodeDriveError):
     super(KodeDriveError, self).__init__(
     	'This folder has already been added.'
     )
+
+class AuthYourself(KodeDriveError):
+  def __init__(self):
+    super(KodeDriveError, self).__init__(
+      'You cannot de/authenticate yourself, please check the key and try again.'
+    )
+
+class AuthAlready(KodeDriveError):
+  def __init__(self, hostname):
+    super(KodeDriveError, self).__init__(
+      "%s has already been de/authenticated." % hostname
+    )

@@ -909,6 +909,10 @@ class SyncthingClient(SyncthingFacade):
 
   def auth(self, path, key):
 
+    if key == self.encode_device_key():
+      raise custom_errors.AuthYourself()
+
+    self.wait_start(0.5, 10)
     path = os.path.abspath(path)
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
@@ -949,8 +953,12 @@ class SyncthingClient(SyncthingFacade):
 
     for f in folders:
       if f['path'] == path:
+
         if client_devid not in f['devices']:
           f['devices'].append(client_devid)
+
+        else:
+          raise custom_errors.AuthAlready(name)
         break
     # add devid to folder if not already there
 
@@ -967,6 +975,11 @@ class SyncthingClient(SyncthingFacade):
     return
 
   def deauth(self, path, key):
+
+    if key == self.encode_device_key():
+      raise custom_errors.AuthYourself()
+
+    self.wait_start(0.5, 10)
     path = os.path.abspath(path)
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
@@ -1007,8 +1020,13 @@ class SyncthingClient(SyncthingFacade):
 
     for f in folders:
       if f['path'] == path:
+
         if r_devid in f['devices']:
           f['devices'].remove(r_devid)
+
+        else:
+          raise custom_errors.AuthAlready(name)
+
         break
     # remove devid from folder if there
 
@@ -1031,54 +1049,51 @@ class SyncthingClient(SyncthingFacade):
     
     return
 
+    return
+
   def auth_ls(self):
 
+    self.wait_start(0.5, 10)
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
     config = self.get_config()
     devices = config['devices']
     folders = config['folders']
-    length = 0
     body = str()
-    longest_path = str()
-    first = False
+
 
     for f in folders:
-      if len(f['path']) > length:
-        length = len(f['path'])
-        longest_path = f['path']
 
-    length += 5
+      for k, v in directories.iteritems():
+        if f['path'] ==  v['local_path']:
+          shared = v['is_shared']
+      # if not your folder, don't display
 
-    header = 'Directory'
-    header = '{:<{}s}'.format(header, length) + 'Devices\n'
-    body += header
-
-    for f in folders:
-      first = False
-
-      if len(f['devices']) > 1:
-        body += '{:<{}s}'.format(f['path'], length)
+      if len(f['devices']) > 1 and not v['is_shared']:
+        body += f['path']
 
         for i, val in enumerate(f['devices']):
-          if i == 0:
-            first = True
 
           if not val['deviceID'] == self.get_device_id():
-            if first:
-              body += val['deviceID'] + '\n'
-              first = False
-              # if first line that contains path
 
-            else:
-              body += '{:>{}s}'.format(val['deviceID'], length + len(val['deviceID'])) + '\n'
-              # every other line, for multiple devices authenticated
+            r_devid = self.find_device(val['deviceID'], config)
+
+            if not r_devid:
+              raise custom_errors.DeviceNotFound(val['deviceID'])
+
+            key = "%s#%s" % (r_devid['name'], val['deviceID'])
+            key = key.encode('base64')
+            key = "".join(key.split())
+
+            body += '\n\t' + key
+      
+          if i == len(f['devices']) - 1:
+            body += '\n'
+
+        body += '\n'
 
     if body.endswith('\n'):
-      body = body[:-1]
-
-    if body + '\n' == header:
-      return None
+      body = body[:-2]
 
     return body
 
