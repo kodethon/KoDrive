@@ -130,7 +130,7 @@ def test_link_server():
   #if not mock.server.folder_exists({
   #  'path' : server_sync_dir
   #}):
-  r_api_key = mock.server.add(
+  mock.server.add(
     path=server_sync_dir,
     tag='client-sync'
   )
@@ -138,11 +138,11 @@ def test_link_server():
 
   mock.server.make_server()
   mock.server.wait_start(0.5, 10)
-  mock.client.wait_start(0.5, 10)
   key = mock.server.encode_key(server_sync_dir)
   
   # Run command on mock.client
   md = mock.client.decode_key(key)
+  mock.client.wait_start(0.5, 10)
   mock.client.link(
     device_id=md['devid'],
     api_key=md['api_key'],
