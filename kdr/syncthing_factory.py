@@ -258,11 +258,8 @@ class SyncthingFacade():
       config = self.get_config()
 
     for d in config['devices']:
-      if 'deviceID' in d:
-        device_id = d['deviceID']
-      else:
-        device_id = d['deviceId']
-
+      device_id = self.get_devid(d)
+      
       if device_id == client_devid:
         return d
 
@@ -270,7 +267,7 @@ class SyncthingFacade():
     devices = config['devices']
 
     for i, d in enumerate(devices):
-      device_id = d['deviceID']
+      device_id = self.get_devid(d)
       
       if device_id == devid:
         del devices[i]
@@ -285,11 +282,7 @@ class SyncthingFacade():
     for i, f in enumerate(folders):
       if path.rstrip('/') == f['path'].rstrip('/'):
         for n, d in enumerate(f['devices']):
-
-          if 'deviceID' in d:
-            device_id = d['deviceID']
-          else:
-            device_id = d['deviceId']
+          device_id = self.get_devid(d)
 
           if device_id == devid:
             del folders[i]['devices'][n]
@@ -338,7 +331,7 @@ class SyncthingFacade():
   def device_exists_in_folder(self, path, devid, config=None):
 
     if not config:
-      config = self.get
+      config = self.get_config()
 
     folder = self.find_folder({
       'path' : path
@@ -348,17 +341,12 @@ class SyncthingFacade():
       return False
 
     for d in folder['devices']:
-      if 'deviceID' in d:
-        device_id = d['deviceID']
-      else:
-        device_id = d['deviceId']
+      device_id = self.get_devid(d)
 
       if device_id == devid:
         return True
 
     return False
-
-    
 
   def folder_exists(self, object, config = None):
     
@@ -366,6 +354,18 @@ class SyncthingFacade():
       config = self.get_config()
 
     return self.find_folder(object, config) != None
+
+  def get_devid(self, dev_obj):
+    if 'deviceID' in dev_obj:
+      return dev_obj['deviceID']
+    else:
+      return dev_obj['deviceId']
+
+  def to_st_path(self, path):
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    return path
 
 class SyncthingClient(SyncthingFacade):
    
@@ -407,7 +407,7 @@ class SyncthingClient(SyncthingFacade):
       'path' : kwargs['path'],
       'ignoreDelete' : False,
       'ignorePerms' : False,
-      'devices' : [{'deviceID' : devid}],
+      'devices' : [{'deviceID' : devid}, {'deviceId' : devid}],
       'disableTempIndexes' : False,
       'maxConflicts' : 10,
       'order' : 'random',
@@ -1015,7 +1015,7 @@ class SyncthingClient(SyncthingFacade):
     return body
 
   def test(self, arg): 
-    self.restart()
+    print self.get_config()
     return
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
@@ -1091,9 +1091,20 @@ class SyncthingProxy(SyncthingFacade):
     if not folder['devices']:
       folder['devices'] = []
     
-    folder['devices'].append({
-      'deviceID' : client_devid
-    })
+    if len(folder['devices']) > 0:
+      key = 'deviceId' if 'deviceId' in folder['devices'] else 'deviceID'
+      folder['devices'].append({
+        key : client_devid
+      })
+    else:
+      # Try both and let st decide
+      # One of them will fail
+      folder['devices'].append({
+        'deviceID' : client_devid
+      })
+      folder['devices'].append({
+        'deviceId' : client_devid
+      })
 
     self.set_config(config)
     self.restart()
@@ -1114,7 +1125,7 @@ def get_handler(home=None):
     ) # Linux
   elif system == "Darwin":
     return SyncthingClient(
-      platform_adapter.SyncthingMac64()
+      platform_adapter.SyncthingMac64(home)
     ) # MacOSX
   elif system == "Windows":
     return SyncthingClient(
