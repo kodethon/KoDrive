@@ -425,7 +425,7 @@ class SyncthingClient(SyncthingFacade):
       'path' : kwargs['path'],
       'ignoreDelete' : False,
       'ignorePerms' : False,
-      'devices' : [{'deviceID' : devid}, {'deviceId' : devid}],
+      'devices' : [{'deviceID' : devid}],
       'disableTempIndexes' : False,
       'maxConflicts' : 10,
       'order' : 'random',
@@ -541,8 +541,12 @@ class SyncthingClient(SyncthingFacade):
       self.hostname(),    
       self.get_device_id()
     )
-    # *** Should be more dynamic in the future
-    remote_folder = remote_config['folders'][0] 
+    
+    # Find the remote folder
+    if remote_path:
+      remote_folder = self.find_folder(remote_path, remote_config)
+    else:
+      remote_folder = remote_config['folders'][0] 
     label = kwargs['tag'] if 'tag' in kwargs else remote_folder['label']
     global_remote_folder = remote_folder['path']
     
@@ -1040,6 +1044,8 @@ class SyncthingClient(SyncthingFacade):
     
     self.set_config(config)
     self.restart()
+    
+    return
 
     return
 
