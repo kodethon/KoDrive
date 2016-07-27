@@ -152,7 +152,7 @@ class SyncthingFacade():
       label = folder_config['label']
       key = "%s#%s#%s#%s" % (devid, self.hostname(), folder_id, label)
     
-    #key = key.encode('base64')
+    key = key.encode('base64')
 
     return "".join(key.split())
   
@@ -176,7 +176,7 @@ class SyncthingFacade():
   def decode_key(self, encoded_key):
 
     key = "".join(encoded_key.split())
-    #key = base64.b64.decode(key)
+    key = key.decode('base64')
 
     try:
       key.index("@")
@@ -888,6 +888,22 @@ class SyncthingClient(SyncthingFacade):
     os.rename(''.join(source), target)
     return
 
+  def valid_device_id(self, device_id):
+
+    if len(device_id) != 63:
+      return False
+
+    if device_id.count('-') != 7:
+      return False
+
+    parts = device_id.split('-')
+
+    for part in parts:
+      if len(part) != 7:
+        return False
+
+    return True
+
   def auth(self, path, key):
 
     path = os.path.abspath(path)
@@ -913,8 +929,19 @@ class SyncthingClient(SyncthingFacade):
         if f['is_shared']:
           raise custom_errors.PermissionDenied()
 
+    decoded = self.decode_device_key(key)
+
+    if not decoded:
+      raise custom_errors.InvalidKey(key)
+
+    device_id = decoded['devid']
+    name = decoded['hostname']
+
+    if not self.valid_device_id(device_id):
+      raise custom_errors.InvalidKey(key)
+
     client_devid = {
-      u'deviceID' : key
+      u'deviceID' : device_id
     }
 
     for f in folders:
@@ -926,7 +953,7 @@ class SyncthingClient(SyncthingFacade):
 
     if not self.device_exists(key):
       try:
-        self.new_device(config=config, device_id=key)
+        self.new_device(config=config, device_id=device_id, hostname=name)
       except:
         raise custom_errors.DeviceNotFound(key)
       # add device to devices
@@ -960,8 +987,19 @@ class SyncthingClient(SyncthingFacade):
         if f['is_shared']:
           raise custom_errors.PermissionDenied()
 
+    decoded = self.decode_device_key(key)
+
+    if not decoded:
+      raise custom_errors.InvalidKey(key)
+
+    device_id = decoded['devid']
+    name = decoded['hostname']
+
+    if not self.valid_device_id(device_id):
+      raise custom_errors.InvalidKey(key)
+
     client_devid = {
-      u'deviceID' : key
+      u'deviceID' : device_id
     }
 
     for f in folders:
@@ -973,7 +1011,7 @@ class SyncthingClient(SyncthingFacade):
 
     if self.device_exists(key):
       try:
-        self.delete_device(devid=key, config=config)
+        self.delete_device(devid=device_id, config=config)
       except:
         raise custom_errors.DeviceNotFound(key)
       # remove device to devices
