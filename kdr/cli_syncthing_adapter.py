@@ -26,6 +26,9 @@ class SystemFactory:
       return 'Running as %s.' % ('server' if is_server else 'client')
     else:
       return 'Exited as %s.' % ('server' if is_server else 'client')
+
+  def key(self):
+    return self.handler.encode_device_key()
   
   def test(self, arg):
     return self.handler.test(arg)
@@ -121,6 +124,7 @@ def sys(**kwargs):
     'client' : SystemSingleton.client,
     'exit' : SystemSingleton.exit,
     'init' : SystemSingleton.init,
+    'key' : SystemSingleton.key,
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test
   }
