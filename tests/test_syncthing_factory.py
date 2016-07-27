@@ -428,7 +428,18 @@ def test_deauth():
 
     assert False
 
-  if mock.client.device_exists(test_device_id):
+  r_devid = {
+    u'deviceID' : test_device_id
+  }
+
+  in_other_folders = False
+
+  for f in syncthing_config['folders']:
+    if r_devid in f['devices'] and client_sync_dir != f['path']:
+      in_other_folders = True
+      break
+
+  if mock.client.device_exists(test_device_id) and not in_other_folders:
 
     print "%s was not removed from devices" % test_device_id
     mock.client.wait_start(0.5, 10)
