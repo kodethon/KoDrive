@@ -125,14 +125,16 @@ def test_link_server():
   server_sync_dir = mock.server_conf['sync_dir']
 
   # Preprocess server
-  if not mock.server.folder_exists({
-    'path' : server_sync_dir
-  }):
-    r_api_key = mock.server.add(
-      path=server_sync_dir,
-      tag='client-sync'
-    )
-    mock.server.wait_start(0.5, 10)
+  mock.server.wait_start(0.5, 10)
+  
+  #if not mock.server.folder_exists({
+  #  'path' : server_sync_dir
+  #}):
+  r_api_key = mock.server.add(
+    path=server_sync_dir,
+    tag='client-sync'
+  )
+  mock.server.wait_start(0.5, 10)
 
   mock.server.make_server()
   mock.server.wait_start(0.5, 10)

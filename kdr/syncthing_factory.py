@@ -326,12 +326,6 @@ class SyncthingFacade():
     if not config:
       config = self.get_config()
     
-    if 'path' in object:
-      path = object['path']
-
-      if path[len(path) - 1] != '/':
-        object['path'] += '/'
-
     # list of folders
     folders = config['folders']
     
@@ -340,8 +334,12 @@ class SyncthingFacade():
       d = 0
 
       for k in object:
-        if object[k] == f[k]:
-          n += 1
+        if k == 'path':
+          if object[k].rstrip('/') == f[k].rstrip('/'):
+            n += 1
+        else: 
+          if object[k] == f[k]:
+            n += 1
 
         d += 1
 
@@ -372,7 +370,7 @@ class SyncthingFacade():
     
     if not config:
       config = self.get_config()
-
+    print config
     return self.find_folder(object, config) != None
 
   def get_devid(self, dev_obj):
