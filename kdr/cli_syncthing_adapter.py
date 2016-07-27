@@ -243,11 +243,13 @@ def auth(option, path, device_id):
   # try:
   if option == 'add':
     handler.auth(path, device_id)
-    return "%s can now access %s." % (device_id, path)
+    hostname = handler.decode_device_key(device_id)['hostname']
+    return "%s can now access %s." % (hostname, path)
 
   elif option == 'remove':
     handler.deauth(path, device_id)
-    return "%s can no longer access %s" % (device_id, path)
+    hostname = handler.decode_device_key(device_id)['hostname']
+    return "%s can no longer access %s" % (hostname, path)
 
   elif option == 'list':
     return handler.auth_ls()
