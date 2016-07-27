@@ -1010,15 +1010,24 @@ class SyncthingClient(SyncthingFacade):
         break
     # remove devid from folder if there
 
-    if self.device_exists(device_id):
+    in_other_folders = False
+
+    for f in folders:
+      if r_devid in f['devices'] and path != f['path']:
+        in_other_folders = True
+        break
+
+    if self.device_exists(device_id) and not in_other_folders:
       try:
         self.delete_device(devid=device_id, config=config)
       except:
         raise custom_errors.DeviceNotFound(key)
-      # remove device to devices
+    # remove device to devices if device isn't syncing with other folders
     
     self.set_config(config)
     self.restart()
+    
+    return
 
   def auth_ls(self):
 
