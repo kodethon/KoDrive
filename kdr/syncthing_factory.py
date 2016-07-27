@@ -334,6 +334,8 @@ class SyncthingFacade():
       d = 0
 
       for k in object:
+        print object[k]
+        print f[k]
         if k == 'path':
           if object[k].rstrip('/') == f[k].rstrip('/'):
             n += 1
