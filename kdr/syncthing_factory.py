@@ -250,7 +250,7 @@ class SyncthingFacade():
       kwargs['hostname'] = 'Unknown'
 
     record = {
-      'deviceId' : kwargs['device_id'],
+      'deviceID' : kwargs['device_id'],
       'name' : kwargs['hostname'],
       'compression' : 'metadata',
       'introducer' : False,
@@ -889,7 +889,6 @@ class SyncthingClient(SyncthingFacade):
     return
 
   def valid_device_id(self, device_id):
-
     if len(device_id) != 63:
       return False
 
@@ -998,28 +997,26 @@ class SyncthingClient(SyncthingFacade):
     if not self.valid_device_id(device_id):
       raise custom_errors.InvalidKey(key)
 
-    client_devid = {
+    r_devid = {
       u'deviceID' : device_id
     }
 
     for f in folders:
       if f['path'] == path:
-        if client_devid in f['devices']:
-          f['devices'].remove(client_devid)
+        if r_devid in f['devices']:
+          f['devices'].remove(r_devid)
         break
     # remove devid from folder if there
 
-    if self.device_exists(key):
+    if self.device_exists(device_id):
       try:
         self.delete_device(devid=device_id, config=config)
       except:
         raise custom_errors.DeviceNotFound(key)
       # remove device to devices
-
+    
     self.set_config(config)
     self.restart()
-
-    return
 
   def auth_ls(self):
 

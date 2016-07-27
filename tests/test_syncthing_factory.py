@@ -188,6 +188,7 @@ def test_link_server():
     assert False
   
   # Check device metadata was inserted remotely
+  mock.server.wait_start(0.5, 10)
   r_config = remote.get_config()
   inserted = remote.device_exists(
     mock.client.get_device_id(),
@@ -400,11 +401,10 @@ def test_deauth():
 
   mock.client.wait_start(0.5, 10)
   mock.client.make_client()
-
   mock.client.wait_start(0.5, 10)
   mock.server.make_client()
+  mock.server.wait_start(0.5, 10)
 
-  mock.client.wait_start(0.5, 10)
   syncthing_config = mock.client.get_config()
   kdr_config = mock.client.adapter.get_config()
 
