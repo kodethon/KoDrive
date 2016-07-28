@@ -25,7 +25,6 @@ class SyncthingFacade():
   def get_device_id(self):
     try:
       return self.sync.sys.status()['myID']
-
     except Exception:
       if self.adapter:
         return self.adapter.get_device_id()
@@ -155,8 +154,30 @@ class SyncthingFacade():
     key = key.encode('base64')
 
     return "".join(key.split())
-  
+    
+  def config_in_sync(self):
+    try:
+      res = self.sync.sys.insync()
+      return res['configInSync']
+    except Exception:
+      return False
+
 # UTILS
+  
+  def wait_sync(self, t, intervals, callback=None):
+    count = 0 
+
+    while not self.config_in_sync() and count < counters:
+      time.sleep(t)
+      count += 1
+
+    if count < intervals:
+      if callback:
+        callback()
+
+      return True
+    else:
+      return False
 
   def wait_start(self, t, intervals, callback=None):
     
@@ -393,7 +414,8 @@ class SyncthingFacade():
     if not config:
       config = self.get_config()
 
-    return self.find_folder(object, config) != None
+    f = self.find_folder(object, config) 
+    return f != None
 
   def get_devid(self, dev_obj):
     if 'deviceID' in dev_obj:
@@ -544,6 +566,7 @@ class SyncthingClient(SyncthingFacade):
     }):
       raise custom_errors.AlreadyAdded()
 
+    self_devid = self.get_device_id()
     if not self.device_exists(device_id):
       self.new_device(config=config, device_id=device_id)
       self.set_config(config)
@@ -559,9 +582,10 @@ class SyncthingClient(SyncthingFacade):
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None
     )
+    remote.wait_start(0.5, 10)
     remote_config = remote.request_folder(
       self.hostname(),    
-      self.get_device_id()
+      self_devid
     )
     
     # Find the remote folder
@@ -571,6 +595,7 @@ class SyncthingClient(SyncthingFacade):
       }, remote_config)
     else:
       remote_folder = remote_config['folders'][0] 
+
     label = kwargs['tag'] if 'tag' in kwargs else remote_folder['label']
     global_remote_folder = remote_folder['path']
     
@@ -626,10 +651,10 @@ class SyncthingClient(SyncthingFacade):
     # Check syncthing config to make sure the user is not
     # already synchronizing this folder
     if self.folder_exists({
-      'id' : r_folder_id
+      'path' : kwargs['local_path']
     }, config):
       # TODO: maybe tell user where they are synchronizing the dev
-      raise ValueError('You are already synchronizing this device.')
+      raise ValueError('You are already synchronizing this folder.')
     
     # Modify syncthing config
     config['folders'].append(remote_folder)
@@ -678,34 +703,7 @@ class SyncthingClient(SyncthingFacade):
       raise custom_errors.FileNotInConfig(local_path)
     
     r_device_id = dir_config['device_id']
-  
-    # If the folder was shared, remove data from remote 
-    if dir_config['is_shared'] and dir_config['server']:
-      
-      # Process remote ~~~
-      r_api_key = dir_config['api_key']
-      
-      if dir_config['host']:
-        host = dir_config['host']
-      else:
-        host = self.devid_to_ip(r_device_id, False)
-
-      remote = SyncthingProxy(
-        r_device_id, host, r_api_key,
-        port=dir_config['port'] if 'port' in dir_config else None
-      )
-      r_config = remote.get_config()
-
-      del_device = remote.delete_device_from_folder(
-        dir_config['remote_path'],
-        self.get_device_id(), 
-        r_config
-      )
-      remote.delete_device(self.get_device_id(), r_config)
-
-      remote.set_config(r_config)
-      remote.restart()
-    
+         
     # Process local ~~~
 
     # 1. Syncthing config
@@ -737,6 +735,33 @@ class SyncthingClient(SyncthingFacade):
     
     # Done process app config, commit :)
     self.adapter.set_config(kdr_config)
+
+    # If the folder was shared, remove data from remote 
+    if dir_config['is_shared'] and dir_config['server']:
+      
+      # Process remote ~~~
+      r_api_key = dir_config['api_key']
+      
+      if dir_config['host']:
+        host = dir_config['host']
+      else:
+        host = self.devid_to_ip(r_device_id, False)
+
+      remote = SyncthingProxy(
+        r_device_id, host, r_api_key,
+        port=dir_config['port'] if 'port' in dir_config else None
+      )
+      r_config = remote.get_config()
+
+      del_device = remote.delete_device_from_folder(
+        dir_config['remote_path'],
+        self.get_device_id(), 
+        r_config
+      )
+      remote.delete_device(self.get_device_id(), r_config)
+
+      remote.set_config(r_config)
+      remote.restart()
 
     return True
 
@@ -1083,15 +1108,15 @@ class SyncthingClient(SyncthingFacade):
     folders = config['folders']
     body = str()
 
-
     for f in folders:
-
+      shared = False  
+        
       for k, v in directories.iteritems():
         if f['path'] ==  v['local_path']:
           shared = v['is_shared']
       # if not your folder, don't display
 
-      if len(f['devices']) > 1 and not v['is_shared']:
+      if len(f['devices']) > 1 and not shared:
         body += f['path']
 
         for i, val in enumerate(f['devices']):
@@ -1120,7 +1145,7 @@ class SyncthingClient(SyncthingFacade):
     return body
 
   def test(self, arg): 
-    print self.get_config()
+    print self.config_in_sync()
     return
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
@@ -1183,6 +1208,11 @@ class SyncthingProxy(SyncthingFacade):
         return d['name']
 
   def request_folder(self, client_hostname, client_devid):
+    print 'ARGS -------------------------------------'
+    print client_hostname
+    print client_devid
+    print self.get_device_id()
+
     config = self.get_config()       
 
     self.new_device(
@@ -1196,21 +1226,10 @@ class SyncthingProxy(SyncthingFacade):
     if not folder['devices']:
       folder['devices'] = []
     
-    if len(folder['devices']) > 0:
-      key = 'deviceId' if 'deviceId' in folder['devices'] else 'deviceID'
-      folder['devices'].append({
-        key : client_devid
-      })
-    else:
-      # Try both and let st decide
-      # One of them will fail
-      folder['devices'].append({
-        'deviceID' : client_devid
-      })
-      folder['devices'].append({
-        'deviceId' : client_devid
-      })
-
+    folder['devices'].append({
+      'deviceID' : client_devid
+    })
+    print config
     self.set_config(config)
     self.restart()
 

@@ -16,7 +16,6 @@ s_app_conf = json.dumps(mock.server.adapter.get_config())
 c_st_conf = json.dumps(mock.client.get_config())
 s_st_conf = json.dumps(mock.server.get_config())
 
-
 def test_make_server():
   ''' Ensure that kdr sys -s meets specs '''
 
@@ -139,6 +138,8 @@ def test_link_server():
   # Run command on mock.client
   md = mock.client.decode_key(key)
   mock.client.wait_start(0.5, 10)
+  print mock.server.get_device_id()
+  print mock.client.get_device_id()
   mock.client.link(
     device_id=md['devid'],
     api_key=md['api_key'],
@@ -149,50 +150,24 @@ def test_link_server():
     remote_port=mock.server_conf['port']
   )
 
-  mock.client.wait_start(0.5, 20) 
-  config = mock.client.get_config()
-
-  folder = None
-
-  for f in config['folders']:
-    if client_sync_dir.rstrip('/') == f['path'].rstrip('/'):
-      folder = f
-      break
-
-  if not folder:
-    print "%s was not inserted into config['folders']" % client_sync_dir
-    log_configs([config])
-    assert False
-
-  folder = mock.client.find_folder({
-    'path' : client_sync_dir
-  }, config) 
-
-  Cache['folder_id'] = folder['id']
-    
   mock.server.wait_start(0.5, 10) # Wait for link remote.restart
+  mock.client.wait_start(0.5, 10)
+  mock.server.wait_sync(0.5, 10)
+  mock.client.wait_sync(0.5, 10)
   remote = factory.SyncthingProxy(
     md['devid'],
     '0.0.0.0',
     md['api_key'],
     port=mock.server_conf['port']
   )
-
-  # Check device metadata was inserted locally
-  inserted = mock.client.device_exists(
-    remote.get_device_id(), 
-    config
-  )
-
-  if not inserted:
-    print "This device was not inserted into config['devices']."
-    assert False
   
+  # Check Remote ~~~
+
   # Check device metadata was inserted remotely
-  mock.server.wait_start(0.5, 10)
   r_config = remote.get_config()
     
-  c_devid = mock.client.get_device_id(),
+  c_devid = mock.client.get_device_id()
+  
   inserted = False
   for d in r_config['devices']:
     if d['deviceID'] == c_devid:
@@ -211,6 +186,30 @@ def test_link_server():
   
   if not device:
     print "This device could not be found in r_config['folders']['devices']"
+    assert False
+  
+  # Check Client ~~~
+
+  # Check device metadata was inserted locally
+  config = mock.client.get_config()
+  inserted = mock.client.device_exists(
+    remote.get_device_id(), 
+    config
+  )
+
+  if not inserted:
+    print "This device was not inserted into config['devices']."
+    assert False
+
+  folder_found = False  
+  for f in config['folders']:
+    if client_sync_dir.rstrip('/') == f['path'].rstrip('/'):
+      folder_found = True
+      break
+
+  if not folder_found:
+    print "%s was not inserted into config['folders']" % client_sync_dir
+    log_configs([config])
     assert False
 
   assert True
@@ -237,6 +236,7 @@ def test_free_server():
     assert False
   
   # Check device metadata was deleted
+  mock.client.wait_start(0.5, 10)
   key = mock.server.encode_key(server_sync_dir)
   md = mock.client.decode_key(key)
   device = mock.client.find_device(
@@ -278,7 +278,7 @@ def test_free_server():
   
   # Check device was inserted into folder metadata
   r_folder = remote.find_folder({
-    'id' : Cache['folder_id']
+    'path' : server_sync_dir
   }, r_config)
   device = remote.find_device(mock.client.get_device_id(), r_folder)
   
@@ -287,35 +287,6 @@ def test_free_server():
     assert False
 
   assert True
-
-def test_rollback():
-  c_app_rb.rollback_config()
-  c_st_rb.rollback_config()
-  s_app_rb.rollback_config()
-  s_st_rb.rollback_config()
-
-  c_app_conf_n = json.dumps(mock.client.adapter.get_config())
-  s_app_conf_n = json.dumps(mock.server.adapter.get_config())
-  c_st_conf_n = json.dumps(mock.client.get_config())
-  s_st_conf_n = json.dumps(mock.server.get_config())
-
-  if c_app_conf_n != c_app_conf:
-    assert False
-
-  if s_app_conf_n != s_app_conf:
-    assert False
-
-  if c_st_conf_n != c_st_conf:
-    assert False
-
-  if s_st_conf_n != s_st_conf_n:
-    assert False
-
-  assert True
-
-def log_configs(configs):
-  for c in configs:
-    print c
 
 def test_auth():
   ''' Ensure that kdr auth meets specs '''
@@ -454,6 +425,34 @@ def test_deauth():
 
   assert True
 
+def test_rollback():
+  c_app_rb.rollback_config()
+  c_st_rb.rollback_config()
+  s_app_rb.rollback_config()
+  s_st_rb.rollback_config()
+
+  c_app_conf_n = json.dumps(mock.client.adapter.get_config())
+  s_app_conf_n = json.dumps(mock.server.adapter.get_config())
+  c_st_conf_n = json.dumps(mock.client.get_config())
+  s_st_conf_n = json.dumps(mock.server.get_config())
+
+  if c_app_conf_n != c_app_conf:
+    assert False
+
+  if s_app_conf_n != s_app_conf:
+    assert False
+
+  if c_st_conf_n != c_st_conf:
+    assert False
+
+  if s_st_conf_n != s_st_conf_n:
+    assert False
+
+  assert True
+
+def log_configs(configs):
+  for c in configs:
+    print c
 
 '''
 def test_cli():

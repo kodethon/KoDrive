@@ -70,51 +70,49 @@ def link(key, tag, path):
   app_rb = rb.AppRollbacker(handler)
   st_rb = rb.SyncthingRollbacker(handler)
 
-  #try:
+  try:
 
-  if not handler.ping():
-    raise custom_errors.CannotConnect()
-  
-  md = handler.decode_key(key)
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+    
+    md = handler.decode_key(key)
 
-  if not md:
-    raise KeyError('Invalid Key.')
-  
-  device_id = md['devid']
+    if not md:
+      raise KeyError('Invalid Key.')
+    
+    device_id = md['devid']
 
-  if 'remote_path' in md and 'api_key' in md:
-    remote_path = md['remote_path']
-    api_key = md['api_key']
-    tag = handler.link(
-      device_id=device_id,
-      api_key=api_key, 
-      tag=tag, 
-      local_path=path,
-      remote_path=remote_path
-    )
-  elif 'label' in md and 'folder_id' in md and 'hostname' in md:
-    label = md['label']
-    hostname = md['hostname']
-    folder_id = md['folder_id']
-    tag = (tag or label)
+    if 'remote_path' in md and 'api_key' in md:
+      remote_path = md['remote_path']
+      api_key = md['api_key']
+      tag = handler.link(
+        device_id=device_id,
+        api_key=api_key, 
+        tag=tag, 
+        local_path=path,
+        remote_path=remote_path
+      )
+    elif 'label' in md and 'folder_id' in md and 'hostname' in md:
+      label = md['label']
+      hostname = md['hostname']
+      folder_id = md['folder_id']
+      tag = (tag or label)
 
-    handler.acknowledge(
-      device_id=device_id,
-      hostname=hostname,
-      label=tag,
-      r_folder_id=folder_id,
-      local_path=path
-    )
+      handler.acknowledge(
+        device_id=device_id,
+        hostname=hostname,
+        label=tag,
+        r_folder_id=folder_id,
+        local_path=path
+      )
 
-  return "%s (%s) is now being synchronized." % (path, tag)
-  '''
+    return "%s (%s) is now being synchronized." % (path, tag)
   except KeyError as e:
     return e.message
   except Exception as e:
     app_rb.rollback_config()
     st_rb.rollback_config()
     return e.message
-  '''
 
 SystemSingleton = SystemFactory()
 def sys(**kwargs):
@@ -240,21 +238,21 @@ def mv_edge_case(source, target):
 def auth(option, path, device_id):
   handler = factory.get_handler()
 
-  # try:
-  if option == 'add':
-    handler.auth(path, device_id)
-    hostname = handler.decode_device_key(device_id)['hostname']
-    return "%s can now access %s." % (hostname, path)
+  try:
+    if option == 'add':
+      handler.auth(path, device_id)
+      hostname = handler.decode_device_key(device_id)['hostname']
+      return "%s can now access %s." % (hostname, path)
 
-  elif option == 'remove':
-    handler.deauth(path, device_id)
-    hostname = handler.decode_device_key(device_id)['hostname']
-    return "%s can no longer access %s" % (hostname, path)
+    elif option == 'remove':
+      handler.deauth(path, device_id)
+      hostname = handler.decode_device_key(device_id)['hostname']
+      return "%s can no longer access %s" % (hostname, path)
 
-  elif option == 'list':
-    return handler.auth_ls()
-  # except Exception as e:
-    # return e.message
+    elif option == 'list':
+      return handler.auth_ls()
+  except Exception as e:
+    return e.message
 
 """
 
