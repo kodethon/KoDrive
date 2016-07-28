@@ -444,8 +444,14 @@ class SyncthingMac64(PlatformBase):
       new_flag = True
     else:  
       gui_address = self.get_gui_address(self.st_conf_file)
-      opts.append('-gui-address')
-      opts.append(gui_address)
+      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      toks = gui_address.split(':')
+      host = toks[0]
+      port = int(toks[1])
+
+      if sock.connect_ex((host, port)) != 0:
+        opts.append('-gui-address')
+        opts.append(gui_address)
 
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'

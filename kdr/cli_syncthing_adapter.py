@@ -100,7 +100,7 @@ def link(key, tag, path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-    if not self.handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
     
     md = handler.decode_key(key)
@@ -202,7 +202,7 @@ def free(path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-    if not self.handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
     
     handler.free(path)
