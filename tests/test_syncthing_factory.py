@@ -165,21 +165,7 @@ def test_link_server():
   folders = config['folders']
   
   for f in folders:
-    n = 0
-    d = 0
-
-    for k in object:
-
-      if k == 'path':
-        if object[k].rstrip('/') == f[k].rstrip('/'):
-          n += 1
-      else: 
-        if object[k] == f[k]:
-          n += 1
-
-      d += 1
-
-    if n == d:
+    if client_sync_dir == f['path'].rstrip('/'):
       folder = f
       break
 
