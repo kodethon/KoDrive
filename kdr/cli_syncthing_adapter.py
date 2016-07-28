@@ -220,7 +220,7 @@ def tag(path, name):
   handler = factory.get_handler()
 
   try:
-    if not self.handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
 
     prev_name = handler.tag(path, name)
