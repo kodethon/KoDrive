@@ -153,7 +153,7 @@ def test_link_server():
     remote_port=mock.server_conf['port']
   )
 
-  mock.client.wait_start(0.5, 10) 
+  mock.client.wait_start(0.5, 20) 
   config = mock.client.get_config()
 
   # Check if src metadata was inserted
