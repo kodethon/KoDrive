@@ -25,7 +25,9 @@ def main(ctx):
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
-@click.option('-t', '--test', help="Test random functions :)")
+@click.option('-r', '--restart', is_flag=True, help="Restart KodeDrive daemon.")
+#@click.option('-t', '--test', help="Test random functions :)")
+
 def sys(**kwargs):
   ''' Manage application configuration. '''
 

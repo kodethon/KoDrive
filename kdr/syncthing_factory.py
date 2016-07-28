@@ -180,7 +180,6 @@ class SyncthingFacade():
       return False
 
   def wait_start(self, t, intervals, callback=None):
-    
     # Base case
     if intervals <= 0:
       try:
@@ -198,6 +197,7 @@ class SyncthingFacade():
 
     try:
       config = self.get_config()
+
       if not config:
         c = False
     except Exception:
@@ -1145,7 +1145,7 @@ class SyncthingClient(SyncthingFacade):
     return body
 
   def test(self, arg): 
-    print self.config_in_sync()
+    self.restart()
     return
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)
@@ -1208,10 +1208,12 @@ class SyncthingProxy(SyncthingFacade):
         return d['name']
 
   def request_folder(self, client_hostname, client_devid):
+    '''
     print 'ARGS -------------------------------------'
     print client_hostname
     print client_devid
     print self.get_device_id()
+    '''
 
     config = self.get_config()       
 
@@ -1229,7 +1231,7 @@ class SyncthingProxy(SyncthingFacade):
     folder['devices'].append({
       'deviceID' : client_devid
     })
-    print config
+
     self.set_config(config)
     self.restart()
 

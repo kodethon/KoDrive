@@ -1,13 +1,37 @@
 from data import custom_errors
+from data import config
 from utils import config_rollbacker as rb
 import syncthing_factory as factory
 
-import json, os
+import click, time
+import json, os, traceback
 
 class SystemFactory:
   
   def __init__(self):
     self.handler = factory.get_handler()
+
+  def restart(self):
+    handler = factory.get_handler()
+
+    if not handler.ping():
+      raise custom_errors.CannotConnect()
+
+    handler.restart()
+    
+    click.echo("KodeDrive is now restarting.")
+
+    count = 0
+    limit = 10
+    while not handler.ping() and count < limit:
+      click.echo("Attempting to detect Kodedrive...") 
+      count += 1
+      time.sleep(1)
+
+    if count >= limit:
+      return "Could not restart KodeDrive :("
+    else:
+      return "KodeDrive has successfully restarted!"
 
   def init(self):
     if not self.handler.ping():
@@ -20,14 +44,19 @@ class SystemFactory:
 
   def about(self):
     kdr_config = self.handler.adapter.get_config()
+    config_path = self.handler.adapter.st_conf_file
+    address = self.handler.adapter.get_gui_address(config_path)
     is_server = kdr_config['system']['server']
     
     if self.handler.ping():
-      return 'Running as %s.' % ('server' if is_server else 'client')
+      return 'Running as %s at %s.' % ('server' if is_server else 'client', address)
     else:
       return 'Exited as %s.' % ('server' if is_server else 'client')
 
   def key(self):
+    if not self.handler.wait_start(0.25, 20):
+      raise custom_errors.CannotConnect()
+
     return self.handler.encode_device_key()
   
   def test(self, arg):
@@ -49,7 +78,7 @@ class SystemFactory:
   
   def server(self):
     
-    if not self.handler.ping():
+    if not self.handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
 
     self.handler.make_server()
@@ -57,7 +86,7 @@ class SystemFactory:
 
   def client(self):
 
-    if not self.handler.ping():
+    if not self.handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
 
     self.handler.make_client()
@@ -71,8 +100,7 @@ def link(key, tag, path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-
-    if not handler.ping():
+    if not self.handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
     
     md = handler.decode_key(key)
@@ -110,6 +138,10 @@ def link(key, tag, path):
   except KeyError as e:
     return e.message
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     app_rb.rollback_config()
     st_rb.rollback_config()
     return e.message
@@ -123,6 +155,7 @@ def sys(**kwargs):
     'exit' : SystemSingleton.exit,
     'init' : SystemSingleton.init,
     'key' : SystemSingleton.key,
+    'restart' : SystemSingleton.restart,
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test
   }
@@ -137,6 +170,9 @@ def sys(**kwargs):
         else:
           return sub_handler(kwargs[key])
   except Exception as e:
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
   
 def refresh(**kwargs):
@@ -152,6 +188,10 @@ def refresh(**kwargs):
     return None if success else 'Failed to refresh ' + path
     
   except IOError as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
 
 def free(path):
@@ -162,12 +202,16 @@ def free(path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-    if not handler.ping():
+    if not self.handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
     
     handler.free(path)
     return "%s is no longer being synchronized." % path
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     app_rb.rollback_config()
     st_rb.rollback_config()
     return e.message
@@ -176,13 +220,17 @@ def tag(path, name):
   handler = factory.get_handler()
 
   try:
-    if not handler.ping():
+    if not self.handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
 
     prev_name = handler.tag(path, name)
     
     return "%s has been changed to %s" % (prev_name, name)
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
 
 def ls(): 
@@ -196,7 +244,9 @@ def key(path):
     path += '/'
 
   handler = factory.get_handler()
-    
+  if not handler.wait_start(0.25, 20):
+    raise custom_errors.CannotConnect()
+
   try:
     if not handler.folder_exists({
       'path': path
@@ -205,6 +255,10 @@ def key(path):
       
     return handler.encode_key(path)
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
 
 def add(**kwargs):
@@ -212,12 +266,16 @@ def add(**kwargs):
   handler = factory.get_handler()
 
   try:
-    if not handler.ping():
+    if not handler.wait_start(0.25, 20):
       raise custom_errors.CannotConnect()
 
     handler.add(**kwargs)
     return "You can now share %s" % kwargs['path']
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
 
 def mv(source, target):
@@ -252,6 +310,10 @@ def auth(option, path, device_id):
     elif option == 'list':
       return handler.auth_ls()
   except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
     return e.message
 
 """

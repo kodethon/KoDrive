@@ -2,7 +2,7 @@ from py_syncthing_adapter import Syncthing
 from data import custom_errors
 
 import xml.etree.ElementTree as ET
-import os, subprocess
+import os, subprocess, socket
 import json, hashlib
 import urllib, copy
 
@@ -24,6 +24,11 @@ class PlatformBase(object):
   def get_gui_address(self, config_path):   
     tree = ET.parse(config_path)
     return tree.find('gui').find('address').text
+
+  def set_gui_address(self, config_path, address):
+    tree = ET.parse(config_path)
+    tree.find('gui').find('address').text = str(address)
+    tree.write(config_path)
 
   def set_platform_dir_config(self, folder_path, object):
 
@@ -68,11 +73,6 @@ class PlatformBase(object):
         return config['directories'][dir_id]
       except:
         custom_errors.FileNotInConfig(local_path)
-  
-  def set_gui_address(self, config_path, address):
-    tree = ET.parse(config_path)
-    tree.find('gui').find('address').text = address
-    ET.write(tree)
 
   def get_platform_gui_hook(self, config_path):
     tree = ET.parse(config_path)
@@ -295,14 +295,40 @@ class SyncthingLinux64(PlatformBase):
       new_flag = True
     else:
       gui_address = self.get_gui_address(self.st_conf_file)
+      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      toks = gui_address.split(':')
+      host = toks[0]
+      port = int(toks[1])
+
+      if sock.connect_ex((host, port)) != 0:
+        opts.append('-gui-address')
+        opts.append(gui_address)
+
+      '''
+      # Check if the port is available
+      
+      while True: 
+        toks = gui_address.split(':')
+        host = toks[0]
+        port = int(toks[1])
+        
+        if sock.connect_ex((host, port)) != 0:
+          break
+
+        port += 1
+        gui_address = "%s:%d" % (host, port)
+      
+      # All good, let's go
       opts.append('-gui-address')
       opts.append(gui_address)
+      self.set_gui_address(self.st_conf_file, gui_address)
+      '''
     
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
-    
+
     return new_flag
 
   def delete_default_folder(self):

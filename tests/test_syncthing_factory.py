@@ -237,6 +237,7 @@ def test_free_server():
   
   # Check device metadata was deleted
   mock.client.wait_start(0.5, 10)
+  mock.server.wait_start(0.5, 10)
   key = mock.server.encode_key(server_sync_dir)
   md = mock.client.decode_key(key)
   device = mock.client.find_device(
@@ -426,6 +427,8 @@ def test_deauth():
   assert True
 
 def test_rollback():
+  mock.client.wait_start(0.5, 10)
+
   c_app_rb.rollback_config()
   c_st_rb.rollback_config()
   s_app_rb.rollback_config()
