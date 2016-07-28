@@ -159,19 +159,40 @@ class SyncthingFacade():
 # UTILS
 
   def wait_start(self, t, intervals, callback=None):
-    count = 0
+    
+    # Base case
+    if intervals <= 0:
+      try:
+        config = self.get_config()
+        return True if config else False
+      except Exception:
+        return False 
 
+    count = 0
     while not self.ping() and count < intervals:
       time.sleep(t)
       count += 1
-    
-    if count < intervals:
-      if callback:
-        callback()
 
-      return True
+    c = True
+
+    try:
+      config = self.get_config()
+      if not config:
+        c = False
+    except Exception:
+      c = False
+
+    if not c:
+      self.wait_start(t, intervals - count, callback)
     else:
-      return False
+      if count < intervals:
+        if callback:
+          callback()
+
+        return True
+      else:
+        return False
+
 
   def decode_key(self, encoded_key):
 
