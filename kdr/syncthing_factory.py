@@ -430,7 +430,7 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : 60,
+      'rescanIntervalS' : 30,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,

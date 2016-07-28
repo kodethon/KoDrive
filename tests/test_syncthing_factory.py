@@ -126,10 +126,6 @@ def test_link_server():
 
   # Preprocess server
   mock.server.wait_start(0.5, 10)
-  
-  #if not mock.server.folder_exists({
-  #  'path' : server_sync_dir
-  #}):
   mock.server.add(
     path=server_sync_dir,
     tag='client-sync'
@@ -156,22 +152,16 @@ def test_link_server():
   mock.client.wait_start(0.5, 20) 
   config = mock.client.get_config()
 
-  # Check if src metadata was inserted
-  #inserted = mock.client.folder_exists({
-  #  'path' : client_sync_dir
-  #}, config)
-  
   folder = None
-  folders = config['folders']
-  
-  for f in folders:
-    if client_sync_dir == f['path'].rstrip('/'):
+
+  for f in config['folders']:
+    if client_sync_dir.rstrip('/') == f['path'].rstrip('/'):
       folder = f
       break
 
   if not folder:
     print "%s was not inserted into config['folders']" % client_sync_dir
-    log_config([config])
+    log_configs([config])
     assert False
 
   folder = mock.client.find_folder({
@@ -201,10 +191,12 @@ def test_link_server():
   # Check device metadata was inserted remotely
   mock.server.wait_start(0.5, 10)
   r_config = remote.get_config()
-  inserted = remote.device_exists(
-    mock.client.get_device_id(),
-    r_config
-  )
+    
+  c_devid = mock.client.get_device_id(),
+  inserted = False
+  for d in r_config['devices']:
+    if d['deviceID'] == c_devid:
+      inserted = True
 
   if not inserted:
     print "This device was not inserted into r_config['devices']"
@@ -213,7 +205,7 @@ def test_link_server():
   
   # Check device was inserted into folder metadata
   r_folder = remote.find_folder({
-    'id' : Cache['folder_id']
+    'path' : server_sync_dir
   }, r_config)
   device = remote.find_device(mock.client.get_device_id(), r_folder)
   
