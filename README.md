@@ -83,6 +83,10 @@ To force a rescan and sync the directory immediately:
 $ kdr push <PATH>
 ```
 
+<p align="center">
+  <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/client-client-circle.png" alt="Client-Client"/>
+</p>
+
 
 ## Stopping Synchronization
 The sharer can deauthorize access to certain users:
