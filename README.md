@@ -38,18 +38,24 @@ $ kdr sys -k
 The sharer then:
 
 1. Adds the directory to be shared with ```kdr add <PATH>```
-  * _**Note**: ```kdr ls``` can be used before and/or after adding and freeing directories to see what is currently in the daemon._
+  ```sh
+  $ kdr add <PATH>
+  $ kdr ls
+  ```
+
+  * _**Note**: ```kdr ls``` is optional and can be used before and/or after adding and freeing directories to verify._
 2. Authorizes a receiver to that directory (```-a``` stands for ```--add```).
-  * _**Note**: ```kdr auth -l``` can be used before and after de/authorizing devices to see who has access to which directories._
+  ```sh
+  $ kdr auth -a <RECEIVER_DEVICE_KEY> <PATH>
+  $ kdr auth -l
+  ```
+
+  * _**Note**: ```kdr auth -l``` is optional and can be used before and after de/authorizing devices to see who has access to which directories._
 3. Gets the key which the receiver will need to link.
 
-```sh
-$ kdr add <PATH>
-$ kdr ls
-$ kdr auth -a <RECEIVER_DEVICE_KEY> <PATH>
-$ kdr auth -l
-$ kdr key <PATH>
-```
+  ```sh
+  $ kdr key <PATH>
+  ```
 
 Running ```kdr key <PATH>``` will return the directory's key, which needs to be passed to the receiver(s).
 
@@ -58,19 +64,26 @@ _**Note**: When there are multiple receivers, the sharer will need to authorize 
 
 The receiver(s) then link to the sharer **in the directory** where they would like to save the files:
 
-_**CAUTION**: linking will merge the 2 directories so that the sharer and receiver will have access to **everything in BOTH** directories. This can lead to the sharing of sensitive data as well as conflicts if there are files with the same name. It is recommended for a receiver to link while in an empty directory. See [conflicts](https://github.com/Jvlythical/KodeDrive#conflicts) for more._
+_**CAUTION**: linking will merge the 2 directories so that the sharer and receiver will have access to **everything in BOTH** directories. This can lead to the sharing of sensitive data as well as conflicts if there are files with the same name. It is recommended for a receiver to link while in an empty directory. See [conflicts](https://github.com/Jvlythical/KodeDrive#conflicts) for more information._
 
 ```sh
 $ kdr link <DIRECTORY_KEY>
+```
+
+Now the authorized devices have access to the directory and can add, modify and remove files. KodeDrive is configured so that the daemon scans the directory for changes every 30 seconds.
+
+To force a rescan and sync the directory immediately:
+```sh
+$ kdr push <PATH>
 ```
 
 
 ## Stopping Synchronization
 The sharer can deauthorize access to certain users:
 
-1. ```kdr auth -l``` lists all directories authorized to others and the devices which are authorized. This can be useful for ```kdr auth -a/-r``` to obtain device keys and check whether a receiver has been deauthorized.
+1. ```kdr auth -l``` lists all directories authorized to others and the devices which are authorized. This can be useful for ```kdr auth -a/-r``` to obtain device keys and verify whether a device has been deauthorized.
 
-2. ```kdr auth -r <RECEIVER_DEVICE_ID> <PATH>``` removes authorization of a certain receiver to a directory. (```-r``` for ```--remove```) 
+2. ```kdr auth -r <RECEIVER_DEVICE_ID> <PATH>``` deauthorizes a certain receiver to a directory. (```-r``` for ```--remove```) 
 
 ```sh
 $ kdr auth -l
