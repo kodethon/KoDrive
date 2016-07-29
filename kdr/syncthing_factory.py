@@ -954,7 +954,7 @@ class SyncthingClient(SyncthingFacade):
 
     return True
 
-  def auth(self, path, key):
+  def auth(self, key, path):
 
     if key == self.encode_device_key():
       raise custom_errors.AuthYourself()
@@ -1021,7 +1021,7 @@ class SyncthingClient(SyncthingFacade):
       
     return
 
-  def deauth(self, path, key):
+  def deauth(self, key, path):
 
     if key == self.encode_device_key():
       raise custom_errors.AuthYourself()
