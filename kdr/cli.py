@@ -226,14 +226,14 @@ def mv(source, target):
 @main.command()
 @click.option(
   '-a', '--add', 
-  type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
-  default=(None, None), nargs=2, metavar="   <PATH> <KEY>",
+  type=(str, (click.Path(exists=True, writable=True, resolve_path=True))), 
+  default=(None, None), nargs=2, metavar="   <KEY> <PATH>",
   help="Authorize a directory."
 )
 @click.option(
   '-r', '--remove', 
-  type=(click.Path(exists=True, writable=True, resolve_path=True), str), 
-  default=(None, None), nargs=2, metavar="<PATH> <KEY>",
+  type=(str, (click.Path(exists=True, writable=True, resolve_path=True))), 
+  default=(None, None), nargs=2, metavar="<KEY> <PATH>",
   help="Deauthorize a directory."
 )
 @click.option(
@@ -260,19 +260,19 @@ def auth(**kwargs):
   output = None
   option = None
   path = None
-  device_id = None
+  key = None
 
   if all(kwargs['add']): # if tuple doesn't contain all Nones
-    (path, device_id) = kwargs['add']
+    (key, path) = kwargs['add']
     option = 'add'
 
   elif all(kwargs['remove']):
-    (path, device_id) = kwargs['remove']
+    (key, path) = kwargs['remove']
     option = 'remove'
 
   elif kwargs['list']:
     option = 'list'
-    output = cli_syncthing_adapter.auth(option, path, device_id)
+    output = cli_syncthing_adapter.auth(option, key, path)
 
     if output:
       click.echo("%s" % output)
@@ -280,19 +280,19 @@ def auth(**kwargs):
     return
 
   if kwargs['yes']:
-    output = cli_syncthing_adapter.auth(option, path)
+    output = cli_syncthing_adapter.auth(option, key, path)
     click.echo("%s" % output)
 
   else:
     if all(kwargs['add']): 
       if click.confirm("Are you sure you want to authorize %s?" % path):
-        output = cli_syncthing_adapter.auth(option, path, device_id)
+        output = cli_syncthing_adapter.auth(option, key, path)
 
       else:
         return
 
     else:
-      output = cli_syncthing_adapter.auth(option, path, device_id)
+      output = cli_syncthing_adapter.auth(option, key, path)
 
   if output:
     click.echo("%s" % output)

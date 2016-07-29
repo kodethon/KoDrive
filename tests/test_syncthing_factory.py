@@ -346,7 +346,7 @@ def test_auth():
         assert False
 
   mock.client.wait_start(0.5, 10)
-  mock.client.auth(client_sync_dir, test_device_key)
+  mock.client.auth(test_device_key, client_sync_dir)
 
   mock.client.wait_start(0.5, 10)
 
@@ -388,7 +388,7 @@ def test_deauth():
   test_device_key = mock.server.encode_device_key()
 
   mock.client.wait_start(0.5, 10)
-  mock.client.deauth(client_sync_dir, test_device_key)
+  mock.client.deauth(test_device_key, client_sync_dir)
 
   mock.client.wait_start(0.5, 10)
 

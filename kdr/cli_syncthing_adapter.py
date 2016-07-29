@@ -293,18 +293,18 @@ def mv_edge_case(source, target):
 
   return handler.mv_edge_case(source, target)
 
-def auth(option, path, device_id):
+def auth(option, key, path):
   handler = factory.get_handler()
 
   try:
     if option == 'add':
-      handler.auth(path, device_id)
-      hostname = handler.decode_device_key(device_id)['hostname']
+      handler.auth(key, path)
+      hostname = handler.decode_device_key(key)['hostname']
       return "%s can now access %s." % (hostname, path)
 
     elif option == 'remove':
-      handler.deauth(path, device_id)
-      hostname = handler.decode_device_key(device_id)['hostname']
+      handler.deauth(key, path)
+      hostname = handler.decode_device_key(key)['hostname']
       return "%s can no longer access %s" % (hostname, path)
 
     elif option == 'list':
