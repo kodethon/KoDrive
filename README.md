@@ -10,10 +10,16 @@ To use KodeDrive, the following must be installed:
 2. [pip](https://pip.pypa.io/en/stable/installing/)
 3. [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
 
-Copy and paste:
+Copy and paste either:
 
-    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
+    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python; PATH="$HOME/.local/bin:$PATH"
 
+or
+
+    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
+    
+to set ```kdr``` (the KodeDrive CLI) as a global command.
+Note that this will require ```sudo``` permissions
 
 ## Getting Started
 
