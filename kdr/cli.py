@@ -309,7 +309,7 @@ def auth(**kwargs):
   'path', nargs=1, 
   type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
-def refresh(**kwargs):
+def push(**kwargs):
   ''' Force synchronization of directory. '''
 
   output = cli_syncthing_adapter.refresh(**kwargs)
