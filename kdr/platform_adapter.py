@@ -415,10 +415,10 @@ class SyncthingMac64(PlatformBase):
     if not os.path.exists(syncthing_path):
       dest_tmp = '/tmp'
 
-      # TODO: get file from Cumulus
+      # mac_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       mac_64_bit_tar = "syncthing-macosx-amd64-v%s.tar.gz" % self.st_version
-      mac_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
-
+      mac_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
+      
       if not os.path.exists(os.path.join(dest_tmp, mac_64_bit_tar)):
         link = mac_64_bit_repo + '/' + mac_64_bit_tar
         urllib.urlretrieve(link, os.path.join(dest_tmp, mac_64_bit_tar))
