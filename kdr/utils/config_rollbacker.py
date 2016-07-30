@@ -10,9 +10,11 @@ class AppRollbacker(RollbackerBase):
     self.app_config = handler.adapter.get_config()
     
   def rollback_config(self):
+    self.app_handler.wait_start(0.5, 10)
     self.app_handler.adapter.set_config(self.app_config)
     self.app_handler.restart()
     self.app_handler.wait_start(0.5, 10)
+
 
 class SyncthingRollbacker(RollbackerBase):
   
@@ -21,6 +23,7 @@ class SyncthingRollbacker(RollbackerBase):
     self.syncthing_config = handler.get_config()
 
   def rollback_config(self):
+    self.app_handler.wait_start(0.5, 10)
     self.app_handler.set_config(self.syncthing_config)
     self.app_handler.restart()
     self.app_handler.wait_start(0.5, 10)

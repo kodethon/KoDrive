@@ -29,17 +29,17 @@ class PlatformBase(object):
     tree.find('gui').find('address').text = str(address)
     tree.write(config_path)
 
-  def init_configs(self, config_path):
-    tree = ET.parse(config_path)
+  def init_configs(self, st_conf, app_conf):
+    tree = ET.parse(st_conf)
     options = tree.find('options')
     options.find('relayReconnectIntervalM').text = '0'
     options.find('reconnectionIntervalS').text = '5'
-    tree.write(config_path)
-    devid = tree.find('device').items()[0][1]
-
-    kdr_config = self.get_platform_config(config_path)
+    tree.write(st_conf)
+    devid = tree.find('device').get('id')
+    
+    kdr_config = self.get_platform_config(app_conf)
     kdr_config['system']['devid'] = devid
-    self.set_platform_config(config_path, kdr_config)
+    self.set_platform_config(app_conf, kdr_config)
 
   def set_platform_dir_config(self, folder_path, object):
 
@@ -263,7 +263,7 @@ class SyncthingLinux64(PlatformBase):
     return self.get_platform_gui_hook(self.st_conf_file)
 
   def get_device_id(self):
-    return self.get_platform_device_id(self.st_conf_file)
+    return self.get_platform_device_id(self.app_conf_file)
 
   def get_syncthing_path(self):
     dest = os.path.join(self.home_dir, '.st')

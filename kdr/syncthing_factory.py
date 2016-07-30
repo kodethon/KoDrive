@@ -26,7 +26,6 @@ class SyncthingFacade():
     try:
       return self.sync.sys.status()['myID']
     except Exception as e:
-      print e.message
       if self.adapter:
         return self.adapter.get_device_id()
       else:
@@ -80,7 +79,11 @@ class SyncthingFacade():
           # if syncthing has not been restart :(
           self.sync = self.adapter.get_gui_hook()
           self.make_client(port)
-          self.adapter.init_configs(self.adapter.st_conf_file)
+
+          st_conf = self.adapter.st_conf_file
+          app_conf = self.adapter.app_conf_file
+          self.adapter.init_configs(st_conf, app_conf)
+
           self.adapter.delete_default_folder()
           break
         except Exception as e:
@@ -342,7 +345,7 @@ class SyncthingFacade():
   def delete_device_from_folder(self, path, devid, config):
     # list of folders
     folders = config['folders']
-    
+
     for i, f in enumerate(folders):
       if path.rstrip('/') == f['path'].rstrip('/'):
         for n, d in enumerate(f['devices']):
@@ -568,7 +571,7 @@ class SyncthingClient(SyncthingFacade):
     }):
       raise custom_errors.AlreadyAdded()
 
-    self_devid = self.get_device_id()
+    #self_devid = self.get_device_id()
     if not self.device_exists(device_id):
       self.new_device(config=config, device_id=device_id)
       self.set_config(config)
@@ -587,7 +590,8 @@ class SyncthingClient(SyncthingFacade):
     remote.wait_start(0.5, 10)
     remote_config = remote.request_folder(
       self.hostname(),    
-      self_devid
+      self.get_device_id()
+      #self_devid
     )
     
     # Find the remote folder
@@ -680,7 +684,7 @@ class SyncthingClient(SyncthingFacade):
       'api_key' : api_key,
       'label' : kwargs['label'],
       'local_path' : kwargs['local_path'],
-      #'remote_path': kwargs['remote_path'],
+      'remote_path': kwargs['remote_path'] if 'remote_path' in kwargs else '',
       'is_shared' : True,
       'host' : kwargs['host'] if 'host' in kwargs else None,
       'port' : kwargs['port'] if 'port' in kwargs else None,
@@ -763,14 +767,15 @@ class SyncthingClient(SyncthingFacade):
       )
       
       # Check to see if no other folder depends has this device
+      device_exists = False
+
       for f in r_config['folders']:
         if self.device_exists(self_devid, f):
           device_exists = True
-      print self_devid
+
       if not device_exists:
         remote.delete_device(self_devid, r_config)
-      print 'AFTER DELETE'
-      print r_config
+
       remote.set_config(r_config)
       remote.restart()
 
@@ -1156,26 +1161,7 @@ class SyncthingClient(SyncthingFacade):
     return body
 
   def test(self, arg): 
-    #self.restart()
-
-    print self.adapter.get_device_id()
-    return
-    device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
-    host = self.devid_to_ip(device_id)
-    api_key = '8854a1a83df049115054c2711a022a955a22abfa'
-
-    remote = SyncthingProxy(device_id, host, api_key)
-    print remote.get_config()
-    return
-
-    '''
-    print self.sync.sys.status()['myID']
-    return
-    print self.devid_to_ip( 'UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
-    print dir(self.sync.sys.set.config)
-    print self.sync.misc.device_id(id='UGTMKD2-GTXMPW5-WUSYAVN-HNBHWSD-LT2HXX7-KLKI6AJ-KHY65W2-XX726QD')
-    return self.sync.sys.ping()
-    '''
+    self.restart()
 
 class SyncthingProxy(SyncthingFacade):
 

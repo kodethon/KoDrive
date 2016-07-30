@@ -38,6 +38,7 @@ def test_init_conf():
 
   if not kdr_config['system']['devid'] == devid:
     print "Was expecting %s to be in app config." % devid
+    print "Instead got: %s" % kdr_config['system']['devid']
     assert False
 
 def test_make_server():

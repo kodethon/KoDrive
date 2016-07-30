@@ -23,7 +23,7 @@ dependencies = ['click', 'requests']
 
 setup(
     name='kdr',
-    version='0.9.1',
+    version='0.9.2',
     url='https://github.com/Jvlythical/KodeDrive',
     license='LICENSE',
     author='Michael Yen',
