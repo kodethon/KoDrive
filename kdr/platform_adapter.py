@@ -13,11 +13,10 @@ class PlatformBase(object):
   st_binary = 'syncthing'
   stfolder = '.stfolder'
   st_version = '0.14.0'
-  #st_version = '0.14.0-beta.1'
   default_config = {
     'directories' : {},
     'system' : {
-      'server' : False
+      'server' : False,
     }
   }
 
@@ -29,6 +28,18 @@ class PlatformBase(object):
     tree = ET.parse(config_path)
     tree.find('gui').find('address').text = str(address)
     tree.write(config_path)
+
+  def init_configs(self, config_path):
+    tree = ET.parse(config_path)
+    options = tree.find('options')
+    options.find('relayReconnectIntervalM').text = '0'
+    options.find('reconnectionIntervalS').text = '5'
+    tree.write(config_path)
+    devid = tree.find('device').items()[0][1]
+
+    kdr_config = self.get_platform_config(config_path)
+    kdr_config['system']['devid'] = devid
+    self.set_platform_config(config_path, kdr_config)
 
   def set_platform_dir_config(self, folder_path, object):
 
@@ -85,8 +96,9 @@ class PlatformBase(object):
     return Syncthing(api_key=api_key, port=int(port), host=host)
 
   def get_platform_device_id(self, config_path):
-    tree = ET.parse(config_path)
-    return tree.find('device').items()[0][1]
+    kdr_config = self.get_platform_config(config_path)
+    sys_config = kdr_config['system']
+    return sys_config['devid'] if 'devid' in sys_config else None
   
   def create_config(self, config_path, **kwargs):
     

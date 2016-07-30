@@ -25,7 +25,8 @@ class SyncthingFacade():
   def get_device_id(self):
     try:
       return self.sync.sys.status()['myID']
-    except Exception:
+    except Exception as e:
+      print e.message
       if self.adapter:
         return self.adapter.get_device_id()
       else:
@@ -79,6 +80,7 @@ class SyncthingFacade():
           # if syncthing has not been restart :(
           self.sync = self.adapter.get_gui_hook()
           self.make_client(port)
+          self.adapter.init_configs(self.adapter.st_conf_file)
           self.adapter.delete_default_folder()
           break
         except Exception as e:
@@ -712,14 +714,14 @@ class SyncthingClient(SyncthingFacade):
 
     # Check whether folders are still connected to this device 
     device_exists = False
-
+    
     for f in config['folders']:
       if self.device_exists(r_device_id, f):
         device_exists = True
     
     if not device_exists:
       del_device = self.delete_device(r_device_id, config)
-    
+        
     # Done processing st config, commit :)
     self.set_config(config)
     self.restart()
@@ -752,14 +754,23 @@ class SyncthingClient(SyncthingFacade):
         port=dir_config['port'] if 'port' in dir_config else None
       )
       r_config = remote.get_config()
+      self_devid = self.get_device_id()
 
       del_device = remote.delete_device_from_folder(
         dir_config['remote_path'],
-        self.get_device_id(), 
+        self_devid, 
         r_config
       )
-      remote.delete_device(self.get_device_id(), r_config)
-
+      
+      # Check to see if no other folder depends has this device
+      for f in r_config['folders']:
+        if self.device_exists(self_devid, f):
+          device_exists = True
+      print self_devid
+      if not device_exists:
+        remote.delete_device(self_devid, r_config)
+      print 'AFTER DELETE'
+      print r_config
       remote.set_config(r_config)
       remote.restart()
 
@@ -1145,7 +1156,9 @@ class SyncthingClient(SyncthingFacade):
     return body
 
   def test(self, arg): 
-    self.restart()
+    #self.restart()
+
+    print self.adapter.get_device_id()
     return
     device_id = 'UUQBJP7-UFER63M-OVAX4F5-7EPV6G4-QHRAXRH-4LL7575-B5U675Y-U6T2YAI'
     host = self.devid_to_ip(device_id)

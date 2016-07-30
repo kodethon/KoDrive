@@ -16,8 +16,32 @@ s_app_conf = json.dumps(mock.server.adapter.get_config())
 c_st_conf = json.dumps(mock.client.get_config())
 s_st_conf = json.dumps(mock.server.get_config())
 
+def test_init_conf():
+
+  mock.client.wait_start(0.5, 10)
+  config= mock.client.get_config()
+  ris = config['options']['reconnectionIntervalS']
+  rrim = config['options']['relayReconnectIntervalM']
+
+  if not ris == 5:
+    print "Was expecting reconnectionIntervalS to be %s" % 5
+    print "Instead got: %s" % ris
+    assert False
+
+  if not rrim == 0:
+    print "Was expecting relayReconnectionIntervalM to be %s" % 0
+    print "Instead got: %s" % rrim
+    assert False
+
+  kdr_config = mock.client.adapter.get_config()
+  devid = mock.client.get_device_id()
+
+  if not kdr_config['system']['devid'] == devid:
+    print "Was expecting %s to be in app config." % devid
+    assert False
+
 def test_make_server():
-  ''' Ensure that kdr sys -s meets specs '''
+  ''' Ensure that syncthing_ meets specs '''
 
   config_path = mock.client.adapter.st_conf_file
   gui_addr = mock.client.adapter.get_gui_address(config_path)
@@ -138,8 +162,7 @@ def test_link_server():
   # Run command on mock.client
   md = mock.client.decode_key(key)
   mock.client.wait_start(0.5, 10)
-  print mock.server.get_device_id()
-  print mock.client.get_device_id()
+
   mock.client.link(
     device_id=md['devid'],
     api_key=md['api_key'],
@@ -223,7 +246,10 @@ def test_free_server():
   server_sync_dir = mock.server_conf['sync_dir']
   mock.client.free(client_sync_dir)
 
-  mock.client.wait_start(0.5, 10) 
+  mock.client.wait_start(0.5, 10)
+  mock.server.wait_start(0.5, 10)
+  mock.server.wait_sync(0.5, 10)
+  mock.client.wait_sync(0.5 ,10)
   config = mock.client.get_config()
 
   # Check if src metadata was deleted
@@ -236,8 +262,6 @@ def test_free_server():
     assert False
   
   # Check device metadata was deleted
-  mock.client.wait_start(0.5, 10)
-  mock.server.wait_start(0.5, 10)
   key = mock.server.encode_key(server_sync_dir)
   md = mock.client.decode_key(key)
   device = mock.client.find_device(
@@ -264,20 +288,23 @@ def test_free_server():
 
   if device:
     print "This device is still in config['devices']."
+    print config
     assert False
   
-  # Check device metadata was inserted remotely
+  # Check device metadata was deleted remotely
   r_config = remote.get_config()
-  device = remote.find_device(
-    mock.client.get_device_id(),
-    r_config
-  )
-
-  if device:
-    print "This device is still in r_config['devices']"
+  devid = mock.client.get_device_id()
+  device_inserted = False
+  for d in r_config['devices']:
+    if d['deviceID'] == devid:
+      device_inserted = True
+    
+  if device_inserted:
+    print "Found %s in r_config['devices']" % devid
+    print r_config
     assert False
   
-  # Check device was inserted into folder metadata
+  # Check device was deleted from folder metadata
   r_folder = remote.find_folder({
     'path' : server_sync_dir
   }, r_config)
