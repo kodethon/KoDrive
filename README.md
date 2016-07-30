@@ -12,7 +12,7 @@ To use KodeDrive, the following must be installed:
 
 Copy and paste either:
 
-    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python; 
+    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
     $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
     
    
