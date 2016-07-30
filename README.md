@@ -13,13 +13,12 @@ To use KodeDrive, the following must be installed:
 Copy and paste either:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python; PATH="$HOME/.local/bin:$PATH"
-
-or
+   
+To set ```kdr``` (the KodeDrive CLI) as a local command or:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
-    
-to set ```kdr``` (the KodeDrive CLI) as a global command.
-Note that this will require ```sudo``` permissions
+ 
+To set ```kdr``` as a global command.  Note that the second one will require ```sudo``` permissions.
 
 ## Getting Started
 
