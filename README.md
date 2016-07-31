@@ -6,14 +6,20 @@ Synchronize remote files and directories across different devices and users with
 
 To use KodeDrive, the following must be installed:
 
-1. [Python 2.7](https://www.python.org/downloads/)
-2. [pip](https://pip.pypa.io/en/stable/installing/)
-3. [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+- [Python 2.7](https://www.python.org/downloads/)
+- [pip](https://pip.pypa.io/en/stable/installing/)
+```sh
+$ curl https://bootstrap.pypa.io/get-pip.py | python
+```
+- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+```sh
+$ pip install virtualenv
+```
 
 Copy and paste either:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
-    $ PATH="$HOME/.local/bin:$PATH"; echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+    $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
     
    
 To set ```kdr``` (the KodeDrive CLI) as a local command or:
@@ -166,8 +172,3 @@ Please note that if users modify conflict files, it is possible to end up with c
 Those will be named as ```sync-conflict-...sync-conflict -...-sync-conflict``` files.
 
 Please refer to Syncthing's [FAQ](https://docs.syncthing.net/users/faq.html?highlight=conflicts).
-
-## Dependencies
-- [Python 2.7](https://www.python.org/)
-- [pip](https://github.com/pypa/pip)
-- [virtualenv](https://github.com/pypa/virtualenv)
