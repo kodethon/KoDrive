@@ -21,7 +21,7 @@ $ pip install virtualenv
 Copy and paste either:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
-    $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+    $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile; PATH="$HOME/.local/bin:$PATH"
     
    
 To set ```kdr``` (the KodeDrive CLI) as a local command or:
@@ -92,6 +92,7 @@ To force a rescan and sync the directory immediately:
 $ kdr push <PATH>
 ```
 
+Below is an illustration of the above process:
 <p align="center">
   <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/client-client-circle.png" alt="Client-Client"/>
 </p>
