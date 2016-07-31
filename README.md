@@ -4,6 +4,7 @@ Synchronize remote files and directories across different devices and users with
 
 ## Installation
 
+### Dependencies
 To use KodeDrive, the following must be installed:
 
 - [Python 2.7](https://www.python.org/downloads/)
@@ -16,6 +17,7 @@ $ curl https://bootstrap.pypa.io/get-pip.py | python
 $ pip install virtualenv
 ```
 
+### Installing KodeDrive
 Copy and paste either:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
