@@ -13,7 +13,7 @@ To use KodeDrive, the following must be installed:
 Copy and paste either:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
-    $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+    $ PATH="$HOME/.local/bin:$PATH"; echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
     
    
 To set ```kdr``` (the KodeDrive CLI) as a local command or:
