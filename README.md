@@ -18,17 +18,15 @@ $ pip install virtualenv
 ```
 
 ### Install KodeDrive
-Copy and paste either:
+To set ```kdr``` (the KodeDrive CLI) as a local command, copy and paste:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
     $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile; PATH="$HOME/.local/bin:$PATH"
     
-   
-To set ```kdr``` (the KodeDrive CLI) as a local command or:
+or to set ```kdr``` as a global command (Please note that this will require ```sudo``` permissions):
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
- 
-To set ```kdr``` as a global command (Please note that this will require ```sudo``` permissions).
+
 
 ## Getting Started
 
@@ -178,5 +176,3 @@ It will be up to the users to resolve conflicts and update their files in this c
 
 Please note that if users modify conflict files, it is possible to end up with conflicting conflict files.
 Those will be named as ```sync-conflict-...sync-conflict -...-sync-conflict``` files.
-
-Please refer to Syncthing's [FAQ](https://docs.syncthing.net/users/faq.html?highlight=conflicts).
