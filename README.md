@@ -159,6 +159,11 @@ $ kdr link <KEY>
 ```
 with the key given by the server.
 
+Below is an illustration of the above process:
+<p align="center">
+  <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/server-client.png" alt="Server-Client"/>
+</p>
+
 #### Stopping Synchronization as Server-Client
 For both the sharer and the receivers:
 ```sh
