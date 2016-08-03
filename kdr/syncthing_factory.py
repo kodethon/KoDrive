@@ -119,7 +119,10 @@ class SyncthingFacade():
     return "".join(key.split())
 
   def decode_device_key(self, key):
-    key = key.decode('base64')
+    try:
+      key = key.decode('base64')
+    except:
+     raise custom_errors.InvalidKey(key)
 
     try:
       toks = key.split('#')
@@ -447,7 +450,10 @@ class SyncthingClient(SyncthingFacade):
       pass
 
   def add(self, **kwargs):
-    
+
+    if os.path.isfile(kwargs['path'].rstrip('/')):
+      raise custom_errors.NotDirectory(kwargs['path'].rstrip('/'))
+
     devid = self.get_device_id()
     config = self.get_config()
     folders = config['folders']
@@ -972,8 +978,17 @@ class SyncthingClient(SyncthingFacade):
 
   def auth(self, key, path):
 
-    if key == self.encode_device_key():
-      raise custom_errors.AuthYourself()
+    try:
+      if key == self.encode_device_key():
+        raise custom_errors.AuthYourself()
+    except:
+      try:
+        alive = self.handler.ping()
+      except:
+        alive = False
+
+      if not alive:
+        raise custom_errors.CannotConnect()
 
     self.wait_start(0.5, 10)
     path = os.path.abspath(path)
@@ -1039,8 +1054,17 @@ class SyncthingClient(SyncthingFacade):
 
   def deauth(self, key, path):
 
-    if key == self.encode_device_key():
-      raise custom_errors.AuthYourself()
+    try:
+      if key == self.encode_device_key():
+        raise custom_errors.AuthYourself()
+    except:
+      try:
+        alive = self.handler.ping()
+      except:
+        alive = False
+
+      if not alive:
+        raise custom_errors.CannotConnect()
 
     self.wait_start(0.5, 10)
     path = os.path.abspath(path)

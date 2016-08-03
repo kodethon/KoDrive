@@ -66,3 +66,9 @@ class AuthAlready(KodeDriveError):
     super(KodeDriveError, self).__init__(
       "%s has already been de/authenticated." % hostname
     )
+
+class NotDirectory(KodeDriveError):
+  def __init__(self, f_path):
+    super(KodeDriveError, self).__init__(
+      "%s is not a directory." % f_path
+    )
