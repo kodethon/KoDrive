@@ -40,6 +40,19 @@ def sys(**kwargs):
       click.echo(click.get_current_context().get_help())
 
 @main.command()
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def stat(**kwargs):
+  ''' Display folder information. '''
+
+  output = cli_syncthing_adapter.stat(**kwargs)
+
+  click.echo("%s" % output)
+
+@main.command()
 def ls():
   ''' List synchronized directories. '''
 

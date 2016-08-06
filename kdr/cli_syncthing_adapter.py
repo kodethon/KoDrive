@@ -54,7 +54,7 @@ class SystemFactory:
       return 'Exited as %s.' % ('server' if is_server else 'client')
 
   def key(self):
-    if not self.handler.wait_start(0.25, 20):
+    if not self.handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
 
     return self.handler.encode_device_key()
@@ -78,7 +78,7 @@ class SystemFactory:
   
   def server(self):
     
-    if not self.handler.wait_start(0.25, 20):
+    if not self.handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
 
     self.handler.make_server()
@@ -86,7 +86,7 @@ class SystemFactory:
 
   def client(self):
 
-    if not self.handler.wait_start(0.25, 20):
+    if not self.handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
 
     self.handler.make_client()
@@ -100,7 +100,7 @@ def link(key, tag, path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-    if not handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
     
     md = handler.decode_key(key)
@@ -202,7 +202,7 @@ def free(path):
   st_rb = rb.SyncthingRollbacker(handler)
 
   try:
-    if not handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
     
     handler.free(path)
@@ -220,7 +220,7 @@ def tag(path, name):
   handler = factory.get_handler()
 
   try:
-    if not handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
 
     prev_name = handler.tag(path, name)
@@ -244,7 +244,7 @@ def key(path):
     path += '/'
 
   handler = factory.get_handler()
-  if not handler.wait_start(0.25, 20):
+  if not handler.wait_start(0.5, 10, verbose=True):
     raise custom_errors.CannotConnect()
 
   try:
@@ -266,7 +266,7 @@ def add(**kwargs):
   handler = factory.get_handler()
 
   try:
-    if not handler.wait_start(0.25, 20):
+    if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
 
     handler.add(**kwargs)
@@ -315,6 +315,24 @@ def auth(option, key, path):
       traceback.print_exc()
 
     return e.message
+
+def stat(**kwargs):
+  handler = factory.get_handler()
+
+  try:
+    if not handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+
+    path = kwargs['path']
+
+    return handler.stat(path)
+  except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
+    return e.message
+
 
 """
 

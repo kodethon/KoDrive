@@ -1,4 +1,5 @@
 from py_syncthing_adapter import Syncthing
+import click
 
 # Self-defined
 import platform_adapter
@@ -37,6 +38,19 @@ class SyncthingFacade():
   def restart(self):
     self.sync.sys.set.restart()
 
+  def stat(self, path):
+    if not path[len(path) - 1] == '/':
+      path += '/'
+
+    folder = self.find_folder({
+      'path' : path
+    }) 
+
+    if not folder:
+      raise IOError(path + ' is not being synchronized.')
+    else:
+      return self.sync.db.status()
+
   def scan(self, path):
   
     if not path[len(path) - 1] == '/':
@@ -48,7 +62,6 @@ class SyncthingFacade():
 
     if not folder:
       raise IOError(path + ' is not being synchronized.')
-
     else:
       return self.sync.db.set.scan(folder=folder['id'])
 
@@ -187,7 +200,18 @@ class SyncthingFacade():
     else:
       return False
 
-  def wait_start(self, t, intervals, callback=None):
+  def wait_start(self, t, intervals, **kwargs):
+    
+    if 'callback' in kwargs:
+      callback = kwargs['callback'] 
+    else:
+      callback = None
+
+    if 'verbose' in kwargs:
+      verbose = kwargs['verbose'] 
+    else:
+      verbose = False
+
     # Base case
     if intervals <= 0:
       try:
@@ -201,6 +225,9 @@ class SyncthingFacade():
       time.sleep(t)
       count += 1
 
+      if verbose:
+        click.echo("Attempt %i to connect." % count)
+
     c = True
 
     try:
@@ -212,7 +239,7 @@ class SyncthingFacade():
       c = False
 
     if not c:
-      self.wait_start(t, intervals - count, callback)
+      self.wait_start(t, intervals - count, **kwargs)
     else:
       if count < intervals:
         if callback:
