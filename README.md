@@ -1,6 +1,6 @@
 # KodeDrive
 
-Synchronize remote files and directories across different devices and users with an easy-to-use CLI.
+Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
 ## Installation
 
