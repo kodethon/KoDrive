@@ -2,7 +2,7 @@
 
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
-## Installation
+## Getting Started
 
 ### Install Dependencies
 To use KodeDrive, the following must be installed:
@@ -26,17 +26,42 @@ or to set ```kdr``` as a global command (```sudo``` permission is required):
     $ pip install virtualenv
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
 
-
-## Getting Started
-
-To see all of the commands:
-
-    $ kdr --help
-    
 ### Initialize the KodeDrive Daemon
+
 ```sh
 $ kdr sys -i
 ```
+
+## Linking Directories
+
+1. Provide the other person with your **device key**:
+
+  ```sh
+  $ kdr sys -k
+  ```
+2. The person sharing with you will then provide a **folder key**:
+
+  ```sh
+  $ kdr link <FOLDER-KEY>
+  ```
+
+## Sharing Directories
+
+1. A folder must first be added before it can be shared:   
+
+  ```sh
+  $ kdr add <PATH>
+  ```
+2. Next the folder needs to be authorized with another user's device key:   
+
+  ```sh
+  $ kdr auth -a <DEVICE-KEY> <PATH>
+  ```
+3. Finally obtain and provide the below folder key back to the other user:
+ 
+  ```sh
+  $ kdr key <PATH>
+  ```
 
 ## Synchronizing Files and Directories
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
