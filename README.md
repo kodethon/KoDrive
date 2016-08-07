@@ -39,10 +39,10 @@ $ kdr sys -i
   ```sh
   $ kdr sys -k
   ```
-2. The person sharing with you will then provide a **folder key**:
+2. The person sharing with you will then provide a **directory key**:
 
   ```sh
-  $ kdr link <FOLDER-KEY>
+  $ kdr link <DIRECTORY-KEY>
   ```
 
 ## Sharing Directories
@@ -57,7 +57,7 @@ $ kdr sys -i
   ```sh
   $ kdr auth -a <DEVICE-KEY> <PATH>
   ```
-3. Finally obtain and provide the below **folder key** back to the other user:
+3. Finally obtain and provide the below **directory key** back to the other user:
  
   ```sh
   $ kdr key <PATH>
