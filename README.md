@@ -62,6 +62,10 @@ $ kdr sys -i
   ```sh
   $ kdr key <PATH>
   ```
+Below is an illustration of the above process:
+<p align="center">
+  <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/client-client-circle.png" alt="Client-Client"/>
+</p>
 
 ## Linking/Sharing Directories Detailed
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
@@ -113,12 +117,6 @@ To force a rescan and sync the directory immediately:
 ```sh
 $ kdr push <PATH>
 ```
-
-Below is an illustration of the above process:
-<p align="center">
-  <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/client-client-circle.png" alt="Client-Client"/>
-</p>
-
 
 ## Stopping Synchronization
 The sharer can deauthorize access to certain users:
