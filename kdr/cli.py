@@ -50,8 +50,12 @@ def stat(**kwargs):
   ''' Display folder information. '''
 
   output = cli_syncthing_adapter.stat(**kwargs)
-
-  click.echo("%s" % output)
+   
+  click.echo("State: %s" % output['state'])
+  click.echo("\nTotal files: %s" % output['localFiles'])
+  click.echo("Files needed: %s" % output['needFiles'])
+  click.echo("\nTotal bytes: %s" % output['localBytes'])
+  click.echo("Bytes needed: %s" % output['needBytes'])
 
 @main.command()
 def ls():
