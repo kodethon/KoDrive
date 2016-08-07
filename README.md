@@ -13,18 +13,17 @@ To use KodeDrive, the following must be installed:
 $ curl https://bootstrap.pypa.io/get-pip.py | python
 ```
 - [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-```sh
-$ pip install virtualenv
-```
+
 
 ### Install KodeDrive
-To set ```kdr``` (the KodeDrive CLI) as a local command, copy and paste:
+To set ```kdr``` (the KodeDrive CLI) as a local command:
 
+    $ pip install --user virtualenv
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
-    $ echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile; PATH="$HOME/.local/bin:$PATH"
     
-or to set ```kdr``` as a global command (Please note that this will require ```sudo``` permissions):
+or to set ```kdr``` as a global command (```sudo``` permission is required):
 
+    $ pip install virtualenv
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
 
 
