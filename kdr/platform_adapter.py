@@ -276,18 +276,19 @@ class SyncthingLinux64(PlatformBase):
 
     # If syncthing doesn't exist, install it
     if not os.path.exists(syncthing_path):
-      dest_tmp = '/tmp'
 
       #linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
       linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
+      dest_tmp = os.path.join('/tmp', linux_64_bit_tar)
       
       if not os.path.exists(os.path.join(dest_tmp, linux_64_bit_tar)):
-        command = "wget -P %s %s" % (dest_tmp, os.path.join(linux_64_bit_repo, linux_64_bit_tar))
-        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        #command = "wget -P %s %s" % (dest_tmp, os.path.join(linux_64_bit_repo, linux_64_bit_tar))
+        #subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        urllib.urlretrieve(os.path.join(linux_64_bit_repo, linux_64_bit_tar), dest_tmp)
 
       src = dest_tmp
-      command = "tar -zxvf %s/%s --directory %s" % (src, linux_64_bit_tar, dest)
+      command = "tar -zxvf %s --directory %s" % (src, dest)
       subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
 
     return syncthing_path
