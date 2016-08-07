@@ -4,7 +4,6 @@ import sys
 from subprocess import call
 import shutil
 
-
 try:
     WindowsError
 except NameError:
@@ -18,9 +17,7 @@ else:
 
 DEFAULT_KDR_HOME = os.path.expanduser('~/.local/venvs')
 DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
-
-# For global installation
-#DEFAULT_KDR_BIN_DIR = '/usr/local/bin'
+virtualenv_bin = 'virtualenv'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
@@ -70,7 +67,7 @@ def install_files(venv, bin_dir, install):
         except (OSError, IOError):
             pass
 
-    if call(['virtualenv', venv]) != 0:
+    if call([global virtualenv_bin, venv]) != 0:
         _cleanup()
         fail('Could not create virtualenv for kdr :(')
 
@@ -87,9 +84,10 @@ def main():
     else:
         echo('Installing kdr')
 
-    if not command_exists('virtualenv'):
-        fail('You need to have virtualenv installed to bootstrap kdr.')
-
+    if not command_exists(global virtualenv_bin):
+        global virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
+        if not command_exists(virutalenv_bin):
+            fail('You need to have virtualenv installed to bootstrap kdr.')
 
     bin_dir = os.environ.get('KDR_BIN_DIR', DEFAULT_KDR_BIN_DIR)
     venv = os.path.join(os.environ.get('KDR_HOME', DEFAULT_KDR_HOME),

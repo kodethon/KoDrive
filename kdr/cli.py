@@ -26,7 +26,7 @@ def main(ctx):
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-r', '--restart', is_flag=True, help="Restart KodeDrive daemon.")
-@click.option('-d', '--delay', type=int, help="Seconds before next scan.")
+@click.option('-d', '--delay', type=int, help="Seconds before next scan.", metavar="  <INTEGER>")
 #@click.option('-t', '--test', help="Test random functions :)")
 
 def sys(**kwargs):
