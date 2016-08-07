@@ -46,7 +46,10 @@ import requests
 from requests.packages.urllib3 import exceptions
 from requests.exceptions import ConnectionError, ConnectTimeout
 
-py_2 = sys.version_info.major == 2
+try:
+    py_2 = sys.version_info.major == 2
+except AttributeError:
+    py_2 = sys.version_info[0]
 
 if py_2:
     import urlparse as uparse

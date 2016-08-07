@@ -67,7 +67,8 @@ def install_files(venv, bin_dir, install):
         except (OSError, IOError):
             pass
 
-    if call([global virtualenv_bin, venv]) != 0:
+    global virtualenv_bin
+    if call([virtualenv_bin, venv]) != 0:
         _cleanup()
         fail('Could not create virtualenv for kdr :(')
 
@@ -84,9 +85,10 @@ def main():
     else:
         echo('Installing kdr')
 
-    if not command_exists(global virtualenv_bin):
-        global virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
-        if not command_exists(virutalenv_bin):
+    global virtualenv_bin
+    if not command_exists(virtualenv_bin):
+        virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
+        if not command_exists(virtualenv_bin):
             fail('You need to have virtualenv installed to bootstrap kdr.')
 
     bin_dir = os.environ.get('KDR_BIN_DIR', DEFAULT_KDR_BIN_DIR)
@@ -98,18 +100,28 @@ def main():
         echo()
         echo('=' * 60)
         echo()
-        echo('Warning:')
-        echo('  It looks like {0} is not on your PATH so kdr will'.format(bin_dir))
-        echo('  not work out of the box.  To fix this problem make sure to')
-        echo('  add this to your .bashrc / .profile file:')
+        echo('WARNING:')
+        echo('  It looks like {0} is not in your PATH so kdr will'.format(bin_dir))
+        echo('  not work out of the box.  To fix this problem make sure to run')
+        echo('  one of the following depending on which shell your are using.')
         echo()
-        echo('  export PATH={0}:$PATH'.format(bin_dir))
+        echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
+        echo("  tcsh: set path=(%s $path)" % bin_dir)
         echo()
         echo('=' * 60)
         echo()
+    
+    if  'SHELL' in os.environ:
+        if 'bash' in os.environ['SHELL']:
+            bashrc = os.path.expanduser("~/.bashrc")
+            with open(bashrc, 'a+') as f:
+                f.write('export PATH="$HOME/.local/bin:$PATH"')
+        elif 'csh' in os.environ['SHELL']:
+            cshrc = os.path.expanduser("~/.cshrc")
+            with open(cshrc, 'a+') as f:
+                f.write('set path=($home/.local/bin $path)')
 
     succeed('kdr is now installed.')
-
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
