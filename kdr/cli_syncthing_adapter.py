@@ -33,6 +33,17 @@ class SystemFactory:
     else:
       return "KodeDrive has successfully restarted!"
 
+  def delay(self, secs):
+    if not self.handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+    
+    success = self.handler.set_rescan_interval(secs)
+
+    if success:
+      return 'KodeDrive will now sync every %s seconds.' % secs
+    else:
+      return 'Seconds cannot be negative.'
+
   def init(self):
     if not self.handler.ping():
       if not self.handler.start():
@@ -157,7 +168,8 @@ def sys(**kwargs):
     'key' : SystemSingleton.key,
     'restart' : SystemSingleton.restart,
     'server' : SystemSingleton.server,
-    'test' : SystemSingleton.test
+    'test' : SystemSingleton.test,
+    'delay' : SystemSingleton.delay
   }
     
   try:
@@ -177,15 +189,15 @@ def sys(**kwargs):
   
 def refresh(**kwargs):
   handler = factory.get_handler()
-
-  if 'progress' in kwargs:
-    return handler.completion()
-
   path = kwargs['path']
 
   try:
     success = handler.scan(path)
-    return None if success else 'Failed to refresh ' + path
+
+    if 'progress' in kwargs:
+      return handler.completion(path, kwargs['device_num'])
+    else:
+      return None if success else 'Failed to refresh ' + path
     
   except IOError as e:
 

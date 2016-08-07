@@ -1,6 +1,6 @@
 import click
 import cli_syncthing_adapter
-import os
+import os, time, math
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
@@ -26,6 +26,7 @@ def main(ctx):
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-r', '--restart', is_flag=True, help="Restart KodeDrive daemon.")
+@click.option('-d', '--delay', type=int, help="Seconds before next scan.")
 #@click.option('-t', '--test', help="Test random functions :)")
 
 def sys(**kwargs):
@@ -298,7 +299,7 @@ def auth(**kwargs):
 
   else:
     if all(kwargs['add']): 
-      if click.confirm("Are you sure you want to authorize %s?" % path):
+      if click.confirm("Are you sure you want to authorize this device to access %s?" % path):
         output = cli_syncthing_adapter.auth(option, key, path)
 
       else:
@@ -332,13 +333,28 @@ def push(**kwargs):
 
   if kwargs['verbose']:
     with click.progressbar(
+      iterable=None,
       length=100,
       label='Synchronizing') as bar:
 
-      progress = 0
+      device_num = 0
+      max_devices = 1
+      prev_percent = 0
 
-      while not progress == 100:
-        progress = cli_syncthing_adapter.refresh(progress=True)
+      while True:
+        kwargs['progress'] = True
+        kwargs['device_num'] = device_num
+        data = cli_syncthing_adapter.refresh(**kwargs)
+
+        device_num = data['device_num']
+        max_devices = data['max_devices']
+        bar.update(math.floor(data['percent']) - prev_percent)
+        prev_percent = math.floor(data['percent'])
+
+        if device_num < max_devices:
+          time.sleep(0.5)
+        else:
+          break
 
 
 """

@@ -49,7 +49,19 @@ class SyncthingFacade():
     if not folder:
       raise IOError(path + ' is not being synchronized.')
     else:
-      return self.sync.db.status()
+      return self.sync.db.status(folder=folder['id'])
+
+  def set_rescan_interval(self, secs):
+    if type(secs) != int or secs < 0:
+      return False
+
+    config = self.get_config()
+
+    for f in config['folders']:
+      f['rescanIntervalS'] = secs
+
+    self.set_config(config)
+    return True
 
   def scan(self, path):
   
@@ -65,7 +77,7 @@ class SyncthingFacade():
     else:
       return self.sync.db.set.scan(folder=folder['id'])
 
-  def completion(self, path):
+  def completion(self, path, device_num=0):
 
     if not path[len(path) - 1] == '/':
       path += '/'
@@ -73,11 +85,33 @@ class SyncthingFacade():
     folder = self.find_folder({
       'path' : path
     })
+    
+    device_id = folder['devices'][device_num]['deviceID']
+    max_devices = len(folder['devices']) - 1
+    
+    # Skip own device
+    if device_id == self.get_device_id():
+      if device_num >= len(folder['devices']): 
+        return {
+          'percent' : 100,
+          'device_num' : device_num + 1,
+          'max_devices' : max_devices
+        }
+      else:
+        device_id = folder['devices'][device_num]['deviceID']
 
-    device_id = self.get_device_id()
-    res = self.sync.db.completion(device=device_id, folder=folder)
+    res = self.sync.db.completion(device=device_id, folder=folder['id'])
+    percent = res['completion']
+    percent = (device_num  * 100 + percent) / (max_devices * 100) * 100
 
-    return res['completion']
+    if percent == 100:
+      device_num += 1
+
+    return {
+      'percent' : percent if percent > 0 else 0,
+      'device_num' : device_num,
+      'max_devices' : max_devices
+    } 
   
   def start(self, port=None):    
     path = self.adapter.get_syncthing_path()
