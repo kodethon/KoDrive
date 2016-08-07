@@ -32,7 +32,7 @@ or to set ```kdr``` as a global command (```sudo``` permission is required):
 $ kdr sys -i
 ```
 
-## Linking Directories
+## Receiving Directories
 
 1. Provide the other person with your **device key**:
 
@@ -62,12 +62,15 @@ $ kdr sys -i
   ```sh
   $ kdr key <PATH>
   ```
-Below is an illustration of the above process:
+  
 <p align="center">
   <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/client-client-circle.png" alt="Client-Client"/>
 </p>
+<p align="center">
+    <b>Figure 1.</b> An illustration of the above process.
+</p>
 
-## Linking/Sharing Directories Detailed
+## Receiving/Sharing Directories Detailed
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
 
