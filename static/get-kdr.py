@@ -119,5 +119,3 @@ if __name__ == '__main__':
         install_files(*sys.argv[1:])
     else:
         main()
-        call('PATH=~/.local/bin:"$PATH"; kdr sys -i')
-
