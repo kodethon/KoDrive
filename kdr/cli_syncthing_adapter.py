@@ -56,10 +56,10 @@ class SystemFactory:
   def about(self):
     kdr_config = self.handler.adapter.get_config()
     config_path = self.handler.adapter.st_conf_file
-    address = self.handler.adapter.get_gui_address(config_path)
     is_server = kdr_config['system']['server']
     
     if self.handler.ping():
+      address = self.handler.adapter.get_gui_address(config_path)
       return 'Running as %s at %s.' % ('server' if is_server else 'client', address)
     else:
       return 'Exited as %s.' % ('server' if is_server else 'client')

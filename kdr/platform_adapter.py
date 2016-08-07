@@ -1,6 +1,7 @@
 from py_syncthing_adapter import Syncthing
 from data import custom_errors
 
+import click
 import xml.etree.ElementTree as ET
 import os, subprocess, socket
 import json, hashlib
