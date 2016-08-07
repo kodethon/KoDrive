@@ -47,23 +47,23 @@ $ kdr sys -i
 
 ## Sharing Directories
 
-1. A folder must first be added before it can be shared:   
+1. A folder must first be **added** before it can be shared:   
 
   ```sh
   $ kdr add <PATH>
   ```
-2. Next the folder needs to be authorized with another user's device key:   
+2. Next the folder needs to be **authorized** with another user's device key:   
 
   ```sh
   $ kdr auth -a <DEVICE-KEY> <PATH>
   ```
-3. Finally obtain and provide the below folder key back to the other user:
+3. Finally obtain and provide the below **folder key** back to the other user:
  
   ```sh
   $ kdr key <PATH>
   ```
 
-## Synchronizing Files and Directories
+## Linking/Sharing Directories Detailed
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
 
