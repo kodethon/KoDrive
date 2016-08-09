@@ -12,9 +12,11 @@ class AppRollbacker(RollbackerBase):
   def rollback_config(self):
     self.app_handler.wait_start(0.5, 10)
     self.app_handler.adapter.set_config(self.app_config)
-    self.app_handler.restart()
-    self.app_handler.wait_start(0.5, 10)
 
+    if self.app_handler.ping():
+      self.app_handler.restart()
+
+    self.app_handler.wait_start(0.5, 10)
 
 class SyncthingRollbacker(RollbackerBase):
   
@@ -25,6 +27,9 @@ class SyncthingRollbacker(RollbackerBase):
   def rollback_config(self):
     self.app_handler.wait_start(0.5, 10)
     self.app_handler.set_config(self.syncthing_config)
-    self.app_handler.restart()
+
+    if self.app_handler.ping():
+      self.app_handler.restart()
+
     self.app_handler.wait_start(0.5, 10)
     
