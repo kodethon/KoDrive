@@ -352,8 +352,11 @@ def push(**kwargs):
 
         device_num = data['device_num']
         max_devices = data['max_devices']
-        bar.update(math.floor(data['percent']) - prev_percent)
-        prev_percent = math.floor(data['percent'])
+
+        cur_percent = math.floor(data['percent']) - prev_percent
+        if cur_percent > 0:
+          bar.update(cur_percent)
+          prev_percent = math.floor(data['percent'])
 
         if device_num < max_devices:
           time.sleep(0.5)

@@ -85,10 +85,9 @@ class SyncthingFacade():
     folder = self.find_folder({
       'path' : path
     })
-    
-    device_id = folder['devices'][device_num]['deviceID']
     max_devices = len(folder['devices']) - 1
     
+    device_id = folder['devices'][device_num]['deviceID']
     # Skip own device
     if device_id == self.get_device_id():
       if device_num >= len(folder['devices']): 
@@ -98,7 +97,7 @@ class SyncthingFacade():
           'max_devices' : max_devices
         }
       else:
-        device_id = folder['devices'][device_num]['deviceID']
+        device_id = folder['devices'][device_num + 1]['deviceID']
 
     res = self.sync.db.completion(device=device_id, folder=folder['id'])
     percent = res['completion']

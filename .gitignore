@@ -1,6 +1,7 @@
 *.pyc
 
 dist/
+deb_dist/
 build/
 *.egg-info/
 
