@@ -193,6 +193,16 @@ For both the sharer and the receivers:
 $ kdr free <PATH>
 ```
 
+### Changing the Rescan Interval
+By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files and it is advised to seek a balance.
+
+To change the rescan interval for all directories:
+```sh
+$ kdr sys -d <SECONDS>
+```
+Note: this will only change the interval on the device running this command and will restart KodeDrive.
+
+
 ### Conflicts
 
 If a file is modified on different devices simultaneously or files with the same name in different directories are synchronized, the file on the device with the larger value of the first 63 bits for their device ID will be marked as the conflicting file. The file will be renamed to ```<filename>.sync- conflict-<date>-<time>.<ext>```
