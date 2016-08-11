@@ -20,7 +20,7 @@ DEFAULT_KDR_HOME = os.path.expanduser('~/.local/venvs')
 #DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
 
 # For global installation
-DEFAULT_KDR_BIN_DIR = '/usr/local/bin'
+DEFAULT_KDR_BIN_DIR = '/usr/bin'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
