@@ -20,7 +20,7 @@ DEFAULT_KDR_HOME = os.path.expanduser('~/.local/venvs')
 #DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
 
 # For global installation
-DEFAULT_KDR_BIN_DIR = '/usr/local/bin'
+DEFAULT_KDR_BIN_DIR = '/usr/bin'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
@@ -95,7 +95,7 @@ def main():
     venv = os.path.join(os.environ.get('KDR_HOME', DEFAULT_KDR_HOME),
                         'kdr')
     install_files(venv, bin_dir, 'kdr')
-
+    
     if not command_exists('kdr') != 0:
         echo()
         echo('=' * 60)
