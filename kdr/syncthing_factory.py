@@ -61,6 +61,7 @@ class SyncthingFacade():
       f['rescanIntervalS'] = secs
 
     self.set_config(config)
+    self.restart()
     return True
 
   def scan(self, path):

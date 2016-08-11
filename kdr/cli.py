@@ -229,8 +229,11 @@ def mv(source, target):
   if os.path.isfile(target) and len(source) == 1:
     if click.confirm("Are you sure you want to overwrite %s?" % target):
 
-      cli_syncthing_adapter.mv_edge_case(source, target)
+      err_msg = cli_syncthing_adapter.mv_edge_case(source, target)
       # Edge case: to match Bash 'mv' behavior and overwrite file
+
+      if err_msg:
+        click.echo(err_msg)
 
       return
 
@@ -239,7 +242,11 @@ def mv(source, target):
     return
 
   else:
-    cli_syncthing_adapter.mv(source, target)
+    err_msg = cli_syncthing_adapter.mv(source, target)
+
+    if err_msg:
+      click.echo(err_msg)
+
 
 @main.command()
 @click.option(
