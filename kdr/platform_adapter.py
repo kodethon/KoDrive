@@ -267,12 +267,18 @@ class SyncthingLinux64(PlatformBase):
     return self.get_platform_device_id(self.app_conf_file)
 
   def get_syncthing_path(self):
+    
+    linux_64_bit_file = "syncthing-linux-amd64-v%s" % self.st_version
+    syncthing_path = os.path.join('/var/opt', linux_64_bit_file)
+
+    if os.path.exists(syncthing_path):
+      return syncthing_path
+
     dest = os.path.join(self.home_dir, '.st')
 
     if not os.path.exists(dest):
       os.makedirs(dest) 
 
-    linux_64_bit_file = "syncthing-linux-amd64-v%s" % self.st_version
     syncthing_path = os.path.join(dest, linux_64_bit_file)
 
     # If syncthing doesn't exist, install it
