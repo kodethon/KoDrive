@@ -95,7 +95,7 @@ def main():
     venv = os.path.join(os.environ.get('KDR_HOME', DEFAULT_KDR_HOME),
                         'kdr')
     install_files(venv, bin_dir, 'kdr')
-
+    
     if not command_exists('kdr') != 0:
         echo()
         echo('=' * 60)
