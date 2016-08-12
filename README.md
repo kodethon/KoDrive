@@ -70,7 +70,7 @@ $ kdr sys -i
     <b>Figure 1.</b> An illustration of the above process.
 </p>
 
-## Receiving/Sharing Directories Detailed
+## Receiving/Sharing Directories in Detail
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
 
@@ -133,7 +133,7 @@ $ kdr auth -l
 $ kdr auth -r <RECEIVER_DEVICE_ID> <PATH>
 ```
 
-Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices to that directory:
+Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices from that directory:
 ```sh
 $ kdr free <PATH>
 ```
@@ -182,9 +182,11 @@ $ kdr link <KEY>
 ```
 with the key given by the server.
 
-Below is an illustration of the above process:
 <p align="center">
   <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/server-client.png" alt="Server-Client"/>
+</p>
+<p align="center">
+    <b>Figure 2.</b> An illustration of the above process.
 </p>
 
 #### Stopping Synchronization as Server-Client
@@ -193,8 +195,14 @@ For both the sharer and the receivers:
 $ kdr free <PATH>
 ```
 
+### Statistics
+To see statistics on a directory currently being synchronized:
+```sh
+$ kdr stat <PATH>
+```
+
 ### Changing the Rescan Interval
-By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files and it is advised to seek a balance.
+By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files on slower computers and it is advised to seek a balance.
 
 To change the rescan interval for all directories:
 ```sh
@@ -207,7 +215,7 @@ Note: this will only change the interval on the device running this command and 
 
 If a file is modified on different devices simultaneously or files with the same name in different directories are synchronized, the file on the device with the larger value of the first 63 bits for their device ID will be marked as the conflicting file. The file will be renamed to ```<filename>.sync- conflict-<date>-<time>.<ext>```
 
-It will be up to the users to resolve conflicts and update their files in this case.
+It will be up to the users to resolve conflicts and update files. It is advised to avoid conflicts if possible.
 
 Please note that if users modify conflict files, it is possible to end up with conflicting conflict files.
 Those will be named as ```sync-conflict-...sync-conflict -...-sync-conflict``` files.
