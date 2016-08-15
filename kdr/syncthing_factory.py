@@ -65,9 +65,16 @@ class SyncthingFacade():
     return True
 
   def scan(self, path):
-  
+    
     if not path[len(path) - 1] == '/':
       path += '/'
+
+    config = self.get_config()
+    
+    for f in config['folders']:
+      if f['path'] in path:
+        path = f['path']
+        break
 
     folder = self.find_folder({
       'path' : path
@@ -1337,10 +1344,10 @@ def get_handler(home=None):
     return SyncthingClient(
       platform_adapter.SyncthingMac64(home)
     ) # MacOSX
-  elif system == "Windows":
-    return SyncthingClient(
-      platform_adapter.SyncthingWin64()
-    ) # TODO: Windows
-
+  # elif system == "Windows":
+  #   return SyncthingClient(
+  #     platform_adapter.SyncthingWin64()
+  #   ) # TODO: Windows
+  
   raise Exception("%s is not currently supported." % system)
 
