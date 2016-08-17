@@ -90,7 +90,7 @@ The sharer then:
   * _**Note**: ```kdr ls``` is optional and can be used before and/or after adding and freeing directories to verify._
 2. Authorizes a receiver to that directory (```-a``` stands for ```--add```).
   ```sh
-  $ kdr auth -a <RECEIVER_DEVICE_KEY> <PATH>
+  $ kdr auth -a <RECEIVER-DEVICE-KEY> <PATH>
   $ kdr auth -l
   ```
 
@@ -111,7 +111,7 @@ The receiver(s) then link to the sharer **in the directory** where they would li
 _**CAUTION**: linking will merge the 2 directories so that the sharer and receiver will have access to **everything in BOTH** directories. This can lead to the sharing of sensitive data as well as conflicts if there are files with the same name. It is recommended for a receiver to link while in an empty directory. See [conflicts](https://github.com/Jvlythical/KodeDrive#conflicts) for more information._
 
 ```sh
-$ kdr link <DIRECTORY_KEY>
+$ kdr link <DIRECTORY-KEY>
 ```
 
 Now the authorized devices have access to the directory and can add, modify and remove files. KodeDrive is configured so that the daemon scans the directory for changes every 30 seconds.
@@ -126,11 +126,11 @@ The sharer can deauthorize access to certain users:
 
 1. ```kdr auth -l``` lists all directories authorized to others and the devices which are authorized. This can be useful for ```kdr auth -a/-r``` to obtain device keys and verify whether a device has been deauthorized.
 
-2. ```kdr auth -r <RECEIVER_DEVICE_ID> <PATH>``` deauthorizes a certain receiver to a directory. (```-r``` for ```--remove```) 
+2. ```kdr auth -r <RECEIVER-DEVICE-ID> <PATH>``` deauthorizes a certain receiver to a directory. (```-r``` for ```--remove```) 
 
 ```sh
 $ kdr auth -l
-$ kdr auth -r <RECEIVER_DEVICE_ID> <PATH>
+$ kdr auth -r <RECEIVER-DEVICE-ID> <PATH>
 ```
 
 Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices from that directory:
