@@ -1,5 +1,9 @@
 # KodeDrive
 
+[![PyPI](https://img.shields.io/pypi/status/Django.svg?maxAge=2592000)](https://pypi.python.org/pypi/kdr/0.9.6)
+[![PyPI](https://img.shields.io/badge/pypi-v0.9.6-blue.svg)](https://pypi.python.org/pypi/kdr/0.9.6)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
 ## Getting Started
