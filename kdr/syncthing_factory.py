@@ -661,7 +661,7 @@ class SyncthingClient(SyncthingFacade):
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None
     )
-    remote.wait_start(0.5, 10)
+    # remote.wait_start(0.5, 10)
     remote_config = remote.request_folder(
       self.hostname(),    
       self.get_device_id()
@@ -802,7 +802,7 @@ class SyncthingClient(SyncthingFacade):
         
     # Done processing st config, commit :)
     self.set_config(config)
-    self.restart()
+    # self.restart()
 
     # 2. App config
     kdr_config = self.adapter.get_config()
@@ -851,7 +851,7 @@ class SyncthingClient(SyncthingFacade):
         remote.delete_device(self_devid, r_config)
 
       remote.set_config(r_config)
-      remote.restart()
+      # remote.restart()
 
     return True
 
@@ -879,7 +879,7 @@ class SyncthingClient(SyncthingFacade):
     self.adapter.set_dir_config(dir_config)
 
     self.set_config(config)
-    self.restart
+    # self.restart
 
     return old_name
   
@@ -971,7 +971,7 @@ class SyncthingClient(SyncthingFacade):
 
       self.adapter.set_config(kdr_config)
     
-    self.restart()
+    # self.restart()
     return
 
   def move(self, source, target):
@@ -1021,7 +1021,7 @@ class SyncthingClient(SyncthingFacade):
       shutil.move(item_path, final_path)
       # move into target
 
-    self.restart()
+    # self.restart()
     return
 
   def mv_edge_case(self, source, target):
@@ -1200,7 +1200,7 @@ class SyncthingClient(SyncthingFacade):
     # remove device to devices if device isn't syncing with other folders
     
     self.set_config(config)
-    self.restart()
+    # self.restart()
     
     return
 
@@ -1252,8 +1252,8 @@ class SyncthingClient(SyncthingFacade):
 
     return body
 
-  def test(self, arg): 
-    self.restart()
+  # def test(self, arg): 
+    # self.restart()
 
 class SyncthingProxy(SyncthingFacade):
 

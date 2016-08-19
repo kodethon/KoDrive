@@ -60,7 +60,7 @@ def test_mv_rename(runner):
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   result = runner.invoke(cli.mv, [source_dir, target_dir])
 
@@ -68,7 +68,7 @@ def test_mv_rename(runner):
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(target_dir) or os.path.exists(source_dir):
     print "Failed to rename %s to %s" % (source_dir, target_dir)
@@ -109,7 +109,7 @@ def test_mv_rename(runner):
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   shutil.rmtree(source_dir, ignore_errors=True)
   shutil.rmtree(target_dir, ignore_errors=True)
@@ -151,14 +151,14 @@ def test_mv_move(runner):
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
   result = runner.invoke(cli.mv, [source_dir, target_dir])
 
   if result.exception:
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if os.path.exists(source_dir):
     print source_dir
@@ -204,7 +204,7 @@ def test_mv_move(runner):
     print result.exception
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   shutil.rmtree(source_dir, ignore_errors=True)
   shutil.rmtree(target_dir, ignore_errors=True)
