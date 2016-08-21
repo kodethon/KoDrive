@@ -593,6 +593,7 @@ class SyncthingClient(SyncthingFacade):
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
 
+    self.wait_start(0.5, 10)
     syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
 
@@ -603,6 +604,7 @@ class SyncthingClient(SyncthingFacade):
     syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
 
     self.set_config(syncthing_config)
+    self.wait_start(0.5, 10)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
 
