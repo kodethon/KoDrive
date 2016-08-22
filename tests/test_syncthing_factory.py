@@ -467,6 +467,9 @@ def test_rollback():
   c_st_conf_n = json.dumps(mock.client.get_config())
   s_st_conf_n = json.dumps(mock.server.get_config())
 
+  mock.server.wait_start(0.5, 10)
+  mock.client.wait_start(0.5, 10)
+
   if c_app_conf_n != c_app_conf:
     assert False
 

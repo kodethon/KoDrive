@@ -589,6 +589,7 @@ class SyncthingClient(SyncthingFacade):
     syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
 
     self.set_config(syncthing_config)
+    self.wait_start(0.5, 10)
     self.restart()
     self.sync = self.adapter.get_gui_hook()
 

@@ -12,7 +12,14 @@ script:
   - docker run -it --rm jvlythical/kdr-test:master 
 
 
-
+############################################
+# Unstable testing manually, osx env hangs #
+############################################
+#
+# os:
+#   - linux
+#   - osx
+#
 # language: python
 #
 # python:

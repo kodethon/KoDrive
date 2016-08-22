@@ -421,9 +421,10 @@ class SyncthingMac64(PlatformBase):
     return self.get_platform_gui_hook(self.st_conf_file)
 
   def get_device_id(self):
-    return self.get_platform_device_id(self.st_conf_file)
+    return self.get_platform_device_id(self.app_conf_file)
 
   def get_syncthing_path(self):
+    
     dest = os.path.join(self.home_dir, '.st')
 
     if not os.path.exists(dest):
