@@ -1,0 +1,29 @@
+sudo: required
+
+language: python
+
+services: 
+  - docker
+
+before_install:
+  - docker pull jvlythical/kdr-test:master
+
+script:
+  - docker run -it --rm jvlythical/kdr-test:master 
+
+
+
+# language: python
+#
+# python:
+#   - "2.7"
+#   - "pypy"
+#
+# install:
+#   - pip install virtualenv
+#   - pip install tox
+#   - curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
+#   - export PATH="$HOME/.local/bin:$PATH"
+#
+# script:
+#   - tox -e py27

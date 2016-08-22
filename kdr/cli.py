@@ -32,10 +32,10 @@ def main(ctx):
 def sys(**kwargs):
   ''' Manage application configuration. '''
 
-  output = cli_syncthing_adapter.sys(**kwargs)
+  output, err = cli_syncthing_adapter.sys(**kwargs)
 
   if output:
-    click.echo("%s" % output)
+    click.echo("%s" % output, err=err)
   else:
     if not kwargs['init']:
       click.echo(click.get_current_context().get_help())
@@ -49,13 +49,16 @@ def sys(**kwargs):
 def stat(**kwargs):
   ''' Display folder information. '''
 
-  output = cli_syncthing_adapter.stat(**kwargs)
+  output, err = cli_syncthing_adapter.stat(**kwargs)
    
-  click.echo("State: %s" % output['state'])
-  click.echo("\nTotal files: %s" % output['localFiles'])
-  click.echo("Files needed: %s" % output['needFiles'])
-  click.echo("\nTotal bytes: %s" % output['localBytes'])
-  click.echo("Bytes needed: %s" % output['needBytes'])
+  if err:
+    click.echo(output, err=err)
+  else:
+    click.echo("State: %s" % output['state'])
+    click.echo("\nTotal files: %s" % output['localFiles'])
+    click.echo("Files needed: %s" % output['needFiles'])
+    click.echo("\nTotal bytes: %s" % output['localBytes'])
+    click.echo("Bytes needed: %s" % output['needBytes'])
 
 @main.command()
 def ls():
@@ -137,12 +140,12 @@ def link(**kwargs):
   path = kwargs['path']
   
   if kwargs['yes']:
-    output = cli_syncthing_adapter.link(key, tag, path)
-    click.echo("%s" % output)
+    output, err = cli_syncthing_adapter.link(key, tag, path)
+    click.echo("%s" % output, err=err)
   else:
     if click.confirm("Are you sure you want to link %s?" % path):
-      output = cli_syncthing_adapter.link(key, tag, path)
-      click.echo("%s" % output)
+      output, err = cli_syncthing_adapter.link(key, tag, path)
+      click.echo("%s" % output, err=err)
 
 ''' 
   *** Make the catch more specific 
@@ -192,8 +195,8 @@ def add(**kwargs):
 def free(**kwargs):
   ''' Stop synchronization of directory. '''
 
-  output = cli_syncthing_adapter.free(kwargs['path'])
-  click.echo("%s" % output)
+  output, err = cli_syncthing_adapter.free(kwargs['path'])
+  click.echo("%s" % output, err=err)
 
 @main.command()
 @click.argument(
@@ -205,8 +208,8 @@ def free(**kwargs):
 def tag(path, name):
   ''' Change tag associated with directory. '''
 
-  output = cli_syncthing_adapter.tag(path, name)
-  click.echo("%s" % output)
+  output, err = cli_syncthing_adapter.tag(path, name)
+  click.echo("%s" % output, err=err)
 
 @main.command()
 @click.argument(
@@ -217,8 +220,8 @@ def tag(path, name):
 def key(path):
   ''' Display synchronization key for directories. '''
 
-  output = cli_syncthing_adapter.key(path)
-  click.echo("%s" % output)
+  output, err = cli_syncthing_adapter.key(path)
+  click.echo("%s" % output, err=err)
 
 @main.command()
 @click.argument('source', nargs=-1, required=True)
@@ -229,8 +232,11 @@ def mv(source, target):
   if os.path.isfile(target) and len(source) == 1:
     if click.confirm("Are you sure you want to overwrite %s?" % target):
 
-      cli_syncthing_adapter.mv_edge_case(source, target)
+      err_msg = cli_syncthing_adapter.mv_edge_case(source, target)
       # Edge case: to match Bash 'mv' behavior and overwrite file
+
+      if err_msg:
+        click.echo(err_msg)
 
       return
 
@@ -239,7 +245,11 @@ def mv(source, target):
     return
 
   else:
-    cli_syncthing_adapter.mv(source, target)
+    err_msg, err = cli_syncthing_adapter.mv(source, target)
+
+    if err_msg:
+      click.echo(err_msg, err)
+
 
 @main.command()
 @click.option(
@@ -290,16 +300,16 @@ def auth(**kwargs):
 
   elif kwargs['list']:
     option = 'list'
-    output = cli_syncthing_adapter.auth(option, key, path)
+    output, err = cli_syncthing_adapter.auth(option, key, path)
 
     if output:
-      click.echo("%s" % output)
+      click.echo("%s" % output, err=err)
 
     return
 
   if kwargs['yes']:
-    output = cli_syncthing_adapter.auth(option, key, path)
-    click.echo("%s" % output)
+    output, err = cli_syncthing_adapter.auth(option, key, path)
+    click.echo("%s" % output, err=err)
 
   else:
     if all(kwargs['add']): 
@@ -310,10 +320,10 @@ def auth(**kwargs):
         return
 
     else:
-      output = cli_syncthing_adapter.auth(option, key, path)
+      output, err = cli_syncthing_adapter.auth(option, key, path)
 
   if output:
-    click.echo("%s" % output)
+    click.echo("%s" % output, err=err)
   
   if not output or not option:
     click.echo(click.get_current_context().get_help())
@@ -330,10 +340,10 @@ def auth(**kwargs):
 def push(**kwargs):
   ''' Force synchronization of directory. '''
 
-  output = cli_syncthing_adapter.refresh(**kwargs)
+  output, err = cli_syncthing_adapter.refresh(**kwargs)
 
   if output:
-    click.echo("%s" % output)
+    click.echo("%s" % output, err=err)
 
   if kwargs['verbose']:
     with click.progressbar(

@@ -7,13 +7,14 @@ import os, subprocess, socket
 import json, hashlib
 import urllib, copy
 
+
 class PlatformBase(object):
 
   app_config = 'config.json'
   st_config = 'config.xml'
   st_binary = 'syncthing'
   stfolder = '.stfolder'
-  st_version = '0.14.0'
+  st_version = '0.14.4'
   default_config = {
     'directories' : {},
     'system' : {

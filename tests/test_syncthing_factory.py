@@ -138,7 +138,7 @@ def test_key():
 
 def test_free_local():
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
   client_sync_dir = mock.client_conf['sync_dir']
   mock.client.free(client_sync_dir)
 
@@ -247,8 +247,8 @@ def test_free_server():
   server_sync_dir = mock.server_conf['sync_dir']
   mock.client.free(client_sync_dir)
 
-  mock.client.wait_start(0.5, 10)
-  mock.server.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
+  # mock.server.wait_start(0.5, 10)
   mock.server.wait_sync(0.5, 10)
   mock.client.wait_sync(0.5 ,10)
   config = mock.client.get_config()
@@ -343,7 +343,7 @@ def test_auth():
   mock.client.wait_start(0.5, 10)
 
   if mock.client.device_exists(test_device_id):
-    mock.client.wait_start(0.5, 10)
+    # mock.client.wait_start(0.5, 10)
     mock.client.delete_device(test_device_id, syncthing_config)
 
   mock.client.wait_start(0.5, 10)
@@ -391,7 +391,7 @@ def test_auth():
     c_st_rb.rollback_config()
     assert False
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if not mock.client.device_exists(test_device_id):
     print "%s was not added to the devices" % test_device_id
@@ -418,12 +418,12 @@ def test_deauth():
   mock.client.wait_start(0.5, 10)
   mock.client.deauth(test_device_key, client_sync_dir)
 
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if mock.client.device_exists_in_folder(client_sync_dir, test_device_id):
 
     print "%s was not removed from the folder." % test_device_id
-    mock.client.wait_start(0.5, 10)
+    # mock.client.wait_start(0.5, 10)
     c_app_rb.rollback_config()
     c_st_rb.rollback_config()
 

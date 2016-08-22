@@ -145,17 +145,19 @@ def link(key, tag, path):
         local_path=path
       )
 
-    return "%s (%s) is now being synchronized." % (path, tag)
+    return "%s (%s) is now being synchronized." % (path, tag), False
   except KeyError as e:
     return e.message
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
-
+    
+    # Error! Rollback :/
     app_rb.rollback_config()
     st_rb.rollback_config()
-    return e.message
+
+    return e.message, True
 
 SystemSingleton = SystemFactory()
 def sys(**kwargs):
@@ -174,24 +176,31 @@ def sys(**kwargs):
     
   try:
     for key in kwargs:
+      
+      # Map option to handler
       if(kwargs[key]):
         sub_handler = sub_handlers[key]
-
+        
+        # Check if arg is a flag 
         if type(kwargs[key]) == bool:
-          return sub_handler()
+          return sub_handler(), False
         else:
-          return sub_handler(kwargs[key])
+          return sub_handler(kwargs[key]), False
+
   except Exception as e:
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
   
 def refresh(**kwargs):
   handler = factory.get_handler()
   path = kwargs['path']
 
   try:
+    if not handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+
     success = handler.scan(path)
 
     if 'progress' in kwargs:
@@ -199,34 +208,39 @@ def refresh(**kwargs):
     else:
       return None if success else 'Failed to refresh ' + path
     
-  except IOError as e:
-
-    if not config.Flags['production']:
-      traceback.print_exc()
-
-    return e.message
-
-def free(path):
-  handler = factory.get_handler()
-
-  # Save application state in case of error
-  app_rb = rb.AppRollbacker(handler)
-  st_rb = rb.SyncthingRollbacker(handler)
-
-  try:
-    if not handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
-    
-    handler.free(path)
-    return "%s is no longer being synchronized." % path
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
+    return e.message, False
+
+def free(path):
+  handler = factory.get_handler()
+  app_rb = None
+  st_rb = None
+
+  try:
+    if not handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+  
+    # Save application state in case of error
+    app_rb = rb.AppRollbacker(handler)
+    st_rb = rb.SyncthingRollbacker(handler)
+
+    handler.free(path)
+    return "%s is no longer being synchronized." % path, False
+
+  except Exception as e:
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+    
+    return e.message, True
+
+  else:
     app_rb.rollback_config()
     st_rb.rollback_config()
-    return e.message
 
 def tag(path, name):
   handler = factory.get_handler()
@@ -237,13 +251,13 @@ def tag(path, name):
 
     prev_name = handler.tag(path, name)
     
-    return "%s has been changed to %s" % (prev_name, name)
+    return "%s has been changed to %s" % (prev_name, name), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
 
 def ls(): 
   handler = factory.get_handler()
@@ -265,13 +279,13 @@ def key(path):
     }):
       raise custom_errors.FileNotInConfig(path)
       
-    return handler.encode_key(path)
+    return handler.encode_key(path), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
 
 def add(**kwargs):
   
@@ -293,17 +307,34 @@ def add(**kwargs):
 def mv(source, target):
   handler = factory.get_handler()
 
-  if os.path.isdir(target) or os.path.islink(target):
-    return handler.move(source, target)
-    # if target is an existing directory or symbolic link then move()
+  try:
+    if not handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
 
-  else:
-    return handler.rename(source, target)
+    if os.path.isdir(target) or os.path.islink(target):
+      return handler.move(source, target), False
+      # if target is an existing directory or symbolic link then move()
+
+    else:
+      return handler.rename(source, target), False
+
+  except Exception as e:
+    if not config.Flags['production']:
+      traceback.print_exc()
+
+    return e.message, True
 
 def mv_edge_case(source, target):
   handler = factory.get_handler()
 
-  return handler.mv_edge_case(source, target)
+  try:
+    return handler.mv_edge_case(source, target)
+
+  except Exception as e:
+    if not config.Flags['production']:
+      traceback.print_exc()
+
+    return e.message
 
 def auth(option, key, path):
   handler = factory.get_handler()
@@ -312,21 +343,21 @@ def auth(option, key, path):
     if option == 'add':
       handler.auth(key, path)
       hostname = handler.decode_device_key(key)['hostname']
-      return "%s can now access %s." % (hostname, path)
 
+      return "%s can now access %s." % (hostname, path), False
     elif option == 'remove':
       handler.deauth(key, path)
       hostname = handler.decode_device_key(key)['hostname']
-      return "%s can no longer access %s" % (hostname, path)
 
+      return "%s can no longer access %s" % (hostname, path), False
     elif option == 'list':
-      return handler.auth_ls()
+      return handler.auth_ls(), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
 
 def stat(**kwargs):
   handler = factory.get_handler()
@@ -337,13 +368,13 @@ def stat(**kwargs):
 
     path = kwargs['path']
 
-    return handler.stat(path)
+    return handler.stat(path), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
 
 
 """

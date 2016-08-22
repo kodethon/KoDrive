@@ -1,5 +1,9 @@
 # KodeDrive
 
+[![PyPI](https://img.shields.io/pypi/status/Django.svg?maxAge=2592000)](https://pypi.python.org/pypi/kdr/0.9.6)
+[![PyPI](https://img.shields.io/badge/pypi-v0.9.6-blue.svg)](https://pypi.python.org/pypi/kdr/0.9.6)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
 ## Getting Started
@@ -70,7 +74,7 @@ $ kdr sys -i
     <b>Figure 1.</b> An illustration of the above process.
 </p>
 
-## Receiving/Sharing Directories Detailed
+## Receiving/Sharing Directories in Detail
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
 
@@ -90,7 +94,7 @@ The sharer then:
   * _**Note**: ```kdr ls``` is optional and can be used before and/or after adding and freeing directories to verify._
 2. Authorizes a receiver to that directory (```-a``` stands for ```--add```).
   ```sh
-  $ kdr auth -a <RECEIVER_DEVICE_KEY> <PATH>
+  $ kdr auth -a <RECEIVER-DEVICE-KEY> <PATH>
   $ kdr auth -l
   ```
 
@@ -111,7 +115,7 @@ The receiver(s) then link to the sharer **in the directory** where they would li
 _**CAUTION**: linking will merge the 2 directories so that the sharer and receiver will have access to **everything in BOTH** directories. This can lead to the sharing of sensitive data as well as conflicts if there are files with the same name. It is recommended for a receiver to link while in an empty directory. See [conflicts](https://github.com/Jvlythical/KodeDrive#conflicts) for more information._
 
 ```sh
-$ kdr link <DIRECTORY_KEY>
+$ kdr link <DIRECTORY-KEY>
 ```
 
 Now the authorized devices have access to the directory and can add, modify and remove files. KodeDrive is configured so that the daemon scans the directory for changes every 30 seconds.
@@ -126,14 +130,14 @@ The sharer can deauthorize access to certain users:
 
 1. ```kdr auth -l``` lists all directories authorized to others and the devices which are authorized. This can be useful for ```kdr auth -a/-r``` to obtain device keys and verify whether a device has been deauthorized.
 
-2. ```kdr auth -r <RECEIVER_DEVICE_ID> <PATH>``` deauthorizes a certain receiver to a directory. (```-r``` for ```--remove```) 
+2. ```kdr auth -r <RECEIVER-DEVICE-ID> <PATH>``` deauthorizes a certain receiver to a directory. (```-r``` for ```--remove```) 
 
 ```sh
 $ kdr auth -l
-$ kdr auth -r <RECEIVER_DEVICE_ID> <PATH>
+$ kdr auth -r <RECEIVER-DEVICE-ID> <PATH>
 ```
 
-Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices to that directory:
+Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices from that directory:
 ```sh
 $ kdr free <PATH>
 ```
@@ -182,9 +186,11 @@ $ kdr link <KEY>
 ```
 with the key given by the server.
 
-Below is an illustration of the above process:
 <p align="center">
   <img src="https://github.com/Jvlythical/KodeDrive/blob/master/static/images/server-client.png" alt="Server-Client"/>
+</p>
+<p align="center">
+    <b>Figure 2.</b> An illustration of the above process.
 </p>
 
 #### Stopping Synchronization as Server-Client
@@ -193,8 +199,14 @@ For both the sharer and the receivers:
 $ kdr free <PATH>
 ```
 
+### Statistics
+To see statistics on a directory currently being synchronized:
+```sh
+$ kdr stat <PATH>
+```
+
 ### Changing the Rescan Interval
-By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files and it is advised to seek a balance.
+By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files on slower computers and it is advised to seek a balance.
 
 To change the rescan interval for all directories:
 ```sh
@@ -207,7 +219,7 @@ Note: this will only change the interval on the device running this command and 
 
 If a file is modified on different devices simultaneously or files with the same name in different directories are synchronized, the file on the device with the larger value of the first 63 bits for their device ID will be marked as the conflicting file. The file will be renamed to ```<filename>.sync- conflict-<date>-<time>.<ext>```
 
-It will be up to the users to resolve conflicts and update their files in this case.
+It will be up to the users to resolve conflicts and update files. It is advised to avoid conflicts if possible.
 
 Please note that if users modify conflict files, it is possible to end up with conflicting conflict files.
 Those will be named as ```sync-conflict-...sync-conflict -...-sync-conflict``` files.
