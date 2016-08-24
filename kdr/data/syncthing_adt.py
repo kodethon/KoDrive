@@ -3,7 +3,7 @@ class Folder:
 
   def __init__(self, **kwargs):
     self.folder = {
-      'rescanIntervalS' : 60,
+      'rescanIntervalS' : kwargs['interval'] or 5,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,

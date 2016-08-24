@@ -95,6 +95,19 @@ def main():
     venv = os.path.join(os.environ.get('KDR_HOME', DEFAULT_KDR_HOME),
                         'kdr')
     install_files(venv, bin_dir, 'kdr')
+    # Start kdr 
+    call([os.path.join(DEFAULT_KDR_BIN_DIR, 'kdr'), 'sys', '-i'])
+
+    # Set PATH variable
+    if  'SHELL' in os.environ:
+        if 'bash' in os.environ['SHELL']:
+            bashrc = os.path.expanduser("~/.bashrc")
+            with open(bashrc, 'a+') as f:
+                f.write('export PATH="$HOME/.local/bin:$PATH"')
+        elif 'csh' in os.environ['SHELL']:
+            cshrc = os.path.expanduser("~/.cshrc")
+            with open(cshrc, 'a+') as f:
+                f.write('set path=($home/.local/bin $path)')
 
     if not command_exists('kdr') != 0:
         echo()
@@ -111,16 +124,6 @@ def main():
         echo('=' * 60)
         echo()
     
-    if  'SHELL' in os.environ:
-        if 'bash' in os.environ['SHELL']:
-            bashrc = os.path.expanduser("~/.bashrc")
-            with open(bashrc, 'a+') as f:
-                f.write('export PATH="$HOME/.local/bin:$PATH"')
-        elif 'csh' in os.environ['SHELL']:
-            cshrc = os.path.expanduser("~/.cshrc")
-            with open(cshrc, 'a+') as f:
-                f.write('set path=($home/.local/bin $path)')
-
     succeed('kdr is now installed.')
 
 if __name__ == '__main__':

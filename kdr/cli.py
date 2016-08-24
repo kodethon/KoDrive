@@ -20,19 +20,18 @@ def main(ctx):
 
 ### Sys
 @main.command()
-@click.option('-k', '--key', is_flag=True, help="Return device key.")
-@click.option('-a', '--about', is_flag=True, help="List KodeDrive information.")
+#@click.option('-k', '--key', is_flag=True, help="Return device key.")
+#@click.option('-a', '--about', is_flag=True, help="List KodeDrive information.")
 @click.option('-i', '--init', is_flag=True, help="Init KodeDrive daemon.")
 @click.option('-e', '--exit', is_flag=True, help="Exit KodeDrive daemon.")
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-r', '--restart', is_flag=True, help="Restart KodeDrive daemon.")
-@click.option('-d', '--delay', type=int, help="Seconds before next scan.", metavar="  <INTEGER>")
+@click.option('-d', '--delay', type=int, help="Set remote device detection speed.", metavar="  <INTEGER>")
 #@click.option('-t', '--test', help="Test random functions :)")
-
 def sys(**kwargs):
-  ''' Manage application configuration. '''
-  
+  ''' Manage system configuration. '''
+
   output, err = cli_syncthing_adapter.sys(**kwargs)
   
   if output:
@@ -41,94 +40,67 @@ def sys(**kwargs):
     if not kwargs['init']:
       click.echo(click.get_current_context().get_help())
 
-### Stat
+### Info 
 @main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
+@click.option(
+  '-d', '--device', 
+  is_flag=True, 
+  help="Display device information."
 )
-def stat(**kwargs):
-  ''' Display folder information. '''
+@click.option(
+  '-f', '--folder', 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="<PATH>", help="Display folder information."
+)
+def info(**kwargs):
+  ''' Display synchronization information. '''
 
-  output, err = cli_syncthing_adapter.stat(**kwargs)
-   
+  output, err = cli_syncthing_adapter.info(**kwargs)
+
   if err:
-    click.echo(output, err=err)
+      click.echo(output, err=err)
   else:
-    click.echo("State: %s" % output['state'])
-    click.echo("\nTotal files: %s" % output['localFiles'])
-    click.echo("Files needed: %s" % output['needFiles'])
-    click.echo("\nTotal bytes: %s" % output['localBytes'])
-    click.echo("Bytes needed: %s" % output['needBytes'])
+    if kwargs['folder']:
+        click.echo("State: %s" % output['state'])
+        click.echo("\nTotal files: %s" % output['localFiles'])
+        click.echo("Files needed: %s" % output['needFiles'])
+        click.echo("\nTotal bytes: %s" % output['localBytes'])
+        click.echo("Bytes needed: %s" % output['needBytes'])
+    elif kwargs['device']:
+      click.echo(output)
+    else:
+      click.echo(click.get_current_context().get_help())
 
 ### Ls
 @main.command()
 def ls():
   ''' List synchronized directories. '''
 
-  metadata = cli_syncthing_adapter.ls()
+  heading, body = cli_syncthing_adapter.ls()
   
-  if not metadata:
-    return
+  if heading:
+    click.echo(heading)
 
-  headers = []
-  lengths = []
-
-  # Preprocess
-
-  # Iterate through list
-  for i, record in enumerate(metadata):
-    lengths.append(0)
-
-    # Iterate through dictionary
-    for header in record:
-      headers.append(header)
-      num_data = len(record[header])
-
-      for data in record[header]:
-        cur = len(data)
-        prev = lengths[i] 
-
-        lengths[i] = cur if cur > prev else prev
-  
-  # Process
-  body = str()
-  for i in range(0, num_data):
-    for n in range(0, len(metadata)):
-      value = metadata[n][headers[n]][i]
-      s = "{:<%i}" % (lengths[n] + 5)
-      body += s.format(value.strip())
-
-    body += "\n"
-  
-  if len(body) == 0:
-    return
-
-  heading = str()
-  # Iterate through list
-  for i, record in enumerate(metadata):
-    # Iterate through dictionary
-    for header in record:
-      s = "{:<%i}" % (lengths[i] + 5)
-      heading += s.format(header)
-  
-  # Postprocess
-  click.echo(heading)
-  click.echo(body.strip())
+  if body:
+    click.echo(body.strip())
 
 ### Link
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
+  '-i', '--interval', default=5,
+  nargs=1, metavar="<INTEGER>",
+  help="Specify sync interval."
+)
+@click.option(
   '-t', '--tag', nargs=1, 
-  metavar=" <TEXT>", 
+  metavar="     <TEXT>", 
   help="Associate this folder with a tag."
 )
 @click.option(
   '-p', '--path', 
   type=click.Path(exists=True, writable=True, resolve_path=True), 
-  default=".", nargs=1, metavar="<PATH>",
+  default=".", nargs=1, metavar="    <PATH>",
   help="Specify which folder to link."
 )
 @click.option(
@@ -139,16 +111,12 @@ def ls():
 def link(**kwargs):
   ''' Synchronize remote/local directory. '''
   
-  key = kwargs['key']
-  tag = kwargs['tag'] if 'tag' in kwargs else None
-  path = kwargs['path']
-  
   if kwargs['yes']:
-    output, err = cli_syncthing_adapter.link(key, tag, path)
+    output, err = cli_syncthing_adapter.link(**kwargs)
     click.echo("%s" % output, err=err)
   else:
-    if click.confirm("Are you sure you want to link %s?" % path):
-      output, err = cli_syncthing_adapter.link(key, tag, path)
+    if click.confirm("Are you sure you want to link %s?" % kwargs['path']):
+      output, err = cli_syncthing_adapter.link(**kwargs)
       click.echo("%s" % output, err=err)
 
 ''' 
@@ -205,6 +173,7 @@ def free(**kwargs):
   click.echo("%s" % output, err=err)
 
 ### Tag
+"""
 @main.command()
 @click.argument(
   'path',
@@ -217,6 +186,7 @@ def tag(path, name):
 
   output, err = cli_syncthing_adapter.tag(path, name)
   click.echo("%s" % output, err=err)
+"""
 
 ### Key
 @main.command()
@@ -228,14 +198,17 @@ def tag(path, name):
 @click.option(
   '-f', '--folder', 
   type=click.Path(exists=True, writable=True, resolve_path=True), 
-  default=".", nargs=1, metavar="<PATH>",
-  help="Display folder key."
+  nargs=1, metavar="<PATH>", help="Display folder key."
 )
 def key(**kwargs):
-  ''' Display synchronization key for directories. '''
+  ''' Display synchronization key. '''
 
   output, err = cli_syncthing_adapter.key(**kwargs)
-  click.echo("%s" % output, err=err)
+
+  if not output:
+    click.echo(click.get_current_context().get_help())
+  else:  
+    click.echo("%s" % output, err=err)
 
 ### Mv
 @main.command()
@@ -329,7 +302,7 @@ def auth(**kwargs):
   else:
     if all(kwargs['add']): 
       if click.confirm("Are you sure you want to authorize this device to access %s?" % path):
-        output = cli_syncthing_adapter.auth(option, key, path)
+        output, err = cli_syncthing_adapter.auth(option, key, path)
 
       else:
         return

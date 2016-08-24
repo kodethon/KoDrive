@@ -33,11 +33,18 @@ class SystemFactory:
     else:
       return "KodeDrive has successfully restarted!"
 
-  def delay(self, secs):
+  def delay(self, speed):
     if not self.handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
-    
-    success = self.handler.set_rescan_interval(secs)
+
+    if speed < 0:
+      speed = 0
+    elif speed > 3:
+      speed = 3
+
+    st_conf = self.handler.adapter.st_conf_file
+    app_conf = self.handler.adapter.app_conf_file
+    self.handler.adapter.init_configs(st_conf, app_conf, speed=speed)
 
     if success:
       return 'KodeDrive will now sync every %s seconds.' % secs
@@ -53,23 +60,6 @@ class SystemFactory:
     else:
       return 'KodeDrive has already been started.' 
 
-  def about(self):
-    kdr_config = self.handler.adapter.get_config()
-    is_server = kdr_config['system']['server']
-    
-    if self.handler.ping():
-      config_path = self.handler.adapter.st_conf_file
-      address = self.handler.adapter.get_gui_address(config_path)
-      return 'Running as %s at %s.' % ('server' if is_server else 'client', address)
-    else:
-      return 'Exited as %s.' % ('server' if is_server else 'client')
-
-  def key(self):
-    if not self.handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
-
-    return self.handler.encode_device_key()
-  
   def test(self, arg):
     return self.handler.test(arg)
 
@@ -103,7 +93,7 @@ class SystemFactory:
     self.handler.make_client()
     return 'KodeDrive now running in client mode.'
 
-def link(key, tag, path):
+def link(**kwargs):
   handler = factory.get_handler()
 
   # Save application state in case of error
@@ -114,22 +104,23 @@ def link(key, tag, path):
     if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
     
-    md = handler.decode_key(key)
+    md = handler.decode_key(kwargs['key'])
 
     if not md:
       raise KeyError('Invalid Key.')
     
     device_id = md['devid']
-
+    
     if 'remote_path' in md and 'api_key' in md:
       remote_path = md['remote_path']
       api_key = md['api_key']
       tag = handler.link(
         device_id=device_id,
         api_key=api_key, 
-        tag=tag, 
-        local_path=path,
-        remote_path=remote_path
+        tag=kwargs['tag'], 
+        local_path=kwargs['path'],
+        remote_path=remote_path,
+        interval=kwargs['interval']
       )
     elif 'label' in md and 'folder_id' in md and 'hostname' in md:
       label = md['label']
@@ -142,7 +133,8 @@ def link(key, tag, path):
         hostname=hostname,
         label=tag,
         r_folder_id=folder_id,
-        local_path=path
+        local_path=path,
+        interval=kwargs['interval']
       )
 
     return "%s (%s) is now being synchronized." % (path, tag), False
@@ -163,11 +155,9 @@ SystemSingleton = SystemFactory()
 def sys(**kwargs):
   
   sub_handlers = {
-    'about' : SystemSingleton.about,
     'client' : SystemSingleton.client,
     'exit' : SystemSingleton.exit,
     'init' : SystemSingleton.init,
-    'key' : SystemSingleton.key,
     'restart' : SystemSingleton.restart,
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test,
@@ -176,7 +166,6 @@ def sys(**kwargs):
     
   try:
     for key in kwargs:
-      
       # Map option to handler
       if(kwargs[key]):
         sub_handler = sub_handlers[key]
@@ -263,24 +252,80 @@ def tag(path, name):
 def ls(): 
   handler = factory.get_handler()
 
-  return handler.ls()
+  metadata = handler.ls()
 
-def key(path):
+  if not metadata:
+    return None, None
 
-  if not path[len(path) - 1] == '/':
-    path += '/'
+  headers = []
+  lengths = []
 
+  # Preprocess
+
+  # Iterate through list
+  for i, record in enumerate(metadata):
+    lengths.append(0)
+
+    # Iterate through dictionary
+    for header in record:
+      headers.append(header)
+      num_data = len(record[header])
+
+      for data in record[header]:
+        cur = len(data)
+        prev = lengths[i] 
+
+        lengths[i] = cur if cur > prev else prev
+  
+  # Process
+  body = str()
+  for i in range(0, num_data):
+    for n in range(0, len(metadata)):
+      value = metadata[n][headers[n]][i]
+      s = "{:<%i}" % (lengths[n] + 5)
+      body += s.format(value.strip())
+
+    body += "\n"
+  
+  if len(body) == 0:
+    return
+
+  heading = str()
+  # Iterate through list
+  for i, record in enumerate(metadata):
+    # Iterate through dictionary
+    for header in record:
+      s = "{:<%i}" % (lengths[i] + 5)
+      heading += s.format(header)
+
+  return heading, body
+
+def key(**kwargs):
+    
   handler = factory.get_handler()
-  if not handler.wait_start(0.5, 10, verbose=True):
-    raise custom_errors.CannotConnect()
-
+  
   try:
-    if not handler.folder_exists({
-      'path': path
-    }):
-      raise custom_errors.FileNotInConfig(path)
+    if not handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+
+    # Return device key
+    if kwargs['device']:
+      return handler.encode_device_key(), False
+
+    # Return folder key
+    elif kwargs['folder']:
+      path = handler.to_st_path(kwargs['folder'])
       
-    return handler.encode_key(path), False
+      if not handler.folder_exists({
+        'path': path
+      }):
+        raise custom_errors.FileNotInConfig(path)
+        
+      return handler.encode_key(path), False
+
+    # Else display help
+    else:
+      return None, False
   except Exception as e:
 
     if not config.Flags['production']:
@@ -350,9 +395,11 @@ def auth(option, key, path):
       handler.deauth(key, path)
       hostname = handler.decode_device_key(key)['hostname']
 
-      return "%s can no longer access %s" % (hostname, path), False
+      return ("%s can no longer access %s" % (hostname, path)), False
     elif option == 'list':
       return handler.auth_ls(), False
+    else:
+      return None, False
   except Exception as e:
 
     if not config.Flags['production']:
@@ -360,23 +407,37 @@ def auth(option, key, path):
 
     return e.message, True
 
-def stat(**kwargs):
+def info(**kwargs):
   handler = factory.get_handler()
 
   try:
     if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
+    
+    # Get folder infomation
+    if kwargs['folder']:
+      return handler.stat(kwargs['folder']), False
 
-    path = kwargs['path']
+    # Get system information
+    elif kwargs['device']:
+      kdr_config = handler.adapter.get_config()
+      is_server = kdr_config['system']['server']
+      
+      if handler.ping():
+        config_path = handler.adapter.st_conf_file
+        address = handler.adapter.get_gui_address(config_path)
+        return ('Running as %s at %s.' % ('server' if is_server else 'client', address)), False
+      else:
+        return ('Exited as %s.' % ('server' if is_server else 'client')), False
+    else:
+      return None, False
 
-    return handler.stat(path), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
     return e.message, True
-
 
 """
 

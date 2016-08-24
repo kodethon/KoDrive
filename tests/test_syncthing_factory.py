@@ -171,7 +171,8 @@ def test_link_server():
     local_path= client_sync_dir,
     tag='my-sync',
     remote_host='0.0.0.0',
-    remote_port=mock.server_conf['port']
+    remote_port=mock.server_conf['port'],
+    interval=5
   )
 
   mock.server.wait_start(0.5, 10) # Wait for link remote.restart

@@ -32,8 +32,11 @@ class SyncthingFacade():
       else:
         return None
         
-  def set_config(self, config):
-    return self.sync.sys.set.config(config)
+  def set_config(self, config, restart=False):
+    status = self.sync.sys.set.config(config)
+    if restart:
+      self.restart()
+    return status
     
   def restart(self):
     self.sync.sys.set.restart()
@@ -51,17 +54,20 @@ class SyncthingFacade():
     else:
       return self.sync.db.status(folder=folder['id'])
 
-  def set_rescan_interval(self, secs):
+  def set_rescan_interval(self, path, secs, restart=False):
     if type(secs) != int or secs < 0:
       return False
 
-    config = self.get_config()
-
-    for f in config['folders']:
-      f['rescanIntervalS'] = secs
+    folder = self.find_folder({
+      'path' : path
+    })
+    folder['rescanIntervalS'] = secs
 
     self.set_config(config)
-    self.restart()
+
+    if restart:
+      self.restart()
+
     return True
 
   def scan(self, path):
@@ -120,6 +126,11 @@ class SyncthingFacade():
       'max_devices' : max_devices
     } 
   
+  ###
+  # 
+  # @@port => having syncthing listen to this port
+  # @@speed => reconnection speed, 1 = fastest, 2 = medium, 3 = slow
+  #
   def start(self, port=None):    
     path = self.adapter.get_syncthing_path()
     is_new = self.adapter.start_syncthing(path)
@@ -136,7 +147,7 @@ class SyncthingFacade():
 
           st_conf = self.adapter.st_conf_file
           app_conf = self.adapter.app_conf_file
-          self.adapter.init_configs(st_conf, app_conf)
+          self.adapter.init_configs(st_conf, app_conf, is_new=True)
 
           self.adapter.delete_default_folder()
           break
@@ -145,7 +156,7 @@ class SyncthingFacade():
 
         time.sleep(0.5)
 
-    return True if self.wait_start(0.5, 10) else False
+    return True if self.wait_start(0.25, 20) else False
 
   def shutdown(self):
     try:
@@ -660,11 +671,9 @@ class SyncthingClient(SyncthingFacade):
     }):
       raise custom_errors.AlreadyAdded()
 
-    #self_devid = self.get_device_id()
     if not self.device_exists(device_id):
       self.new_device(config=config, device_id=device_id)
-      self.set_config(config)
-      self.restart()
+      self.set_config(config, True)
     
     if 'remote_host' in kwargs:
       host = kwargs['remote_host']
@@ -676,11 +685,9 @@ class SyncthingClient(SyncthingFacade):
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None
     )
-    # remote.wait_start(0.5, 10)
+
     remote_config = remote.request_folder(
-      self.hostname(),    
-      self.get_device_id()
-      #self_devid
+      self.hostname(), self.get_device_id()
     )
     
     # Find the remote folder
@@ -695,20 +702,16 @@ class SyncthingClient(SyncthingFacade):
     global_remote_folder = remote_folder['path']
     
     # Save the folder data into syncthing config
-
     self.wait_start(0.5, 10) # Wait for the self.restart
     self.acknowledge(
-      device_id=device_id,
-      api_key = api_key,
+      device_id=device_id, api_key = api_key,
       hostname=remote.hostname(remote_config), 
-      folder_obj=remote_folder, 
-      label=label,
-      local_path=local_path,
-      remote_path=remote_folder['path'],
-      host=remote.host,
-      port=remote.port,
-      server=True
+      folder_obj=remote_folder, label=label,
+      local_path=local_path, remote_path=remote_folder['path'],
+      host=remote.host, port=remote.port,
+      server=True, interval=kwargs['interval']
     )
+
     return label
 
   def acknowledge(self, **kwargs):
@@ -727,20 +730,27 @@ class SyncthingClient(SyncthingFacade):
 
     device_id = kwargs['device_id']
     config = self.get_config()
-
+    
+    # Client - Client
     if 'r_folder_id' in kwargs:
       r_folder_id = kwargs['r_folder_id']
       remote_folder = syncthing_adt.Folder(
         id=r_folder_id,
         label=kwargs['label'],
         path=kwargs['local_path'],
-        deviceID=self.get_device_id()
+        deviceID=self.get_device_id(),
+        rescanIntervals=kwargs['interval']
       )
       remote_folder.add_device(device_id)
       remote_folder = remote_folder.obj
+    # Server - Client
     else:
       remote_folder = kwargs['folder_obj']
       remote_folder['path'] = kwargs['local_path']
+
+      if kwargs['interval']:
+        remote_folder['rescanIntervalS'] = kwargs['interval']
+
       r_folder_id = remote_folder['id']
     
     # Check syncthing config to make sure the user is not

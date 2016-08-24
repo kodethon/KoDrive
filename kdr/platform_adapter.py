@@ -35,17 +35,35 @@ class PlatformBase(object):
     tree.find('gui').find('address').text = str(address)
     tree.write(config_path)
 
-  def init_configs(self, st_conf, app_conf):
+  def init_configs(self, st_conf, app_conf, **kwargs):
+    
     tree = ET.parse(st_conf)
     options = tree.find('options')
-    options.find('relayReconnectIntervalM').text = '0'
-    options.find('reconnectionIntervalS').text = '5'
-    tree.write(st_conf)
-    devid = tree.find('device').get('id')
     
-    kdr_config = self.get_platform_config(app_conf)
-    kdr_config['system']['devid'] = devid
-    self.set_platform_config(app_conf, kdr_config)
+    # Translate speed to relayReconnectIntervalM & reconnectionIntervalS
+    if not 'speed' in kwargs:
+      kwargs['speed'] = 1
+
+    if kwargs['speed'] == 1:
+      relay_rec = 0
+      rec_interval = 5
+    elif kwargs['speed'] == 2:
+      relay_rec = 1
+      rec_interval = 5
+    else:
+      relay_rec = 2
+      rec_interval = 10
+    
+    options.find('relayReconnectIntervalM').text = str(relay_rec)
+    options.find('reconnectionIntervalS').text = str(rec_interval)
+    tree.write(st_conf)
+    
+    # Save device id to kdr config
+    if 'is_new' in kwargs:
+      devid = tree.find('device').get('id')
+      kdr_config = self.get_platform_config(app_conf)
+      kdr_config['system']['devid'] = devid
+      self.set_platform_config(app_conf, kdr_config)
 
   def set_platform_dir_config(self, folder_path, object):
 
