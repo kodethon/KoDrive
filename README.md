@@ -17,12 +17,13 @@ To use KodeDrive, the following must be installed:
 $ curl https://bootstrap.pypa.io/get-pip.py | python
 ```
 - [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-
+```sh
+$ pip install --user virtualenv
+```
 
 ### Install KodeDrive
 To set ```kdr``` (the KodeDrive CLI) as a local command:
 
-    $ pip install --user virtualenv
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
 
 ### Initialize the KodeDrive Daemon
@@ -70,7 +71,7 @@ $ kdr sys -i
 </p>
 
 ## Receiving/Sharing Directories in Detail
-_**CAUTION**: If you decide to skip this section, please read the Conflicts section_
+_**CAUTION**: If you decide to skip this section, please continue on to the Conflicts section._
 
 _**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
