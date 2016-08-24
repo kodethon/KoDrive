@@ -17,18 +17,14 @@ To use KodeDrive, the following must be installed:
 $ curl https://bootstrap.pypa.io/get-pip.py | python
 ```
 - [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-
+```sh
+$ pip install --user virtualenv
+```
 
 ### Install KodeDrive
 To set ```kdr``` (the KodeDrive CLI) as a local command:
 
-    $ pip install --user virtualenv
     $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr.py | python
-    
-or to set ```kdr``` as a global command (```sudo``` permission is required):
-
-    $ pip install virtualenv
-    $ curl https://raw.githubusercontent.com/Jvlythical/KodeDrive/master/static/get-kdr-global.py | python
 
 ### Initialize the KodeDrive Daemon
 
@@ -41,7 +37,7 @@ $ kdr sys -i
 1. Provide the other person with your **device key**:
 
   ```sh
-  $ kdr sys -k
+  $ kdr key -d
   ```
 2. The person sharing with you will then provide a **directory key**:
 
@@ -64,7 +60,7 @@ $ kdr sys -i
 3. Finally obtain and provide the below **directory key** back to the other user:
  
   ```sh
-  $ kdr key <PATH>
+  $ kdr key -f <PATH>
   ```
   
 <p align="center">
@@ -75,12 +71,13 @@ $ kdr sys -i
 </p>
 
 ## Receiving/Sharing Directories in Detail
-_**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
+_**CAUTION**: If you decide to skip this section, please continue on to the Conflicts section._
 
+_**Note**: 'Sharer' refers to the device that is sharing their directory and 'receiver' refers to the device that the 'sharer' is sharing their directory with._
 
 First, the receiver(s) need to supply their device key(s) to the sharer with:
 ```sh
-$ kdr sys -k
+$ kdr key -d 
 ```
 
 The sharer then:
@@ -102,7 +99,7 @@ The sharer then:
 3. Gets the key which the receiver will need to link.
 
   ```sh
-  $ kdr key <PATH>
+  $ kdr key -f <PATH>
   ```
 
 Running ```kdr key <PATH>``` will return the directory's key, which needs to be passed to the receiver(s).
@@ -169,7 +166,7 @@ $ kdr sys -c
 
 To see the KodeDrive status and which mode it is currently in:
 ```sh
-$ kdr sys -a
+$ kdr info -d
 ```
 
 #### Synchronizing as Server-Client
@@ -177,7 +174,7 @@ $ kdr sys -a
 The server (in Server mode) does:
 ```sh
 $ kdr add <PATH>
-$ kdr key <PATH>
+$ kdr key -f <PATH>
 ```
 
 The client(s) (in Client mode) run:
@@ -202,20 +199,17 @@ $ kdr free <PATH>
 ### Statistics
 To see statistics on a directory currently being synchronized:
 ```sh
-$ kdr stat <PATH>
+$ kdr info -f <PATH>
 ```
 
 ### Changing the Rescan Interval
 By default, KodeDrive scans each directory every 30 seconds for changes and propagates those changes to all linked directories. Decreasing the interval can lead to faster syncing, but will make KodeDrive more CPU and memory intensive and vice versa. This can be problematic if syncing large directories/files on slower computers and it is advised to seek a balance.
 
-To change the rescan interval for all directories:
-```sh
-$ kdr sys -d <SECONDS>
-```
 Note: this will only change the interval on the device running this command and will restart KodeDrive.
 
-
 ### Conflicts
+
+_**CAUTION**: KodeDrive will not automatically start when your computer boots up, please start KodeDrive to avoid potential conflicts._
 
 If a file is modified on different devices simultaneously or files with the same name in different directories are synchronized, the file on the device with the larger value of the first 63 bits for their device ID will be marked as the conflicting file. The file will be renamed to ```<filename>.sync- conflict-<date>-<time>.<ext>```
 
