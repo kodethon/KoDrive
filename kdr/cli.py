@@ -1,5 +1,5 @@
 import click
-import cli_syncthing_adapter
+from . import cli_syncthing_adapter
 import os, time, math
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -18,6 +18,7 @@ def main(ctx):
 # Subcommands start
 #
 
+### Sys
 @main.command()
 @click.option('-k', '--key', is_flag=True, help="Return device key.")
 @click.option('-a', '--about', is_flag=True, help="List KodeDrive information.")
@@ -31,15 +32,16 @@ def main(ctx):
 
 def sys(**kwargs):
   ''' Manage application configuration. '''
-
+  
   output, err = cli_syncthing_adapter.sys(**kwargs)
-
+  
   if output:
     click.echo("%s" % output, err=err)
   else:
     if not kwargs['init']:
       click.echo(click.get_current_context().get_help())
 
+### Stat
 @main.command()
 @click.argument(
   'path',
@@ -60,6 +62,7 @@ def stat(**kwargs):
     click.echo("\nTotal bytes: %s" % output['localBytes'])
     click.echo("Bytes needed: %s" % output['needBytes'])
 
+### Ls
 @main.command()
 def ls():
   ''' List synchronized directories. '''
@@ -114,6 +117,7 @@ def ls():
   click.echo(heading)
   click.echo(body.strip())
 
+### Link
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
@@ -169,6 +173,7 @@ def link(**kwargs):
         click.echo("%s" % output)
 '''
 
+### Add
 @main.command()
 @click.option(
   '-t', '--tag', nargs=1, metavar=" <TEXT>", 
@@ -186,6 +191,7 @@ def add(**kwargs):
   output = cli_syncthing_adapter.add(**kwargs)
   click.echo("%s" % output)
 
+### Free
 @main.command()
 @click.argument(
   'path',
@@ -198,6 +204,7 @@ def free(**kwargs):
   output, err = cli_syncthing_adapter.free(kwargs['path'])
   click.echo("%s" % output, err=err)
 
+### Tag
 @main.command()
 @click.argument(
   'path',
@@ -211,18 +218,26 @@ def tag(path, name):
   output, err = cli_syncthing_adapter.tag(path, name)
   click.echo("%s" % output, err=err)
 
+### Key
 @main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
+@click.option(
+  '-d', '--device', 
+  is_flag=True, 
+  help="Display device key."
 )
-def key(path):
+@click.option(
+  '-f', '--folder', 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  default=".", nargs=1, metavar="<PATH>",
+  help="Display folder key."
+)
+def key(**kwargs):
   ''' Display synchronization key for directories. '''
 
-  output, err = cli_syncthing_adapter.key(path)
+  output, err = cli_syncthing_adapter.key(**kwargs)
   click.echo("%s" % output, err=err)
 
+### Mv
 @main.command()
 @click.argument('source', nargs=-1, required=True)
 @click.argument('target', nargs=1)
@@ -250,7 +265,7 @@ def mv(source, target):
     if err_msg:
       click.echo(err_msg, err)
 
-
+### Auth
 @main.command()
 @click.option(
   '-a', '--add', 
@@ -328,6 +343,7 @@ def auth(**kwargs):
   if not output or not option:
     click.echo(click.get_current_context().get_help())
 
+### Push
 @main.command()
 @click.option(
   '-v', '--verbose', is_flag=True,
@@ -345,7 +361,7 @@ def push(**kwargs):
   if output:
     click.echo("%s" % output, err=err)
 
-  if kwargs['verbose']:
+  if kwargs['verbose'] and not err:
     with click.progressbar(
       iterable=None,
       length=100,
@@ -358,7 +374,7 @@ def push(**kwargs):
       while True:
         kwargs['progress'] = True
         kwargs['device_num'] = device_num
-        data = cli_syncthing_adapter.refresh(**kwargs)
+        data, err = cli_syncthing_adapter.refresh(**kwargs)
 
         device_num = data['device_num']
         max_devices = data['max_devices']

@@ -1,5 +1,5 @@
-from py_syncthing_adapter import Syncthing
-from data import custom_errors
+from .py_syncthing_adapter import Syncthing
+from .data import custom_errors
 
 import click
 import xml.etree.ElementTree as ET
@@ -15,10 +15,14 @@ class PlatformBase(object):
   st_binary = 'syncthing'
   stfolder = '.stfolder'
   st_version = '0.14.4'
+
+  # Specifies whether to update kdr config
+  migrate = True
   default_config = {
     'directories' : {},
     'system' : {
       'server' : False,
+      'sync-speed' : 0
     }
   }
 
@@ -291,8 +295,6 @@ class SyncthingLinux64(PlatformBase):
       dest_tmp = os.path.join('/tmp', linux_64_bit_tar)
       
       if not os.path.exists(os.path.join(dest_tmp, linux_64_bit_tar)):
-        #command = "wget -P %s %s" % (dest_tmp, os.path.join(linux_64_bit_repo, linux_64_bit_tar))
-        #subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         urllib.urlretrieve(os.path.join(linux_64_bit_repo, linux_64_bit_tar), dest_tmp)
 
       src = dest_tmp
@@ -311,7 +313,8 @@ class SyncthingLinux64(PlatformBase):
         command, '-no-browser', '-logfile', log_path, 
         '-home', os.path.join(self.st_conf_dir)
     ]
-
+    
+    # Check if this is first time starting syncthing
     if not os.path.exists(self.st_conf_file):
       new_flag = True
     else:
@@ -324,27 +327,21 @@ class SyncthingLinux64(PlatformBase):
       if sock.connect_ex((host, port)) != 0:
         opts.append('-gui-address')
         opts.append(gui_address)
-
-      '''
-      # Check if the port is available
-      
-      while True: 
-        toks = gui_address.split(':')
-        host = toks[0]
-        port = int(toks[1])
-        
-        if sock.connect_ex((host, port)) != 0:
-          break
-
-        port += 1
-        gui_address = "%s:%d" % (host, port)
-      
-      # All good, let's go
-      opts.append('-gui-address')
-      opts.append(gui_address)
-      self.set_gui_address(self.st_conf_file, gui_address)
-      '''
     
+    # Check if a migration is needed
+    # Note: only migrates 2 layers down
+    if self.migrate:
+      kdr_config = self.get_config()
+      for i in kdr_config:
+        if not type(kdr_config[i]) == object:
+          self.default_config[i] = kdr_config[i]
+        else:
+          for j in kdr_config[i]:
+            self.default_config[i][j] = kdr_config[i][j]
+
+      self.set_config(self.default_config)
+    
+    # Set env variable to disable upgrades
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 

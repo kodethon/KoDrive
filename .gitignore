@@ -14,3 +14,6 @@ build/
 
 trash
 kdr/trash
+
+static/linux/syncthing*
+deploy.sh

@@ -8,8 +8,20 @@ def get_data_files():
     """ Return data_files in a platform dependent manner """
 
     if sys.platform.startswith('linux'):
+        st_version = '0.14.4'
+        linux_64_bit_dir = "syncthing-linux-amd64-v%s" % st_version
+        bin_src = os.path.join('static/linux', linux_64_bit_dir, 'syncthing')
+        license_src = os.path.join('static/linux', linux_64_bit_dir, 'LICENSE.txt')
+        authors_src = os.path.join('static/linux', linux_64_bit_dir, 'AUTHORS.txt')
+        dest = os.path.expanduser(os.path.join('~', '.st', linux_64_bit_dir))
+        
+        if not os.path.exists(dest):
+            os.makedirs(dest)
+
         return [
-            ('/etc/init.d', ['static/linux/kdr'])
+            (dest, [bin_src]),
+            (dest, [license_src]),
+            (dest, [authors_src])
         ]
     elif os.name == 'nt':
         data_files = []
@@ -23,7 +35,7 @@ dependencies = ['click', 'requests']
 
 setup(
     name='kdr',
-    version='0.9.6',
+    version='0.9.79',
     url='https://github.com/Jvlythical/KodeDrive',
     license='LICENSE',
     author='Michael Yen',

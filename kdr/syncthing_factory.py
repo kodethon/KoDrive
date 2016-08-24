@@ -1,10 +1,10 @@
-from py_syncthing_adapter import Syncthing
+from .py_syncthing_adapter import Syncthing
 import click
 
 # Self-defined
-import platform_adapter
-from data import custom_errors
-from data import syncthing_adt
+from . import platform_adapter
+from .data import custom_errors
+from .data import syncthing_adt
 
 # Standard library
 import os, sys, platform
@@ -255,6 +255,8 @@ class SyncthingFacade():
 
     # Base case
     if intervals <= 0:
+      if verbose:  
+        click.echo("", err=True)
       try:
         config = self.get_config()
         return True if config else False
@@ -262,18 +264,19 @@ class SyncthingFacade():
         return False 
 
     count = 0
-    while not self.ping() and count < intervals:
+    while count < intervals:
+      if self.ping():
+        break
+
       time.sleep(t)
       count += 1
 
       if verbose:
         if count == 1:
-          click.echo("Attempting to reconnect ", nl=False)
+          click.echo("Attempting to reconnect ", err=True, nl=False)
         else:
-          click.echo("~", nl=False)
-          if count == intervals:
-            click.echo("")
-
+          click.echo("~", err=True, nl=False)
+            
     c = True
 
     try:
@@ -287,7 +290,11 @@ class SyncthingFacade():
     if not c:
       self.wait_start(t, intervals - count, **kwargs)
     else:
+
       if count < intervals:
+        if count > 0 and verbose:
+            click.echo("", err=True)
+
         if callback:
           callback()
 
@@ -355,12 +362,12 @@ class SyncthingFacade():
         host = self.devid_to_ip(devid, False)           
 
         if not host:
-          print "Attempt %i to discover device." % count
+          click.echo("Attempt %i to discover device." % count)
           time.sleep(1)
           count += 1
         else:
           if count > 1:
-            print 'Device successfully discovered!'
+            click.echo('Device successfully discovered!')
           
           return host
 
@@ -527,6 +534,7 @@ class SyncthingClient(SyncthingFacade):
       raise custom_errors.NotDirectory(kwargs['path'].rstrip('/'))
 
     devid = self.get_device_id()
+    kdr_config = self.adapter.get_config()
     config = self.get_config()
     folders = config['folders']
 
@@ -535,7 +543,7 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : 30,
+      'rescanIntervalS' : 5,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,
@@ -1306,15 +1314,10 @@ class SyncthingProxy(SyncthingFacade):
         return d['name']
 
   def request_folder(self, client_hostname, client_devid):
-    '''
-    print 'ARGS -------------------------------------'
-    print client_hostname
-    print client_devid
-    print self.get_device_id()
-    '''
-
+    
     config = self.get_config()       
-
+    
+    # Create a new device record
     self.new_device(
       config = config,
       hostname = client_hostname,

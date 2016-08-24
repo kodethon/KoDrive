@@ -180,13 +180,14 @@ def sys(**kwargs):
       # Map option to handler
       if(kwargs[key]):
         sub_handler = sub_handlers[key]
-        
+
         # Check if arg is a flag 
         if type(kwargs[key]) == bool:
           return sub_handler(), False
         else:
           return sub_handler(kwargs[key]), False
 
+    return None, False
   except Exception as e:
     if not config.Flags['production']:
       traceback.print_exc()
@@ -204,16 +205,16 @@ def refresh(**kwargs):
     success = handler.scan(path)
 
     if 'progress' in kwargs:
-      return handler.completion(path, kwargs['device_num'])
+      return handler.completion(path, kwargs['device_num']), False
     else:
-      return None if success else 'Failed to refresh ' + path
+      return (None, False) if success else ('Failed to refresh ' + path, True)
     
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message, False
+    return e.message, True
 
 def free(path):
   handler = factory.get_handler()

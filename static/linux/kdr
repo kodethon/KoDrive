@@ -3,10 +3,10 @@
 #Carry out specific functions when asked to by the system
 case "$1" in
   start)
-		kdr start
+		kdr sys -i
     ;;
   stop)
-		kdr stop
+		kdr sys -e
     ;;
   *)
     echo "Usage: /etc/init.d/kdr {start|stop}"
