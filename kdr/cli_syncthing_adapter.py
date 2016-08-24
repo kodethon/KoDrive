@@ -1,7 +1,7 @@
-from data import custom_errors
-from data import config
-from utils import config_rollbacker as rb
-import syncthing_factory as factory
+from .data import custom_errors
+from .data import config
+from .utils import config_rollbacker as rb
+from . import syncthing_factory as factory
 
 import click, time
 import json, os, traceback

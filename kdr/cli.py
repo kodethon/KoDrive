@@ -1,6 +1,7 @@
 import click
-from . import cli_syncthing_adapter
 import os, time, math
+
+from . import cli_syncthing_adapter
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()

@@ -1,5 +1,6 @@
-from .py_syncthing_adapter import Syncthing
 import click
+
+from .py_syncthing_adapter import Syncthing
 
 # Self-defined
 from . import platform_adapter
