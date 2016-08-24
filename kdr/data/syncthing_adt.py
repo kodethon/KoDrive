@@ -2,8 +2,13 @@
 class Folder:
 
   def __init__(self, **kwargs):
+    if 'rescanIntervalS' in kwargs:
+      rescanIntervalS = kwargs['rescanIntervalS']   
+    else:
+      rescanIntervalS = 5
+
     self.folder = {
-      'rescanIntervalS' : kwargs['interval'] or 5,
+      'rescanIntervalS' : rescanIntervalS,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,

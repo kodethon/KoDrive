@@ -115,7 +115,7 @@ def main():
         echo()
         echo('WARNING:')
         echo('  It looks like {0} is not in your PATH so kdr will'.format(bin_dir))
-        echo('  not work out of the box.  To fix this problem make sure to run')
+        echo('  not work out of the box. To fix this problem make sure to run')
         echo('  one of the following depending on which shell your are using.')
         echo()
         echo('  bash: export PATH={0}:$PATH'.format(bin_dir))

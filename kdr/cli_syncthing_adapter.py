@@ -111,6 +111,7 @@ def link(**kwargs):
     
     device_id = md['devid']
     
+    # Server - client
     if 'remote_path' in md and 'api_key' in md:
       remote_path = md['remote_path']
       api_key = md['api_key']
@@ -122,24 +123,36 @@ def link(**kwargs):
         remote_path=remote_path,
         interval=kwargs['interval']
       )
+
+    # Client - client
     elif 'label' in md and 'folder_id' in md and 'hostname' in md:
       label = md['label']
       hostname = md['hostname']
       folder_id = md['folder_id']
-      tag = (tag or label)
+      tag = (kwargs['tag'] or label)
 
       handler.acknowledge(
         device_id=device_id,
         hostname=hostname,
         label=tag,
         r_folder_id=folder_id,
-        local_path=path,
+        local_path=kwargs['path'],
         interval=kwargs['interval']
       )
-
-    return "%s (%s) is now being synchronized." % (path, tag), False
+    else:
+      return 'Invalid Key.', True
+    
+    return ("%s (%s) is now being synchronized." % (kwargs['path'], tag)), False
   except KeyError as e:
-    return e.message
+
+    if not config.Flags['production']:
+      traceback.print_exc()
+
+    # Error! Rollback :/
+    app_rb.rollback_config()
+    st_rb.rollback_config()
+
+    return e.message, True
   except Exception as e:
 
     if not config.Flags['production']:
