@@ -157,8 +157,8 @@ def link(**kwargs):
 def add(**kwargs):
   ''' Make a folder shareable. '''
 
-  output = cli_syncthing_adapter.add(**kwargs)
-  click.echo("%s" % output)
+  output, err = cli_syncthing_adapter.add(**kwargs)
+  click.echo("%s" % output, err=err)
 
 ### Free
 @main.command()

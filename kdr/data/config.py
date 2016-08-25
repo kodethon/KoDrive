@@ -1,3 +1,3 @@
 Flags = {
-  'production' : False
+  'production' : True
 }

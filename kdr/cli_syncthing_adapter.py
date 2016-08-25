@@ -121,7 +121,8 @@ def link(**kwargs):
         tag=kwargs['tag'], 
         local_path=kwargs['path'],
         remote_path=remote_path,
-        interval=kwargs['interval']
+        interval=kwargs['interval'],
+        remote_port=md['port'] if 'port' in md else None
       )
 
     # Client - client
@@ -355,13 +356,13 @@ def add(**kwargs):
       raise custom_errors.CannotConnect()
 
     handler.add(**kwargs)
-    return "You can now share %s" % kwargs['path']
+    return ("You can now share %s" % kwargs['path']), False
   except Exception as e:
 
     if not config.Flags['production']:
       traceback.print_exc()
 
-    return e.message
+    return e.message, True
 
 def mv(source, target):
   handler = factory.get_handler()
@@ -424,11 +425,12 @@ def info(**kwargs):
   handler = factory.get_handler()
 
   try:
-    if not handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
     
     # Get folder infomation
     if kwargs['folder']:
+      if not handler.wait_start(0.5, 10, verbose=True):
+        raise custom_errors.CannotConnect()
+
       return handler.stat(kwargs['folder']), False
 
     # Get system information
@@ -441,7 +443,7 @@ def info(**kwargs):
         address = handler.adapter.get_gui_address(config_path)
         return ('Running as %s at %s.' % ('server' if is_server else 'client', address)), False
       else:
-        return ('Exited as %s.' % ('server' if is_server else 'client')), False
+        return ('Exited as %s.' % ('server' if is_server else 'client')), True
     else:
       return None, False
 

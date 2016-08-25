@@ -209,11 +209,15 @@ class SyncthingFacade():
       f = directories[key]
       
       if f['local_path']  == path.rstrip('/'):
-        if f['is_shared']:
+        # Allow servers to shared any dir
+        if f['is_shared'] and not system['server']:
           raise custom_errors.PermissionDenied()
    
     config = self.get_config()
     devid = self.get_device_id()
+    
+    # Return different keys depending on
+    # if the app is in server or client mode
     if system['server']:
       api_key = config['gui']['apiKey']
       key = "%s@%s@%s" % (devid, path, api_key)
@@ -325,7 +329,8 @@ class SyncthingFacade():
       return {
         'devid' : toks[0],
         'remote_path' : toks[1],
-        'api_key' : toks[2]
+        'api_key' : toks[2],
+        'port' : toks[3] if len(toks) > 3 else None
       }
     except ValueError:
       pass
@@ -360,10 +365,8 @@ class SyncthingFacade():
               break
 
           return href.split('/')[2].split(':')[0]
-
       except Exception:
         return None
-
     else:
       count = 1
       host = None
@@ -374,12 +377,16 @@ class SyncthingFacade():
         host = self.devid_to_ip(devid, False)           
 
         if not host:
-          click.echo("Attempt %i to discover device." % count)
+          if count == 1:  
+            click.echo("Attempting to discover device ", nl=False)
+          else:
+            click.echo("~", nl=False)
+
           time.sleep(1)
           count += 1
         else:
           if count > 1:
-            click.echo('Device successfully discovered!')
+            click.echo("\nDevice successfully discovered!")
           
           return host
 
@@ -699,7 +706,8 @@ class SyncthingClient(SyncthingFacade):
     else:
       remote_folder = remote_config['folders'][0] 
 
-    label = kwargs['tag'] if 'tag' in kwargs else remote_folder['label']
+    label = kwargs['tag'] if 'tag' in kwargs else None
+    label = label or remote_folder['label']
     global_remote_folder = remote_folder['path']
     
     # Save the folder data into syncthing config
@@ -1277,9 +1285,6 @@ class SyncthingClient(SyncthingFacade):
       body = body[:-2]
 
     return body
-
-  # def test(self, arg): 
-    # self.restart()
 
 class SyncthingProxy(SyncthingFacade):
 
