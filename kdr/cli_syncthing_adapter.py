@@ -56,6 +56,7 @@ class SystemFactory:
       if not self.handler.start():
         return 'KodeDrive could not be started.'
       else:
+        self.handler.autostart()
         return 'KodeDrive has successfully started.'
     else:
       return 'KodeDrive has already been started.' 
@@ -92,6 +93,13 @@ class SystemFactory:
 
     self.handler.make_client()
     return 'KodeDrive now running in client mode.'
+
+  def autostart(self):
+
+    if not self.handler.wait_start(0.5, 10, verbose=True):
+      raise custom_errors.CannotConnect()
+
+    self.handler.autostart()
 
 def link(**kwargs):
   handler = factory.get_handler()

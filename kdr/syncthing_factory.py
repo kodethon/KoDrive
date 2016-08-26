@@ -1297,6 +1297,9 @@ class SyncthingClient(SyncthingFacade):
 
     return body
 
+  def autostart(self):
+    self.adapter.autostart()
+
 class SyncthingProxy(SyncthingFacade):
 
   port = 8384
