@@ -2,10 +2,11 @@ import click
 
 from .py_syncthing_adapter import Syncthing
 from .data import custom_errors
+from .data import mac_plist_adt
 
 import xml.etree.ElementTree as ET
 import os, subprocess, socket
-import json, hashlib
+import json, hashlib, plistlib
 import urllib, copy
 
 class PlatformBase(object):
@@ -376,6 +377,14 @@ class SyncthingLinux64(PlatformBase):
       force_config=True
     )
 
+  def autostart():
+
+    return
+
+  def disable_autostart(self):
+
+    return
+
 class SyncthingMac64(PlatformBase): 
 
   rel_st_conf_dir = 'Library/Application Support/Syncthing'
@@ -505,6 +514,65 @@ class SyncthingMac64(PlatformBase):
       config_path=self.st_conf_file,
       force_config=True
     )
+
+  def autostart(self):
+
+    HOME = os.path.expanduser('~')
+    DEVNULL = open(os.devnull, 'w')
+    bin_binary = os.path.join(HOME, 'bin', self.st_binary)
+
+    # == ln -s ~/.st/.../syncthing ~/bin/syncthing
+    if not os.path.exists(bin_binary):
+      os.symlink(os.path.join(folder_path, self.st_binary), bin_binary)
+
+    agent_path = os.path.join(HOME, 'Library/LaunchAgents')
+    plist_name = 'com.kodedrive.autostart'
+    plist_path = os.path.join(agent_path, plist_name + '.plist')
+
+    if not os.path.isfile(plist_path):
+      plist = mac_plist_adt.PList(plist_name, HOME, bin_binary)
+      plistlib.writePlist(plist.file, plist_path)
+
+    p = subprocess.Popen([
+      'launchctl', 'load', plist_path
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    out, err = p.communicate()
+
+    daemon_list = subprocess.check_output([
+      'launchctl', 'list'
+    ])
+
+    if plist_name not in daemon_list:
+      raise custom_errors.StartOnLoginFailure()
+
+    DEVNULL.close()
+
+  # Not used, kept for reference
+  def disable_autostart(self):
+
+    HOME = os.path.expanduser('~')
+    DEVNULL = open(os.devnull, 'w')
+    agent_path = os.path.join(HOME, 'Library/LaunchAgents')
+    plist_name = 'com.kodedrive.autostart'
+    plist_path = os.path.join(agent_path, plist_name + '.plist')
+
+    if os.path.isfile(plist_path):
+      p = subprocess.Popen([
+        'launchctl', 'unload', plist_path
+      ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+      out, err = p.communicate()
+
+    daemon_list = subprocess.check_output([
+      'launchctl', 'list'
+    ])
+
+    if plist_name in daemon_list:
+      raise custom_errors.StartOnLoginFailure()
+
+    os.remove(plist_path)
+    DEVNULL.close()
 
 # class SyncthingWin64():
   # TODO

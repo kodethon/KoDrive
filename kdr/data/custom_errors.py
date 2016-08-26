@@ -72,3 +72,10 @@ class NotDirectory(KodeDriveError):
     super(KodeDriveError, self).__init__(
       "%s is not a directory." % f_path
     )
+
+class StartOnLoginFailure(KodeDriveError):
+  def __init__(self):
+    super(KodeDriveError, self).__init__(
+      "KodeDrive autostart configuration has failed."
+    )
+
