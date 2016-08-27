@@ -50,10 +50,16 @@ class SyncthingFacade():
       'path' : path
     }) 
 
+    files_needed = self.sync.db.need(folder=folder['id'])
+    status = self.sync.db.status(folder=folder['id'])
+
     if not folder:
       raise IOError(path + ' is not being synchronized.')
     else:
-      return self.sync.db.status(folder=folder['id'])
+      return {
+        'status' : status, 
+        'files_needed' : files_needed
+      }
 
   def set_rescan_interval(self, path, secs, restart=False):
     if type(secs) != int or secs < 0:
@@ -614,16 +620,18 @@ class SyncthingClient(SyncthingFacade):
     kdr_config['system']['server'] = True
     self.adapter.set_config(kdr_config)
 
-    syncthing_config = self.get_config()
+    #syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
 
     if not port:
       address = self.adapter.get_gui_address(config_path)
       port = address.split(':')[1]
 
-    syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
+    #syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
+    #self.set_config(syncthing_config)
 
-    self.set_config(syncthing_config)
+    gui_address = "0.0.0.0:%s" % str(port)
+    self.adapter.set_gui_address(config_path, gui_address)
 
     if self.ping():
       self.wait_start(0.5, 10)
@@ -636,19 +644,24 @@ class SyncthingClient(SyncthingFacade):
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
 
-    self.wait_start(0.5, 10)
-    syncthing_config = self.get_config()
+    #self.wait_start(0.5, 10)
+    #syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
 
     if not port:
       address = self.adapter.get_gui_address(config_path)
       port = address.split(':')[1]
 
-    syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
+    #syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
+    #self.set_config(syncthing_config)
 
-    self.set_config(syncthing_config)
-    self.wait_start(0.5, 10)
-    self.restart()
+    gui_address = "127.0.0.1:%s" % port
+    self.adapter.set_gui_address(config_path, gui_address)
+
+    if self.ping():
+      self.wait_start(0.5, 10)
+      self.restart()
+
     self.sync = self.adapter.get_gui_hook()
 
   def link(self, **kwargs):

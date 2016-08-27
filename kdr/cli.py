@@ -62,11 +62,26 @@ def info(**kwargs):
       click.echo(output, err=err)
   else:
     if kwargs['folder']:
-        click.echo("State: %s" % output['state'])
-        click.echo("\nTotal files: %s" % output['localFiles'])
-        click.echo("Files needed: %s" % output['needFiles'])
-        click.echo("\nTotal bytes: %s" % output['localBytes'])
-        click.echo("Bytes needed: %s" % output['needBytes'])
+        stat = output['status']
+        click.echo("State: %s" % stat['state'])
+        click.echo("\nTotal files: %s" % stat['localFiles'])
+        click.echo("Files needed: %s" % stat['needFiles'])
+        click.echo("\nTotal bytes: %s" % stat['localBytes'])
+        click.echo("Bytes needed: %s" % stat['needBytes'])
+        click.echo("\nFiles Needed:")
+
+        files_needed = output['files_needed']['progress']
+        for f in files_needed:
+          click.echo("  " + f['namek'])
+
+        files_needed = output['files_needed']['queue']
+        for f in files_needed:
+          click.echo("  " + f['namek'])
+
+        files_needed = output['files_needed']['rest']
+        for f in files_needed:
+          click.echo("  " + f['name'])
+
     elif kwargs['device']:
       click.echo(output)
     else:

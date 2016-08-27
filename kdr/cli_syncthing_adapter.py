@@ -80,16 +80,16 @@ class SystemFactory:
   
   def server(self):
     
-    if not self.handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
+    #if not self.handler.wait_start(0.5, 10, verbose=True):
+    #  raise custom_errors.CannotConnect()
 
     self.handler.make_server()
     return 'KodeDrive now running in server mode.'
 
   def client(self):
 
-    if not self.handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
+    #if not self.handler.wait_start(0.5, 10, verbose=True):
+    #  raise custom_errors.CannotConnect()
 
     self.handler.make_client()
     return 'KodeDrive now running in client mode.'
