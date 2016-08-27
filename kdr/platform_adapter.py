@@ -29,7 +29,7 @@ class PlatformBase(object):
   
   def platform_get_api_key(self, config_path):
     tree = ET.parse(config_path)
-    return tree.find('gui').find('apikey')
+    return tree.find('gui').find('apikey').text
 
   def platform_find_folder(self, config_path, folder_path):
     tree = ET.parse(config_path)
@@ -400,12 +400,10 @@ class SyncthingLinux64(PlatformBase):
       force_config=True
     )
 
-  def autostart():
-
+  def autostart(self):
     return
 
   def disable_autostart(self):
-
     return
 
 class SyncthingMac64(PlatformBase): 

@@ -251,7 +251,7 @@ class SyncthingFacade():
   def wait_sync(self, t, intervals, callback=None):
     count = 0 
 
-    while not self.config_in_sync() and count < counters:
+    while not self.config_in_sync() and count < intervals:
       time.sleep(t)
       count += 1
 
@@ -634,7 +634,6 @@ class SyncthingClient(SyncthingFacade):
     self.adapter.set_gui_address(config_path, gui_address)
 
     if self.ping():
-      self.wait_start(0.5, 10)
       self.restart()
 
     self.sync = self.adapter.get_gui_hook()
@@ -659,7 +658,6 @@ class SyncthingClient(SyncthingFacade):
     self.adapter.set_gui_address(config_path, gui_address)
 
     if self.ping():
-      self.wait_start(0.5, 10)
       self.restart()
 
     self.sync = self.adapter.get_gui_hook()
