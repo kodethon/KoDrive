@@ -317,11 +317,8 @@ def ls():
 def key(**kwargs):
     
   handler = factory.get_handler()
-  
-  try:
-    if not handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
 
+  try:
     # Return device key
     if kwargs['device']:
       return handler.encode_device_key(), False
@@ -330,9 +327,7 @@ def key(**kwargs):
     elif kwargs['folder']:
       path = handler.to_st_path(kwargs['folder'])
       
-      if not handler.folder_exists({
-        'path': path
-      }):
+      if not handler.adapter.folder_exists(path):
         raise custom_errors.FileNotInConfig(path)
         
       return handler.encode_key(path), False

@@ -200,6 +200,7 @@ class SyncthingFacade():
       pass
 
   def encode_key(self, path):
+
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
     system = kdr_config['system']
@@ -213,22 +214,21 @@ class SyncthingFacade():
         if f['is_shared'] and not system['server']:
           raise custom_errors.PermissionDenied()
    
-    config = self.get_config()
     devid = self.get_device_id()
     
     # Return different keys depending on
     # if the app is in server or client mode
     if system['server']:
-      api_key = config['gui']['apiKey']
+      api_key = self.adapter.get_api_key()
       key = "%s@%s@%s" % (devid, path, api_key)
     else:
-      folder_config = self.find_folder({
-        'path' : path
-      }, config)
+      folder_config = self.adapter.find_folder(path) 
+
       folder_id = folder_config['id']
       label = folder_config['label']
       key = "%s#%s#%s#%s" % (devid, self.hostname(), folder_id, label)
     
+    # Package the key and return
     key = key.encode('base64')
 
     return "".join(key.split())
@@ -412,7 +412,11 @@ class SyncthingFacade():
       config['devices'] = []
     
     config['devices'].append(record)
-              
+  
+  ###
+  # 
+  # Checks whether device exists in config['devices']
+  #
   def device_exists(self, client_devid, config=None):
 
     if not config:
@@ -420,6 +424,10 @@ class SyncthingFacade():
 
     return self.find_device(client_devid, config) != None
 
+  ###
+  #
+  # Return the device object in config['devices']
+  #
   def find_device(self, client_devid, config=None):
       
     if not config:
@@ -616,8 +624,11 @@ class SyncthingClient(SyncthingFacade):
     syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
 
     self.set_config(syncthing_config)
-    self.wait_start(0.5, 10)
-    self.restart()
+
+    if self.ping():
+      self.wait_start(0.5, 10)
+      self.restart()
+
     self.sync = self.adapter.get_gui_hook()
 
   def make_client(self, port=None):
