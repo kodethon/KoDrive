@@ -72,11 +72,11 @@ def info(**kwargs):
 
         files_needed = output['files_needed']['progress']
         for f in files_needed:
-          click.echo("  " + f['namek'])
+          click.echo("  " + f['name'])
 
         files_needed = output['files_needed']['queued']
         for f in files_needed:
-          click.echo("  " + f['namek'])
+          click.echo("  " + f['name'])
 
         files_needed = output['files_needed']['rest']
         for f in files_needed:

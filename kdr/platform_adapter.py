@@ -445,7 +445,19 @@ class SyncthingMac64(PlatformBase):
   @property
   def config_path(self):
     return self.app_conf_file
-    
+
+  def find_folder(self, path):
+    if path[len(path) - 1] != '/':
+      path += '/'
+
+    return self.platform_find_folder(self.st_conf_file, path)
+
+  def folder_exists(self, path):
+    return self.platform_find_folder(self.st_conf_file, path) != None
+
+  def get_api_key(self):
+    return self.platform_get_api_key(self.st_conf_file)
+
   def get_config(self):
     return self.get_platform_config(self.app_conf_file)
 

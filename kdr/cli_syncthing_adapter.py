@@ -310,7 +310,7 @@ def ls():
     body += "\n"
   
   if len(body) == 0:
-    return
+    return None, None
 
   heading = str()
   # Iterate through list
