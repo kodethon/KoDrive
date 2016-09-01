@@ -11,15 +11,11 @@ Synchronize remote files and directories across different devices with an easy-t
 ### Install Dependencies
 To use KodeDrive, the following must be installed:
 
-- [Python 2.7](https://www.python.org/downloads/)
-- [pip](https://pip.pypa.io/en/stable/installing/)
-```sh
-$ curl https://bootstrap.pypa.io/get-pip.py | python
-```
-- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-```sh
-$ pip install --user virtualenv
-```
+- Python 2.7
+- pip
+- virtualenv
+
+Refer to the [Dependencies](#dependencies) section.
 
 ### Install KodeDrive
 To set ```kdr``` (the KodeDrive CLI) as a local command:
@@ -217,3 +213,15 @@ It will be up to the users to resolve conflicts and update files. It is advised 
 
 Please note that if users modify conflict files, it is possible to end up with conflicting conflict files.
 Those will be named as ```sync-conflict-...sync-conflict -...-sync-conflict``` files.
+
+## Dependencies
+- [Python 2.7](https://www.python.org/downloads/)
+- [pip](https://pip.pypa.io/en/stable/installing/)
+```sh
+$ curl https://bootstrap.pypa.io/get-pip.py | sudo python
+```
+- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+```sh
+$ pip install --user virtualenv
+```
+
