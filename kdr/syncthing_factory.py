@@ -144,24 +144,13 @@ class SyncthingFacade():
     
     # If is new, initialize config file
     if is_new:
-      for i in range(0, 10):
-        try:
-          # The order in which this is done is important!
-          # make_client can undo the changes of delete_default_folder
-          # if syncthing has not been restart :(
-          self.sync = self.adapter.get_gui_hook()
-          self.make_client(port)
-
-          st_conf = self.adapter.st_conf_file
-          app_conf = self.adapter.app_conf_file
-          self.adapter.init_configs(st_conf, app_conf, is_new=True)
-
-          self.adapter.delete_default_folder()
-          break
-        except Exception as e:
-          pass
-
-        time.sleep(0.5)
+      self.wait_start(0.25, 20)
+      self.sync = self.adapter.get_gui_hook()
+      st_conf = self.adapter.st_conf_file
+      app_conf = self.adapter.app_conf_file
+      self.adapter.init_configs(st_conf, app_conf, is_new=True)
+      self.adapter.delete_default_folder()
+      self.make_client(port)
 
     return True if self.wait_start(0.25, 20) else False
 
@@ -620,21 +609,18 @@ class SyncthingClient(SyncthingFacade):
     kdr_config['system']['server'] = True
     self.adapter.set_config(kdr_config)
 
-    #syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
+    address = self.adapter.get_gui_address(config_path)
 
     if not port:
-      address = self.adapter.get_gui_address(config_path)
       port = address.split(':')[1]
-
-    #syncthing_config['gui']['address'] = "0.0.0.0:%s" % str(port)
-    #self.set_config(syncthing_config)
 
     gui_address = "0.0.0.0:%s" % str(port)
     self.adapter.set_gui_address(config_path, gui_address)
 
-    if self.ping():
-      self.restart()
+    #if not address != gui_address:
+    self.wait_start(0.5, 10)
+    self.restart()
 
     self.sync = self.adapter.get_gui_hook()
 
@@ -643,22 +629,17 @@ class SyncthingClient(SyncthingFacade):
     kdr_config['system']['server'] = False
     self.adapter.set_config(kdr_config)
 
-    #self.wait_start(0.5, 10)
-    #syncthing_config = self.get_config()
     config_path = self.adapter.st_conf_file
+    address = self.adapter.get_gui_address(config_path)
 
     if not port:
-      address = self.adapter.get_gui_address(config_path)
       port = address.split(':')[1]
-
-    #syncthing_config['gui']['address'] = "127.0.0.1:%s" % port
-    #self.set_config(syncthing_config)
 
     gui_address = "127.0.0.1:%s" % port
     self.adapter.set_gui_address(config_path, gui_address)
 
-    if self.ping():
-      self.restart()
+    self.wait_start(0.5, 10)
+    self.restart()
 
     self.sync = self.adapter.get_gui_hook()
 
