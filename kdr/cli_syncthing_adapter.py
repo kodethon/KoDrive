@@ -357,7 +357,8 @@ def add(**kwargs):
   try:
     if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
-
+    
+    kwargs['wait'] = true
     handler.add(**kwargs)
     return ("You can now share %s" % kwargs['path']), False
   except Exception as e:

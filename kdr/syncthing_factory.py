@@ -589,10 +589,12 @@ class SyncthingClient(SyncthingFacade):
       'versioning' : {'type': '', 'params': {}}
     })
     self.set_config(config)
-    self.restart()
+
+    if 'wait' not in kwargs:
+      self.restart()
 
     # Save folder data into kdr config
-    config = self.adapter.set_dir_config({
+    self.adapter.set_dir_config({
       'device_id' : devid,
       'api_key' : hashlib.sha1(devid + kwargs['path']).hexdigest(),
       'label' : kwargs['tag'],
@@ -602,7 +604,7 @@ class SyncthingClient(SyncthingFacade):
     }) 
     open(os.path.join(kwargs['path'], '.stfolder'), 'w').close()
 
-    return True
+    return config
 
   def make_server(self, port=None):
     kdr_config = self.adapter.get_config()
@@ -618,9 +620,9 @@ class SyncthingClient(SyncthingFacade):
     gui_address = "0.0.0.0:%s" % str(port)
     self.adapter.set_gui_address(config_path, gui_address)
 
-    #if not address != gui_address:
-    self.wait_start(0.5, 10)
-    self.restart()
+    if port or self.ping():
+      self.wait_start(0.5, 10)
+      self.restart()
 
     self.sync = self.adapter.get_gui_hook()
 
@@ -1082,11 +1084,12 @@ class SyncthingClient(SyncthingFacade):
     return True
 
   def auth(self, key, path):
-
+    
     try:
       if key == self.encode_device_key():
         raise custom_errors.AuthYourself()
     except:
+      # *** This checking should be moved to cli
       try:
         alive = self.handler.ping()
       except:
@@ -1095,22 +1098,21 @@ class SyncthingClient(SyncthingFacade):
       if not alive:
         raise custom_errors.CannotConnect()
 
+    # See note above
     self.wait_start(0.5, 10)
+
+    # Automatically add folder if the folder does
+    # not exist in the config, otherwise grab config
+    if not self.adapter.folder_exists(path):
+      config = self.add(path=path, tag='sync', wait=False)
+    else:
+      config = self.get_config()
+
     path = os.path.abspath(path)
     kdr_config = self.adapter.get_config()
     directories = kdr_config['directories']
-    config = self.get_config()
     devices = config['devices']
     folders = config['folders']
-
-    if not path[len(path) - 1] == '/':
-      path += '/'
-
-    if not self.folder_exists({
-      'path' : path
-    }, config):
-      raise custom_errors.FileNotInConfig(path)
-    # to check if user did 'kdr add <PATH>'
 
     for k in directories:
       f = directories[k]

@@ -6,10 +6,9 @@ from . import cli_syncthing_adapter
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
 @click.group(
-  epilog="Run 'kdr COMMAND --help' for more information on a command.", 
+  epilog="Run 'kdr COMMAND --help' for more information on a command.",
   context_settings=CONTEXT_SETTINGS
 )
-
 @click.pass_context
 def main(ctx):
   ''' A tool to synchronize remote/local directories. '''
@@ -41,59 +40,13 @@ def sys(**kwargs):
     if not kwargs['init']:
       click.echo(click.get_current_context().get_help())
 
-### Info 
-@main.command()
-@click.option(
-  '-d', '--device', 
-  is_flag=True, 
-  help="Display device information."
-)
-@click.option(
-  '-f', '--folder', 
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="<PATH>", help="Display folder information."
-)
-def info(**kwargs):
-  ''' Display synchronization information. '''
-
-  output, err = cli_syncthing_adapter.info(**kwargs)
-
-  if err:
-      click.echo(output, err=err)
-  else:
-    if kwargs['folder']:
-        stat = output['status']
-        click.echo("State: %s" % stat['state'])
-        click.echo("\nTotal files: %s" % stat['localFiles'])
-        click.echo("Files needed: %s" % stat['needFiles'])
-        click.echo("\nTotal bytes: %s" % stat['localBytes'])
-        click.echo("Bytes needed: %s" % stat['needBytes'])
-        click.echo("\nFiles Needed:")
-
-        files_needed = output['files_needed']['progress']
-        for f in files_needed:
-          click.echo("  " + f['name'])
-
-        files_needed = output['files_needed']['queued']
-        for f in files_needed:
-          click.echo("  " + f['name'])
-
-        files_needed = output['files_needed']['rest']
-        for f in files_needed:
-          click.echo("  " + f['name'])
-
-    elif kwargs['device']:
-      click.echo(output)
-    else:
-      click.echo(click.get_current_context().get_help())
-
 ### Ls
 @main.command()
 def ls():
-  ''' List synchronized directories. '''
+  ''' List all synchronized directories. '''
 
   heading, body = cli_syncthing_adapter.ls()
-  
+
   if heading:
     click.echo(heading)
 
@@ -157,105 +110,19 @@ def link(**kwargs):
         click.echo("%s" % output)
 '''
 
-### Add
-@main.command()
-@click.option(
-  '-t', '--tag', nargs=1, metavar=" <TEXT>", 
-  default="my-sync",
-  help="Associate this folder with a tag."
-)
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
-)
-def add(**kwargs):
-  ''' Make a folder shareable. '''
+###
+#
+# *** Dir commands
+#
 
-  output, err = cli_syncthing_adapter.add(**kwargs)
-  click.echo("%s" % output, err=err)
-
-### Free
-@main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
-)
-def free(**kwargs):
-  ''' Stop synchronization of directory. '''
-
-  output, err = cli_syncthing_adapter.free(kwargs['path'])
-  click.echo("%s" % output, err=err)
-
-### Tag
-"""
-@main.command()
-@click.argument(
-  'path',
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="PATH",
-)
-@click.argument('name', nargs=1)
-def tag(path, name):
-  ''' Change tag associated with directory. '''
-
-  output, err = cli_syncthing_adapter.tag(path, name)
-  click.echo("%s" % output, err=err)
-"""
-
-### Key
-@main.command()
-@click.option(
-  '-d', '--device', 
-  is_flag=True, 
-  help="Display device key."
-)
-@click.option(
-  '-f', '--folder', 
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-  nargs=1, metavar="<PATH>", help="Display folder key."
-)
-def key(**kwargs):
-  ''' Display synchronization key. '''
-
-  output, err = cli_syncthing_adapter.key(**kwargs)
-
-  if not output:
-    click.echo(click.get_current_context().get_help())
-  else:  
-    click.echo("%s" % output, err=err)
-
-### Mv
-@main.command()
-@click.argument('source', nargs=-1, required=True)
-@click.argument('target', nargs=1)
-def mv(source, target):
-  ''' Move synchronized directory. '''
-
-  if os.path.isfile(target) and len(source) == 1:
-    if click.confirm("Are you sure you want to overwrite %s?" % target):
-
-      err_msg = cli_syncthing_adapter.mv_edge_case(source, target)
-      # Edge case: to match Bash 'mv' behavior and overwrite file
-
-      if err_msg:
-        click.echo(err_msg)
-
-      return
-
-  if len(source) > 1 and not os.path.isdir(target):
-    click.echo(click.get_current_context().get_help())
-    return
-
-  else:
-    err_msg, err = cli_syncthing_adapter.mv(source, target)
-
-    if err_msg:
-      click.echo(err_msg, err)
+@click.group()
+@click.pass_context
+def dir(ctx):
+  ''' Manage synchronized directory settings. '''
+  pass
 
 ### Auth
-@main.command()
+@dir.command()
 @click.option(
   '-a', '--add', 
   type=(str, (click.Path(exists=True, writable=True, resolve_path=True))), 
@@ -332,8 +199,37 @@ def auth(**kwargs):
   if not output or not option:
     click.echo(click.get_current_context().get_help())
 
+
+### Mv
+@dir.command()
+@click.argument('source', nargs=-1, required=True)
+@click.argument('target', nargs=1)
+def mv(source, target):
+  ''' Move synchronized directory. '''
+
+  if os.path.isfile(target) and len(source) == 1:
+    if click.confirm("Are you sure you want to overwrite %s?" % target):
+
+      err_msg = cli_syncthing_adapter.mv_edge_case(source, target)
+      # Edge case: to match Bash 'mv' behavior and overwrite file
+
+      if err_msg:
+        click.echo(err_msg)
+
+      return
+
+  if len(source) > 1 and not os.path.isdir(target):
+    click.echo(click.get_current_context().get_help())
+    return
+
+  else:
+    err_msg, err = cli_syncthing_adapter.mv(source, target)
+
+    if err_msg:
+      click.echo(err_msg, err)
+
 ### Push
-@main.command()
+@dir.command()
 @click.option(
   '-v', '--verbose', is_flag=True,
   help='Show synchronize progress.'
@@ -378,79 +274,157 @@ def push(**kwargs):
         else:
           break
 
-
-"""
-REFERENCE
-
-@main.command()
-@click.option(
-  '-p', '--port', nargs=1, 
-  type=int
-)
-@click.option(
-  '-c', '--config', nargs=1, 
-  type=click.Path(exists=True, writable=True, resolve_path=True), 
-)
-def start(**kwargs):
-  ''' Start a KodeDrive instance. '''
-  output = cli_syncthing_adapter.start(**kwargs)
-  click.echo("%s" % output)  
-
-@main.command()
+### Tag
+@dir.command()
 @click.argument(
   'path',
   type=click.Path(exists=True, writable=True, resolve_path=True), 
   nargs=1, metavar="PATH",
 )
-def inspect(path):
-  ''' Return information regarding directory. '''
+@click.argument('name', nargs=1)
+def tag(path, name):
+  ''' Change tag associated with directory. '''
 
-  return
+  output, err = cli_syncthing_adapter.tag(path, name)
+  click.echo("%s" % output, err=err)
 
-@main.command()
-@click.argument('arg', nargs=1)
-def test(arg):
-  ''' Test random functions :) '''
+### Free
+@dir.command()
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def free(**kwargs):
+  ''' Stop synchronization of directory. '''
 
-  cli_syncthing_adapter.test(arg)
+  output, err = cli_syncthing_adapter.free(kwargs['path'])
+  click.echo("%s" % output, err=err)
 
-@cli.command()
-@click.argument('src', type=click.Path(exists=True), nargs=1)
-@click.argument('dest', nargs=1)
-def connect(src, dest):
-  ''' Connect to remote server. '''
-    
-  output = cli_syncthing_adapter.connect()
-  click.echo("%s" % output)
+### Add
+@dir.command()
+@click.option(
+  '-t', '--tag', nargs=1, metavar=" <TEXT>", 
+  default="my-sync",
+  help="Associate this folder with a tag."
+)
+@click.argument(
+  'path',
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="PATH",
+)
+def add(**kwargs):
+  ''' Make a directory shareable. '''
 
-@click.group(invoke_without_command=True)
-@click.option('-v', '--version', is_flag=True, help='Print version information and quit')
-click.echo("%s '%s' is not a valid command." % ('kodedrive:', arg))
-click.echo("See 'kodedrive --help'.")
+  output, err = cli_syncthing_adapter.add(**kwargs)
+  click.echo("%s" % output, err=err)
 
-@main.command()
-def start():
+### Info 
+@dir.command()
+@click.argument(
+  'path', nargs=1, 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+)
+def info(path):
+  ''' Display synchronization information. '''
+
+  output, err = cli_syncthing_adapter.info(folder=path)
+
+  if err:
+    click.echo(output, err=err)
+  else:
+    stat = output['status']
+    click.echo("State: %s" % stat['state'])
+    click.echo("\nTotal files: %s" % stat['localFiles'])
+    click.echo("Files needed: %s" % stat['needFiles'])
+    click.echo("\nTotal bytes: %s" % stat['localBytes'])
+    click.echo("Bytes needed: %s" % stat['needBytes'])
+    click.echo("\nFiles Needed:")
+
+    files_needed = output['files_needed']['progress']
+    for f in files_needed:
+      click.echo("  " + f['name'])
+
+    files_needed = output['files_needed']['queued']
+    for f in files_needed:
+      click.echo("  " + f['name'])
+
+    files_needed = output['files_needed']['rest']
+    for f in files_needed:
+      click.echo("  " + f['name'])
+
+### Key
+@dir.command()
+@click.argument(
+  'path', nargs=1, 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+)
+def key(path):
+  ''' Display synchronization key. '''
+
+  output, err = cli_syncthing_adapter.key(folder=path)
+
+  if not output:
+    click.echo(click.get_current_context().get_help())
+  else:  
+    click.echo("%s" % output, err=err)
+
+###
+#
+# *** Sys commands
+#
+@click.group()
+@click.pass_context
+def sys(ctx):
+  ''' Manage system-wide configuration. '''
+  pass
+
+@sys.command()
+@click.option(
+  '-d', '--device', 
+  is_flag=True, 
+  help="Display device key."
+)
+@click.option(
+  '-f', '--folder', 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  nargs=1, metavar="<PATH>", help="Display folder key."
+)
+def key(**kwargs):
+  ''' Display system key. '''
+
+  output, err = cli_syncthing_adapter.key(device=True)
+  click.echo("%s" % output, err=err)
+
+### Info 
+@sys.command()
+def info(**kwargs):
+  ''' Display system information. '''
+
+  output, err = cli_syncthing_adapter.info(device=True)
+  click.echo(output, err=err)
+
+### Start
+@sys.command()
+@click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
+@click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
+@click.option('-d', '--delay', type=int, help="Set remote device detection speed.", metavar="  <INTEGER>")
+def start(**kwargs):
   ''' Start KodeDrive daemon. '''
+    
+  kwargs['init']  = True
+  output, err = cli_syncthing_adapter.sys(**kwargs)
+  click.echo("%s" % output, err=err)
 
-  output = cli_syncthing_adapter.start()
-  click.echo("%s" % output)
-
-@main.command()
+### Start
+@sys.command()
 def stop():
   ''' Stop KodeDrive daemon. '''
 
-  output = cli_syncthing_adapter.stop()
-  output = output.strip()
-  click.echo("%s" % output)
+  output, err = cli_syncthing_adapter.sys(exit=True)
+  click.echo("%s" % output, err=err)
 
-@main.command()
-@click.argument('arg', nargs=1)
-def test(arg):
-  ''' Test random functions :) '''
+# Attach subcommands to main
+main.add_command(dir)
+main.add_command(sys)
 
-  cli_syncthing_adapter.test(arg)
-
-Syncthing's scan currently seems buggy
-
-
-"""
