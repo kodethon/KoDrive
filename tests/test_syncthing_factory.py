@@ -1,8 +1,8 @@
 import pytest
 import json
 
-from kdr import syncthing_factory as factory
-from kdr.utils import config_rollbacker as rb
+from kodrive import syncthing_factory as factory
+from kodrive.utils import config_rollbacker as rb
 from mock import adapters as mock
 
 Cache = {}
@@ -33,12 +33,12 @@ def test_init_conf():
     print "Instead got: %s" % rrim
     assert False
 
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
   devid = mock.client.get_device_id()
 
-  if not kdr_config['system']['devid'] == devid:
+  if not kodrive_config['system']['devid'] == devid:
     print "Was expecting %s to be in app config." % devid
-    print "Instead got: %s" % kdr_config['system']['devid']
+    print "Instead got: %s" % kodrive_config['system']['devid']
     assert False
 
 def test_make_server():
@@ -50,15 +50,15 @@ def test_make_server():
 
   mock.client.make_server()
 
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
 
-  if 'system' not in kdr_config:
+  if 'system' not in kodrive_config:
     assert False
 
-  if 'server' not in kdr_config['system']:
+  if 'server' not in kodrive_config['system']:
     assert False
 
-  if not kdr_config['system']['server']:
+  if not kodrive_config['system']['server']:
     assert False
 
   config_path = mock.client.adapter.st_conf_file
@@ -73,7 +73,7 @@ def test_make_server():
   assert True 
 
 def test_system_client():
-  ''' Ensure that kdr sys -c meets specs '''
+  ''' Ensure that kodrive sys -c meets specs '''
     
   mock.client.wait_start(0.5, 10)
 
@@ -83,15 +83,15 @@ def test_system_client():
 
   mock.client.make_client()
 
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
 
-  if 'system' not in kdr_config:
+  if 'system' not in kodrive_config:
     assert False
 
-  if 'server' not in kdr_config['system']:
+  if 'server' not in kodrive_config['system']:
     assert False
 
-  if kdr_config['system']['server']:
+  if kodrive_config['system']['server']:
     assert False
   
   gui_addr = mock.client.adapter.get_gui_address(config_path)
@@ -104,7 +104,7 @@ def test_system_client():
   assert True
 
 def test_add():
-  ''' Ensure that kdr add meets specs '''
+  ''' Ensure that kodrive add meets specs '''
 
   mock.client.wait_start(0.5, 10)
   client_sync_dir = mock.client_conf['sync_dir']
@@ -129,7 +129,7 @@ def test_add():
   assert True
 
 def test_key():
-  ''' Ensure that kdr key meets specs '''
+  ''' Ensure that kodrive key meets specs '''
 
   mock.client.wait_start(0.5, 10) 
   output = mock.client.encode_key(mock.client_conf['sync_dir'])
@@ -143,7 +143,7 @@ def test_free_local():
   mock.client.free(client_sync_dir)
 
 def test_link_server():
-  ''' Ensure that kdr link meets specs '''
+  ''' Ensure that kodrive link meets specs '''
   
   client_sync_dir = mock.client_conf['sync_dir']
   server_sync_dir = mock.server_conf['sync_dir']
@@ -240,7 +240,7 @@ def test_link_server():
   assert True
 
 def test_free_server():
-  ''' Ensure that kdr free meets specs '''
+  ''' Ensure that kodrive free meets specs '''
   
   mock.client.wait_start(0.5, 10) 
 
@@ -319,7 +319,7 @@ def test_free_server():
   assert True
 
 def test_auth():
-  ''' Ensure that kdr auth meets specs '''
+  ''' Ensure that kodrive auth meets specs '''
 
   mock.client.make_client()
   mock.client.wait_start(0.5, 10)
@@ -328,7 +328,7 @@ def test_auth():
   mock.server.wait_start(0.5, 10)
 
   syncthing_config = mock.client.get_config()
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
 
   mock.client.wait_start(0.5, 10)
   client_sync_dir = mock.client_conf['sync_dir']
@@ -366,8 +366,8 @@ def test_auth():
     c_st_rb.rollback_config()
     assert False
 
-  for k in kdr_config['directories']:
-    f = kdr_config['directories'][k]
+  for k in kodrive_config['directories']:
+    f = kodrive_config['directories'][k]
 
     if f['local_path']  == client_sync_dir.rstrip('/'):
       if f['is_shared']:
@@ -401,7 +401,7 @@ def test_auth():
   assert True
 
 def test_deauth():
-  ''' Ensure that kdr deauth meets specs '''
+  ''' Ensure that kodrive deauth meets specs '''
 
   mock.client.wait_start(0.5, 10)
   mock.client.make_client()
@@ -410,7 +410,7 @@ def test_deauth():
   mock.server.wait_start(0.5, 10)
 
   syncthing_config = mock.client.get_config()
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
 
   client_sync_dir = mock.client_conf['sync_dir']
   test_device_id = mock.server.get_device_id()

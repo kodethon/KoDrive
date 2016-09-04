@@ -1,3 +1,3 @@
-from kdr import syncthing_factory as factory
+from kodrive import syncthing_factory as factory
 
 client = factory.get_handler()

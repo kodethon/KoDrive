@@ -9,14 +9,14 @@ try:
 except NameError:
     IS_WIN = False
     PIP = '/bin/pip'
-    KDR = '/bin/kdr'
+    KODRIVE = '/bin/kodrive'
 else:
     IS_WIN = True
     PIP = '/Scripts/pip.exe'
-    KDR = '/Scripts/kdr.exe'
+    KODRIVE = '/Scripts/kodrive.exe'
 
-DEFAULT_KDR_HOME = os.path.expanduser('~/.local/venvs')
-DEFAULT_KDR_BIN_DIR = os.path.expanduser('~/.local/bin')
+DEFAULT_KODRIVE_HOME = os.path.expanduser('~/.local/venvs')
+DEFAULT_KODRIVE_BIN_DIR = os.path.expanduser('~/.local/bin')
 virtualenv_bin = 'virtualenv'
 
 def echo(msg=''):
@@ -47,13 +47,13 @@ def command_exists(cmd):
 
 def publish_script(venv, bin_dir):
 
-    echo('Installing kdr binary to ' + bin_dir)
+    echo('Installing kodrive binary to ' + bin_dir)
     if IS_WIN:
         for name in os.listdir(venv + '/Scripts'):
-            if 'kdr' in name.lower():
+            if 'kodrive' in name.lower():
                 shutil.copy(venv + '/Scripts/' + name, bin_dir)
     else:
-        os.symlink(venv + '/bin/kdr', bin_dir + '/kdr')
+        os.symlink(venv + '/bin/kodrive', bin_dir + '/kodrive')
 
 def install_files(venv, bin_dir, install):
     try:
@@ -70,33 +70,33 @@ def install_files(venv, bin_dir, install):
     global virtualenv_bin
     if call([virtualenv_bin, venv]) != 0:
         _cleanup()
-        fail('Could not create virtualenv for kdr :(')
+        fail('Could not create virtualenv for kodrive :(')
 
     if call([venv + PIP, 'install', install]) != 0:
         _cleanup()
-        fail('Could not install kdr :(')
+        fail('Could not install kodrive :(')
 
     publish_script(venv, bin_dir)
 
 
 def main():
-    if command_exists('kdr'):
-        succeed('You already have kdr installed')
+    if command_exists('kodrive'):
+        succeed('You already have kodrive installed')
     else:
-        echo('Installing kdr')
+        echo('Installing kodrive')
 
     global virtualenv_bin
     if not command_exists(virtualenv_bin):
         virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
         if not command_exists(virtualenv_bin):
-            fail('You need to have virtualenv installed to bootstrap kdr.')
+            fail('You need to have virtualenv installed to bootstrap kodrive.')
 
-    bin_dir = os.environ.get('KDR_BIN_DIR', DEFAULT_KDR_BIN_DIR)
-    venv = os.path.join(os.environ.get('KDR_HOME', DEFAULT_KDR_HOME),
-                        'kdr')
-    install_files(venv, bin_dir, 'kdr')
-    # Start kdr 
-    call([os.path.join(DEFAULT_KDR_BIN_DIR, 'kdr'), 'sys', '-i'])
+    bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
+    venv = os.path.join(os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
+                        'kodrive')
+    install_files(venv, bin_dir, 'kodrive')
+    # Start kodrive 
+    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', '-i'])
 
     # Set PATH variable
     if  'SHELL' in os.environ:
@@ -109,12 +109,12 @@ def main():
             with open(cshrc, 'a+') as f:
                 f.write('set path=($home/.local/bin $path)')
 
-    if not command_exists('kdr') != 0:
+    if not command_exists('kodrive') != 0:
         echo()
         echo('=' * 60)
         echo()
         echo('WARNING:')
-        echo('  It looks like {0} is not in your PATH so kdr will'.format(bin_dir))
+        echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
         echo('  not work out of the box. To fix this problem make sure to run')
         echo('  one of the following depending on which shell your are using.')
         echo()
@@ -124,7 +124,7 @@ def main():
         echo('=' * 60)
         echo()
     
-    succeed('kdr is now installed.')
+    succeed('kodrive is now installed.')
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

@@ -1,8 +1,8 @@
 import pytest
 
 from click.testing import CliRunner
-from kdr import cli
-from kdr import syncthing_factory as factory
+from kodrive import cli
+from kodrive import syncthing_factory as factory
 
 import time, os, json, shutil
 
@@ -35,10 +35,10 @@ def test_system_exit(runner):
 
 def test_mv_rename(runner):
   """
-    1. 'kdr add' a path to the json
+    1. 'kodrive add' a path to the json
     2. rename it
     3. check if rename worked
-    4. if worked, revert and 'kdr free', else False
+    4. if worked, revert and 'kodrive free', else False
   """
 
   source_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'THE_CHOSEN_ONE')
@@ -75,7 +75,7 @@ def test_mv_rename(runner):
     assert False
 
   syncthing_config = mock.client.get_config()
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
   folders = syncthing_config['folders']
   old_key = mock.client.adapter.get_dir_id(source_dir)
   new_key = mock.client.adapter.get_dir_id(target_dir)
@@ -99,8 +99,8 @@ def test_mv_rename(runner):
     print 'New path hasn\'t been added to syncthing_config'
     assert False
 
-  if new_key not in kdr_config['directories'] or old_key in kdr_config['directories']:
-    print 'Modifying kdr_config has failed'
+  if new_key not in kodrive_config['directories'] or old_key in kodrive_config['directories']:
+    print 'Modifying kodrive_config has failed'
     assert False
 
   result = runner.invoke(cli.dir, ['free', target_dir])
@@ -118,10 +118,10 @@ def test_mv_rename(runner):
 
 def test_mv_move(runner):
   """
-    1. 'kdr add' a path to the json
+    1. 'kodrive add' a path to the json
     2. move it into another directories
     3. check if move worked
-    4. if worked, revert and 'kdr free', else False
+    4. if worked, revert and 'kodrive free', else False
   """
 
   source_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'child123123')
@@ -170,7 +170,7 @@ def test_mv_move(runner):
     assert False
 
   syncthing_config = mock.client.get_config()
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
   folders = syncthing_config['folders']
   old_key = mock.client.adapter.get_dir_id(source_dir)
   new_key = mock.client.adapter.get_dir_id(final_dir)
@@ -194,8 +194,8 @@ def test_mv_move(runner):
     print 'New path hasn\'t been added to syncthing_config'
     assert False
 
-  if new_key not in kdr_config['directories'] or old_key in kdr_config['directories']:
-    print 'Modifying kdr_config has failed'
+  if new_key not in kodrive_config['directories'] or old_key in kodrive_config['directories']:
+    print 'Modifying kodrive_config has failed'
     assert False
 
   result = runner.invoke(cli.dir, ['free', final_dir])

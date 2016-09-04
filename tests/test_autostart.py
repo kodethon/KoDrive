@@ -1,8 +1,8 @@
 import pytest
 
 from click.testing import CliRunner
-from kdr import cli
-from kdr import syncthing_factory as factory
+from kodrive import cli
+from kodrive import syncthing_factory as factory
 
 import time, os, json 
 import shutil, subprocess, platform
@@ -17,9 +17,9 @@ def runner():
   return CliRunner()
 
 def test_autostart(runner):
-  ''' Ensures that KodeDrive will autostart  '''
+  ''' Ensures that kodrive will autostart  '''
 
-  result = runner.invoke(cli.sys, ['-i'])
+  result = runner.invoke(cli.sys, ['start'])
   mock.client.wait_start(0.5, 10)
 
   if result.exception:
@@ -29,7 +29,7 @@ def test_autostart(runner):
   if not mock.client.ping():
     assert False
 
-  kdr_config = mock.client.adapter.get_config()
+  kodrive_config = mock.client.adapter.get_config()
   system = platform.system()
 
   if system == "Linux":
@@ -37,17 +37,17 @@ def test_autostart(runner):
     assert True
 
   elif system == "Darwin":
-    plist_name = 'com.kodedrive.autostart'
+    plist_name = 'com.kodrive.autostart'
 
     daemon_list = subprocess.check_output([
       'launchctl', 'list'   
     ])
 
     if plist_name not in daemon_list:
-      print 'KodeDrive was not added to the autostart list'
+      print 'kodrive was not added to the autostart list'
       assert False
 
-  result = runner.invoke(cli.sys, ['-e'])
+  result = runner.invoke(cli.sys, ['stop'])
 
   if result.exception:
     print result.exception
@@ -63,7 +63,7 @@ def test_autostart(runner):
   elif system == "Darwin":
 
     if mock.client.ping():
-      result = runner.invoke(cli.sys, ['-e'])
+      result = runner.invoke(cli.sys, ['stop'])
 
       if result.exception:
         print result.exception

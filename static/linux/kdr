@@ -3,13 +3,13 @@
 #Carry out specific functions when asked to by the system
 case "$1" in
   start)
-		kdr sys -i
+		kodrive sys -i
     ;;
   stop)
-		kdr sys -e
+		kodrive sys -e
     ;;
   *)
-    echo "Usage: /etc/init.d/kdr {start|stop}"
+    echo "Usage: /etc/init.d/kodrive {start|stop}"
     exit 1
     ;;
 esac

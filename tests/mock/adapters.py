@@ -1,9 +1,9 @@
-from kdr import syncthing_factory as factory
+from kodrive import syncthing_factory as factory
 
 import os
 
 home_dir = os.path.expanduser('~')
-test_dir = os.path.join(home_dir, 'kdr_test')
+test_dir = os.path.join(home_dir, 'kodrive_test')
 client_conf = {
   'port' : 8389,
   'sync_home' : os.path.join(test_dir, 'client'),
@@ -32,7 +32,17 @@ client = factory.get_handler(client_conf['sync_home'])
 server = factory.get_handler(server_conf['sync_home'])
 
 if not server.ping():
-  server.start(port=server_conf['port'])
+  server.start(
+    delay=None,
+    client=False,
+    server=False,
+    port=server_conf['port']
+  )
 
 if not client.ping():
-  client.start(port=client_conf['port'])
+  client.start(
+    delay=None,
+    client=False,
+    server=False,
+    port=client_conf['port']
+  )

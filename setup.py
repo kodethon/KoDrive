@@ -34,8 +34,8 @@ def get_data_files():
 dependencies = ['click', 'requests']
 
 setup(
-    name='kdr',
-    version='0.9.90',
+    name='kodrive',
+    version='0.9.92',
     url='https://github.com/Jvlythical/KodeDrive',
     license='LICENSE',
     author='Michael Yen',
@@ -49,7 +49,7 @@ setup(
     install_requires=dependencies,
     entry_points={
         'console_scripts': [
-            'kdr = kdr.cli:main',
+            'kodrive = kodrive.cli:main',
         ],
     },
     #data_files=get_data_files(),

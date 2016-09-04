@@ -153,7 +153,7 @@ class SyncthingFacade():
       # Update internal st reference
       self.sync = self.adapter.get_gui_hook()
       
-      # Initialize st config and kodedrive config
+      # Initialize st config and kodrive config
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
       self.adapter.init_configs(st_conf, app_conf, is_new=True)
@@ -161,7 +161,7 @@ class SyncthingFacade():
       
       init_client = self.make_client
 
-    # Initialize kodedrive in one of two modes
+    # Initialize kodrive in one of two modes
     if kwargs['server']:
       init_client = self.make_server
     elif kwargs['client']:
@@ -227,9 +227,9 @@ class SyncthingFacade():
 
   def encode_key(self, path):
 
-    kdr_config = self.adapter.get_config()
-    directories = kdr_config['directories']
-    system = kdr_config['system']
+    kodrive_config = self.adapter.get_config()
+    directories = kodrive_config['directories']
+    system = kodrive_config['system']
   
     # Check if the directory belongs to user
     for key in directories:
@@ -587,7 +587,7 @@ class SyncthingClient(SyncthingFacade):
       raise custom_errors.NotDirectory(kwargs['path'].rstrip('/'))
 
     devid = self.get_device_id()
-    kdr_config = self.adapter.get_config()
+    kodrive_config = self.adapter.get_config()
     config = self.get_config()
     folders = config['folders']
 
@@ -624,7 +624,7 @@ class SyncthingClient(SyncthingFacade):
     if 'wait' not in kwargs:
       self.restart()
 
-    # Save folder data into kdr config
+    # Save folder data into kodrive config
     self.adapter.set_dir_config({
       'device_id' : devid,
       'api_key' : hashlib.sha1(devid + kwargs['path']).hexdigest(),
@@ -638,9 +638,9 @@ class SyncthingClient(SyncthingFacade):
     return config
 
   def make_server(self, port=None):
-    kdr_config = self.adapter.get_config()
-    kdr_config['system']['server'] = True
-    self.adapter.set_config(kdr_config)
+    kodrive_config = self.adapter.get_config()
+    kodrive_config['system']['server'] = True
+    self.adapter.set_config(kodrive_config)
 
     config_path = self.adapter.st_conf_file
     address = self.adapter.get_gui_address(config_path)
@@ -658,9 +658,9 @@ class SyncthingClient(SyncthingFacade):
     self.sync = self.adapter.get_gui_hook()
 
   def make_client(self, port=None):
-    kdr_config = self.adapter.get_config()
-    kdr_config['system']['server'] = False
-    self.adapter.set_config(kdr_config)
+    kodrive_config = self.adapter.get_config()
+    kodrive_config['system']['server'] = False
+    self.adapter.set_config(kodrive_config)
 
     config_path = self.adapter.st_conf_file
     address = self.adapter.get_gui_address(config_path)
@@ -681,7 +681,7 @@ class SyncthingClient(SyncthingFacade):
     """
 
       1. If config.json not created:
-        Create config as ~/.config/kdr/config.json
+        Create config as ~/.config/kodrive/config.json
         Initialize contents in confing.json
       else
         Append new folder data to config
@@ -822,7 +822,7 @@ class SyncthingClient(SyncthingFacade):
     else:
       api_key = ''
 
-    # Save folder data into kdr config
+    # Save folder data into kodrive config
     self.adapter.set_dir_config({
       'device_id' : device_id,
       'api_key' : api_key,
@@ -875,16 +875,16 @@ class SyncthingClient(SyncthingFacade):
     # self.restart()
 
     # 2. App config
-    kdr_config = self.adapter.get_config()
+    kodrive_config = self.adapter.get_config()
 
-    for key in kdr_config['directories']: 
-      d = kdr_config['directories'][key]
+    for key in kodrive_config['directories']: 
+      d = kodrive_config['directories'][key]
       if d['local_path'].rstrip('/') == local_path.rstrip('/'):
-        del kdr_config['directories'][key]
+        del kodrive_config['directories'][key]
         break
     
     # Done process app config, commit :)
-    self.adapter.set_config(kdr_config)
+    self.adapter.set_config(kodrive_config)
 
     # If the folder was shared, remove data from remote 
     if dir_config['is_shared'] and dir_config['server']:
@@ -1024,22 +1024,22 @@ class SyncthingClient(SyncthingFacade):
       # if not found but exists
 
     #Modify config.json
-    kdr_config = self.adapter.get_config()
+    kodrive_config = self.adapter.get_config()
     
     try:
-      kdr_config['directories'][new_key] = kdr_config['directories'][old_key]
-      del kdr_config['directories'][old_key]
+      kodrive_config['directories'][new_key] = kodrive_config['directories'][old_key]
+      del kodrive_config['directories'][old_key]
     except:
       raise custom_errors.InvalidKey(old_key)
       
-    if kdr_config['directories'][new_key]['local_path'] == source_path:
+    if kodrive_config['directories'][new_key]['local_path'] == source_path:
 
-      kdr_config['directories'][new_key]['local_path'] = target_path
+      kodrive_config['directories'][new_key]['local_path'] = target_path
       shutil.move(source_path, os.path.join(path, target))
       shutil.rmtree(source_path, ignore_errors=True)
       # renames directories in client's local environment
 
-      self.adapter.set_config(kdr_config)
+      self.adapter.set_config(kodrive_config)
     
     # self.restart()
     return
@@ -1048,7 +1048,7 @@ class SyncthingClient(SyncthingFacade):
     target_path = os.path.abspath(target)
     syncthing_config = self.get_config()
     folders = syncthing_config['folders']
-    kdr_config = self.adapter.get_config()
+    kodrive_config = self.adapter.get_config()
     found = False
 
     # Modify config.xml
@@ -1076,14 +1076,14 @@ class SyncthingClient(SyncthingFacade):
 
           # Modify config.json
           try:
-            kdr_config['directories'][new_key] = kdr_config['directories'][old_key]
-            del kdr_config['directories'][old_key]
+            kodrive_config['directories'][new_key] = kodrive_config['directories'][old_key]
+            del kodrive_config['directories'][old_key]
           except:
             raise custom_errors.InvalidKey(old_key)
 
-          if kdr_config['directories'][new_key]['local_path'] == item_path:
-            kdr_config['directories'][new_key]['local_path'] = final_path
-            self.adapter.set_config(kdr_config)
+          if kodrive_config['directories'][new_key]['local_path'] == item_path:
+            kodrive_config['directories'][new_key]['local_path'] = final_path
+            self.adapter.set_config(kodrive_config)
 
           found = True
           break
@@ -1133,19 +1133,22 @@ class SyncthingClient(SyncthingFacade):
 
     # See note above
     self.wait_start(0.5, 10)
-
+    
     # Automatically add folder if the folder does
     # not exist in the config, otherwise grab config
     if not self.adapter.folder_exists(path):
       config = self.add(path=path, tag='sync', wait=False)
     else:
       config = self.get_config()
-
+    
     path = os.path.abspath(path)
-    kdr_config = self.adapter.get_config()
-    directories = kdr_config['directories']
+    kodrive_config = self.adapter.get_config()
+    directories = kodrive_config['directories']
     devices = config['devices']
     folders = config['folders']
+    
+    if not path[len(path) - 1] == '/':
+      path += '/'
 
     for k in directories:
       f = directories[k]
@@ -1171,7 +1174,6 @@ class SyncthingClient(SyncthingFacade):
 
     for f in folders:
       if f['path'] == path:
-
         if client_devid not in f['devices']:
           f['devices'].append(client_devid)
 
@@ -1186,7 +1188,7 @@ class SyncthingClient(SyncthingFacade):
       except:
         raise custom_errors.DeviceNotFound(key)
       # add device to devices
-
+    
     self.set_config(config)
     self.restart()
       
@@ -1208,8 +1210,8 @@ class SyncthingClient(SyncthingFacade):
 
     self.wait_start(0.5, 10)
     path = os.path.abspath(path)
-    kdr_config = self.adapter.get_config()
-    directories = kdr_config['directories']
+    kodrive_config = self.adapter.get_config()
+    directories = kodrive_config['directories']
     config = self.get_config()
     devices = config['devices']
     folders = config['folders']
@@ -1221,7 +1223,7 @@ class SyncthingClient(SyncthingFacade):
       'path' : path
     }, config):
       raise custom_errors.FileNotInConfig(path)
-    # to check if user did 'kdr add <PATH>'
+    # to check if user did 'kodrive add <PATH>'
 
     for k in directories:
       f = directories[k]
@@ -1281,8 +1283,8 @@ class SyncthingClient(SyncthingFacade):
   def auth_ls(self):
 
     self.wait_start(0.5, 10)
-    kdr_config = self.adapter.get_config()
-    directories = kdr_config['directories']
+    kodrive_config = self.adapter.get_config()
+    directories = kodrive_config['directories']
     config = self.get_config()
     devices = config['devices']
     folders = config['folders']

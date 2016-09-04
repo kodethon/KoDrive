@@ -17,7 +17,7 @@ class PlatformBase(object):
   stfolder = '.stfolder'
   st_version = '0.14.4'
 
-  # Specifies whether to update kdr config
+  # Specifies whether to update kodrive config
   migrate = True
   default_config = {
     'directories' : {},
@@ -35,6 +35,7 @@ class PlatformBase(object):
     tree = ET.parse(config_path)
     for f in tree.findall('folder'):
       path = f.attrib['path']
+
       if path == folder_path:
         return f.attrib
 
@@ -70,12 +71,12 @@ class PlatformBase(object):
     options.find('reconnectionIntervalS').text = str(rec_interval)
     tree.write(st_conf)
     
-    # Save device id to kdr config
+    # Save device id to kodrive config
     if 'is_new' in kwargs:
       devid = tree.find('device').get('id')
-      kdr_config = self.get_platform_config(app_conf)
-      kdr_config['system']['devid'] = devid
-      self.set_platform_config(app_conf, kdr_config)
+      kodrive_config = self.get_platform_config(app_conf)
+      kodrive_config['system']['devid'] = devid
+      self.set_platform_config(app_conf, kodrive_config)
 
   def set_platform_dir_config(self, folder_path, object):
 
@@ -132,8 +133,8 @@ class PlatformBase(object):
     return Syncthing(api_key=api_key, port=int(port), host=host)
 
   def get_platform_device_id(self, config_path):
-    kdr_config = self.get_platform_config(config_path)
-    sys_config = kdr_config['system']
+    kodrive_config = self.get_platform_config(config_path)
+    sys_config = kodrive_config['system']
     return sys_config['devid'] if 'devid' in sys_config else None
   
   def create_config(self, config_path, **kwargs):
@@ -242,7 +243,7 @@ class PlatformBase(object):
 class SyncthingLinux64(PlatformBase): 
   
   rel_st_conf_dir = '.config/syncthing'
-  rel_app_conf_dir  = '.config/kdr'
+  rel_app_conf_dir  = '.config/kodrive'
   
   def __init__(self, home=None):
     if home:
@@ -286,6 +287,9 @@ class SyncthingLinux64(PlatformBase):
     return self.platform_find_folder(self.st_conf_file, path)
 
   def folder_exists(self, path):
+    if path[len(path) - 1] != '/':
+      path += '/'
+
     return self.platform_find_folder(self.st_conf_file, path) != None
 
   def get_api_key(self):
@@ -333,7 +337,7 @@ class SyncthingLinux64(PlatformBase):
 
       #linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
-      linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
+      linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kodrive/"
       dest_tmp = os.path.join('/tmp', linux_64_bit_tar)
       
       if not os.path.exists(os.path.join(dest_tmp, linux_64_bit_tar)):
@@ -373,13 +377,13 @@ class SyncthingLinux64(PlatformBase):
     # Check if a migration is needed
     # Note: only migrates 2 layers down
     if self.migrate:
-      kdr_config = self.get_config()
-      for i in kdr_config:
-        if not type(kdr_config[i]) == object:
-          self.default_config[i] = kdr_config[i]
+      kodrive_config = self.get_config()
+      for i in kodrive_config:
+        if not type(kodrive_config[i]) == object:
+          self.default_config[i] = kodrive_config[i]
         else:
-          for j in kdr_config[i]:
-            self.default_config[i][j] = kdr_config[i][j]
+          for j in kodrive_config[i]:
+            self.default_config[i][j] = kodrive_config[i][j]
 
       self.set_config(self.default_config)
     
@@ -409,7 +413,7 @@ class SyncthingLinux64(PlatformBase):
 class SyncthingMac64(PlatformBase): 
 
   rel_st_conf_dir = 'Library/Application Support/Syncthing'
-  rel_app_conf_dir  = '.config/kdr'
+  rel_app_conf_dir  = '.config/kodrive'
 
   def __init__(self, home=None):
     if home:
@@ -453,6 +457,9 @@ class SyncthingMac64(PlatformBase):
     return self.platform_find_folder(self.st_conf_file, path)
 
   def folder_exists(self, path):
+    if path[len(path) - 1] != '/':
+      path += '/'
+
     return self.platform_find_folder(self.st_conf_file, path) != None
 
   def get_api_key(self):
@@ -496,7 +503,7 @@ class SyncthingMac64(PlatformBase):
 
       # mac_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       mac_64_bit_tar = "syncthing-macosx-amd64-v%s.tar.gz" % self.st_version
-      mac_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kdr/"
+      mac_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kodrive/"
       
       if not os.path.exists(os.path.join(dest_tmp, mac_64_bit_tar)):
         link = mac_64_bit_repo + '/' + mac_64_bit_tar
@@ -559,7 +566,7 @@ class SyncthingMac64(PlatformBase):
       os.symlink(os.path.join(folder_path, self.st_binary), bin_binary)
 
     agent_path = os.path.join(HOME, 'Library/LaunchAgents')
-    plist_name = 'com.kodedrive.autostart'
+    plist_name = 'com.kodrive.autostart'
     plist_path = os.path.join(agent_path, plist_name + '.plist')
 
     if not os.path.isfile(plist_path):
@@ -587,7 +594,7 @@ class SyncthingMac64(PlatformBase):
     HOME = os.path.expanduser('~')
     DEVNULL = open(os.devnull, 'w')
     agent_path = os.path.join(HOME, 'Library/LaunchAgents')
-    plist_name = 'com.kodedrive.autostart'
+    plist_name = 'com.kodrive.autostart'
     plist_path = os.path.join(agent_path, plist_name + '.plist')
 
     if os.path.isfile(plist_path):

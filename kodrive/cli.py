@@ -6,7 +6,7 @@ from . import cli_syncthing_adapter
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option()
 @click.group(
-  epilog="Run 'kdr COMMAND --help' for more information on a command.",
+  epilog="Run 'kodrive COMMAND --help' for more information on a command.",
   context_settings=CONTEXT_SETTINGS
 )
 @click.pass_context
@@ -148,7 +148,7 @@ def auth(**kwargs):
   ''' Authorize device synchronization. '''
 
   """
-    kdr auth <path> <device_id (client)>
+    kodrive auth <path> <device_id (client)>
 
     1. make sure path has been added to config.xml, server
     2. make sure path is not shared by someone
@@ -414,7 +414,7 @@ def info(**kwargs):
 @click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
 def start(**kwargs):
   ''' Start KodeDrive daemon. '''
-  print kwargs  
+
   output, err = cli_syncthing_adapter.start(**kwargs)
   click.echo("%s" % output, err=err)
 

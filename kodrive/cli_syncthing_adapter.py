@@ -411,8 +411,8 @@ def info(**kwargs):
 
     # Get system information
     elif 'device' in kwargs:
-      kdr_config = handler.adapter.get_config()
-      is_server = kdr_config['system']['server']
+      kodrive_config = handler.adapter.get_config()
+      is_server = kodrive_config['system']['server']
       
       if handler.ping():
         config_path = handler.adapter.st_conf_file
