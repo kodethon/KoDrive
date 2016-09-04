@@ -59,7 +59,7 @@ def ls():
 @click.option(
   '-i', '--interval', default=5,
   nargs=1, metavar="<INTEGER>",
-  help="Specify sync interval."
+  help="Specify sync interval in seconds."
 )
 @click.option(
   '-t', '--tag', nargs=1, 
@@ -339,18 +339,21 @@ def info(path):
     click.echo("Files needed: %s" % stat['needFiles'])
     click.echo("\nTotal bytes: %s" % stat['localBytes'])
     click.echo("Bytes needed: %s" % stat['needBytes'])
-    click.echo("\nFiles Needed:")
 
-    files_needed = output['files_needed']['progress']
-    for f in files_needed:
+    progress = output['files_needed']['progress']
+    queued = output['files_needed']['queued']
+    rest = output['files_needed']['rest']
+
+    if len(progress) or len(queued) or len(rest):
+      click.echo("\nFiles Needed:")
+
+    for f in progress:
       click.echo("  " + f['name'])
 
-    files_needed = output['files_needed']['queued']
-    for f in files_needed:
+    for f in queued:
       click.echo("  " + f['name'])
 
-    files_needed = output['files_needed']['rest']
-    for f in files_needed:
+    for f in rest:
       click.echo("  " + f['name'])
 
 ### Key
@@ -408,12 +411,11 @@ def info(**kwargs):
 @sys.command()
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
-@click.option('-d', '--delay', type=int, help="Set remote device detection speed.", metavar="  <INTEGER>")
+@click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
 def start(**kwargs):
   ''' Start KodeDrive daemon. '''
-    
-  kwargs['init']  = True
-  output, err = cli_syncthing_adapter.sys(**kwargs)
+  print kwargs  
+  output, err = cli_syncthing_adapter.start(**kwargs)
   click.echo("%s" % output, err=err)
 
 ### Start

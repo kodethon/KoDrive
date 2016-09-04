@@ -6,6 +6,8 @@ from . import syncthing_factory as factory
 import click, time
 import json, os, traceback
 
+# This class is no longer used as a 
+# result of the new subcommand system
 class SystemFactory:
   
   def __init__(self):
@@ -32,35 +34,7 @@ class SystemFactory:
       return "Could not restart KodeDrive :("
     else:
       return "KodeDrive has successfully restarted!"
-
-  def delay(self, speed):
-    if not self.handler.wait_start(0.5, 10, verbose=True):
-      raise custom_errors.CannotConnect()
-
-    if speed < 0:
-      speed = 0
-    elif speed > 3:
-      speed = 3
-
-    st_conf = self.handler.adapter.st_conf_file
-    app_conf = self.handler.adapter.app_conf_file
-    self.handler.adapter.init_configs(st_conf, app_conf, speed=speed)
-
-    if success:
-      return 'KodeDrive will now sync every %s seconds.' % secs
-    else:
-      return 'Seconds cannot be negative.'
-
-  def init(self):
-    if not self.handler.ping():
-      if not self.handler.start():
-        return 'KodeDrive could not be started.'
-      else:
-        self.handler.autostart()
-        return 'KodeDrive has successfully started.'
-    else:
-      return 'KodeDrive has already been started.' 
-
+  
   def test(self, arg):
     return self.handler.test(arg)
 
@@ -179,11 +153,9 @@ def sys(**kwargs):
   sub_handlers = {
     'client' : SystemSingleton.client,
     'exit' : SystemSingleton.exit,
-    'init' : SystemSingleton.init,
     'restart' : SystemSingleton.restart,
     'server' : SystemSingleton.server,
     'test' : SystemSingleton.test,
-    'delay' : SystemSingleton.delay
   }
     
   try:
@@ -328,11 +300,11 @@ def key(**kwargs):
 
   try:
     # Return device key
-    if kwargs['device']:
+    if 'device' in kwargs:
       return handler.encode_device_key(), False
 
     # Return folder key
-    elif kwargs['folder']:
+    elif 'folder' in kwargs:
       path = handler.to_st_path(kwargs['folder'])
       
       if not handler.adapter.folder_exists(path):
@@ -358,7 +330,7 @@ def add(**kwargs):
     if not handler.wait_start(0.5, 10, verbose=True):
       raise custom_errors.CannotConnect()
     
-    kwargs['wait'] = true
+    kwargs['wait'] = True
     handler.add(**kwargs)
     return ("You can now share %s" % kwargs['path']), False
   except Exception as e:
@@ -388,6 +360,7 @@ def mv(source, target):
 
     return e.message, True
 
+# This should be placed here
 def mv_edge_case(source, target):
   handler = factory.get_handler()
 
@@ -429,16 +402,15 @@ def info(**kwargs):
   handler = factory.get_handler()
 
   try:
-    
     # Get folder infomation
-    if kwargs['folder']:
+    if 'folder' in kwargs:
       if not handler.wait_start(0.5, 10, verbose=True):
         raise custom_errors.CannotConnect()
 
       return handler.stat(kwargs['folder']), False
 
     # Get system information
-    elif kwargs['device']:
+    elif 'device' in kwargs:
       kdr_config = handler.adapter.get_config()
       is_server = kdr_config['system']['server']
       
@@ -452,47 +424,19 @@ def info(**kwargs):
       return None, False
 
   except Exception as e:
-
     if not config.Flags['production']:
       traceback.print_exc()
 
     return e.message, True
 
-"""
-
-def start():
-
-  try:
-    handler = factory.get_handler()
-    alive = handler.ping()
-  except Exception as e:
-    alive = False
-  
-  if not alive:
-    success = handler.start()   
-
-    if not success:
-      return e if e else 'KodeDrive could not be started.'
-
-    else:
-      return 'KodeDrive has successfully started.'
-
-  else:
-    return 'KodeDrive has already been started.' 
-
-def stop():
-        
+def start(**kwargs):
   handler = factory.get_handler()
 
-  try:
-    alive = handler.ping()
-
-  except:
-    alive = False
-
-  if not alive:
-    return 'KodeDrive has already exited.'
-
-  return handler.shutdown()
-
-"""
+  if not handler.ping():
+    if not handler.start(**kwargs):
+      return 'KodeDrive could not be started.', True
+    else:
+      handler.autostart()
+      return 'KodeDrive has successfully started.', False
+  else:
+    return 'KodeDrive has already been started.', False

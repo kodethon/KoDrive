@@ -138,21 +138,52 @@ class SyncthingFacade():
   # @@port => having syncthing listen to this port
   # @@speed => reconnection speed, 1 = fastest, 2 = medium, 3 = slow
   #
-  def start(self, port=None):    
+  def start(self, **kwargs):    
     path = self.adapter.get_syncthing_path()
     is_new = self.adapter.start_syncthing(path)
-    
+    init_client = None
+
+    if kwargs['delay']:
+      self.set_delay(kwargs['delay'])
+
     # If is new, initialize config file
     if is_new:
       self.wait_start(0.25, 20)
+
+      # Update internal st reference
       self.sync = self.adapter.get_gui_hook()
+      
+      # Initialize st config and kodedrive config
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
       self.adapter.init_configs(st_conf, app_conf, is_new=True)
       self.adapter.delete_default_folder()
-      self.make_client(port)
+      
+      init_client = self.make_client
 
-    return True if self.wait_start(0.25, 20) else False
+    # Initialize kodedrive in one of two modes
+    if kwargs['server']:
+      init_client = self.make_server
+    elif kwargs['client']:
+      init_client = self.make_client
+
+    if init_client != None:
+      if 'port' in kwargs:
+        init_client(kwargs['port'])
+      else:
+        init_client()
+
+    return True if self.wait_start(0.5, 20, verbose=True) else False
+  
+  def set_delay(self, speed):
+    if speed < 0:
+      speed = 0
+    elif speed > 3:
+      speed = 3
+
+    st_conf = self.adapter.st_conf_file
+    app_conf = self.adapter.app_conf_file
+    self.adapter.init_configs(st_conf, app_conf, speed=speed)
 
   def shutdown(self):
     try:
@@ -235,7 +266,7 @@ class SyncthingFacade():
     except Exception:
       return False
 
-# UTILS
+# UTILS (Should be moved to its own class)
   
   def wait_sync(self, t, intervals, callback=None):
     count = 0 
@@ -284,7 +315,7 @@ class SyncthingFacade():
 
       if verbose:
         if count == 1:
-          click.echo("Attempting to reconnect ", err=True, nl=False)
+          click.echo("Attempting to connect ", err=True, nl=False)
         else:
           click.echo("~", err=True, nl=False)
             
@@ -1062,12 +1093,14 @@ class SyncthingClient(SyncthingFacade):
 
     # self.restart()
     return
-
+  
+  # Should not be its own method
   def mv_edge_case(self, source, target):
     os.remove(target)
     os.rename(''.join(source), target)
     return
-
+  
+  # Should be part of util class
   def valid_device_id(self, device_id):
     if len(device_id) != 63:
       return False
@@ -1290,7 +1323,9 @@ class SyncthingClient(SyncthingFacade):
       body = body[:-2]
 
     return body
-
+  
+  # What does this method do?
+  # Sets autostart?
   def autostart(self):
     self.adapter.autostart()
 

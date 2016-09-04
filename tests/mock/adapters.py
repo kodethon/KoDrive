@@ -32,7 +32,7 @@ client = factory.get_handler(client_conf['sync_home'])
 server = factory.get_handler(server_conf['sync_home'])
 
 if not server.ping():
-  server.start(server_conf['port'])
+  server.start(port=server_conf['port'])
 
 if not client.ping():
-  client.start(client_conf['port'])
+  client.start(port=client_conf['port'])

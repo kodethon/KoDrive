@@ -15,7 +15,7 @@ def runner():
 def test_system_init(runner):
   ''' Ensure that syncthing is up '''
   
-  result = runner.invoke(cli.sys, ['-i'])
+  result = runner.invoke(cli.sys, ['start'])
   mock.client.wait_start(0.5, 10)
 
   if result.exception:
@@ -27,7 +27,7 @@ def test_system_init(runner):
 def test_system_exit(runner):
   ''' Ensure that syncthing is down '''
 
-  result = runner.invoke(cli.sys, ['-e'])
+  result = runner.invoke(cli.sys, ['stop'])
 
   if result.exception:
     print result.exception
@@ -54,7 +54,7 @@ def test_mv_rename(runner):
       print "Failed to create %s" % source_dir
       assert False
 
-  result = runner.invoke(cli.add, [source_dir])
+  result = runner.invoke(cli.dir, ['add', source_dir])
 
   if result.exception:
     print result.exception
@@ -62,7 +62,7 @@ def test_mv_rename(runner):
 
   # mock.client.wait_start(0.5, 10)
 
-  result = runner.invoke(cli.mv, [source_dir, target_dir])
+  result = runner.invoke(cli.dir, ['mv', source_dir, target_dir])
 
   if result.exception:
     print result.exception
@@ -103,7 +103,7 @@ def test_mv_rename(runner):
     print 'Modifying kdr_config has failed'
     assert False
 
-  result = runner.invoke(cli.free, [target_dir])
+  result = runner.invoke(cli.dir, ['free', target_dir])
 
   if result.exception:
     print result.exception
@@ -145,14 +145,14 @@ def test_mv_move(runner):
       print "Failed to create %s" % target_dir
       assert False
 
-  result = runner.invoke(cli.add, [source_dir])
+  result = runner.invoke(cli.dir, ['add', source_dir])
 
   if result.exception:
     print result.exception
     assert False
 
   # mock.client.wait_start(0.5, 10)
-  result = runner.invoke(cli.mv, [source_dir, target_dir])
+  result = runner.invoke(cli.dir, ['mv', source_dir, target_dir])
 
   if result.exception:
     print result.exception
@@ -198,7 +198,7 @@ def test_mv_move(runner):
     print 'Modifying kdr_config has failed'
     assert False
 
-  result = runner.invoke(cli.free, [final_dir])
+  result = runner.invoke(cli.dir, ['free', final_dir])
 
   if result.exception:
     print result.exception
