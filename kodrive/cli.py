@@ -110,39 +110,24 @@ def link(**kwargs):
         click.echo("%s" % output)
 '''
 
-###
-#
-# *** Dir commands
-#
-
-@click.group()
-@click.pass_context
-def dir(ctx):
-  ''' Manage synchronized directory settings. '''
-  pass
-
 ### Auth
-@dir.command()
+@main.command()
+@click.argument('key', nargs=1)
 @click.option(
-  '-a', '--add', 
-  type=(str, (click.Path(exists=True, writable=True, resolve_path=True))), 
-  default=(None, None), nargs=2, metavar="   <KEY> <PATH>",
-  help="Authorize a directory."
-)
-@click.option(
-  '-r', '--remove', 
-  type=(str, (click.Path(exists=True, writable=True, resolve_path=True))), 
-  default=(None, None), nargs=2, metavar="<KEY> <PATH>",
+  '-R', '--remove', 
+  is_flag=True,
   help="Deauthorize a directory."
 )
-@click.option(
-  '-l', '--list', 
-  is_flag=True, 
-  help="List all devices authorized")
 @click.option(
   '-y', '--yes', nargs=1, is_flag=True,
   default=False,
   help="Bypass confirmation step."
+)
+@click.option(
+  '-p', '--path', 
+  type=click.Path(exists=True, writable=True, resolve_path=True), 
+  default=".", nargs=1, metavar="  <PATH>",
+  help="Specify which folder to link."
 )
 def auth(**kwargs):
   ''' Authorize device synchronization. '''
@@ -156,49 +141,35 @@ def auth(**kwargs):
     4. add device to devices in config.xml, server
 
   """
-  output = None
-  option = None
-  path = None
-  key = None
 
-  if all(kwargs['add']): # if tuple doesn't contain all Nones
-    (key, path) = kwargs['add']
-    option = 'add'
+  option = 'add'
+  path = kwargs['path'] 
+  key = kwargs['key']
 
-  elif all(kwargs['remove']):
-    (key, path) = kwargs['remove']
+  if kwargs['remove']:
     option = 'remove'
-
-  elif kwargs['list']:
-    option = 'list'
-    output, err = cli_syncthing_adapter.auth(option, key, path)
-
-    if output:
-      click.echo("%s" % output, err=err)
-
-    return
 
   if kwargs['yes']:
     output, err = cli_syncthing_adapter.auth(option, key, path)
     click.echo("%s" % output, err=err)
-
   else:
-    if all(kwargs['add']): 
-      if click.confirm("Are you sure you want to authorize this device to access %s?" % path):
-        output, err = cli_syncthing_adapter.auth(option, key, path)
-
-      else:
-        return
-
-    else:
+    verb = 'authorize' if not kwargs['remove'] else 'de-authorize'
+    if click.confirm("Are you sure you want to %s this device to access %s?" % (verb, path)):
       output, err = cli_syncthing_adapter.auth(option, key, path)
 
-  if output:
-    click.echo("%s" % output, err=err)
-  
-  if not output or not option:
-    click.echo(click.get_current_context().get_help())
+      if output:
+        click.echo("%s" % output, err=err)
+      
+###
+#
+# *** Dir commands
+#
 
+@click.group()
+@click.pass_context
+def dir(ctx):
+  ''' Manage synchronized directory settings. '''
+  pass
 
 ### Mv
 @dir.command()

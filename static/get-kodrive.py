@@ -96,7 +96,7 @@ def main():
                         'kodrive')
     install_files(venv, bin_dir, 'kodrive')
     # Start kodrive 
-    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', '-i'])
+    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
 
     # Set PATH variable
     if  'SHELL' in os.environ:
@@ -116,7 +116,7 @@ def main():
         echo('WARNING:')
         echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
         echo('  not work out of the box. To fix this problem make sure to run')
-        echo('  one of the following depending on which shell your are using.')
+        echo('  one of the following depending on which shell you are using.')
         echo()
         echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
         echo("  tcsh: set path=(%s $path)" % bin_dir)
