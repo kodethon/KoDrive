@@ -142,9 +142,10 @@ class SyncthingFacade():
     path = self.adapter.get_syncthing_path()
     is_new = self.adapter.start_syncthing(path)
     init_client = None
-
-    if kwargs['delay']:
-      self.set_delay(kwargs['delay'])
+    
+    # Note: modifying config file shoult not be done here;
+    # cannot gaurantee that config file has been created
+    # until syncthing has started
 
     # If is new, initialize config file
     if is_new:
@@ -152,7 +153,10 @@ class SyncthingFacade():
 
       # Update internal st reference
       self.sync = self.adapter.get_gui_hook()
-      
+
+      if kwargs['delay']:
+        self.set_delay(kwargs['delay'])     
+
       # Initialize st config and kodrive config
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
@@ -160,6 +164,9 @@ class SyncthingFacade():
       self.adapter.delete_default_folder()
       
       init_client = self.make_client
+    else:
+      if kwargs['delay']:
+        self.set_delay(kwargs['delay'])
 
     # Initialize kodrive in one of two modes
     if kwargs['server']:
