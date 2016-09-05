@@ -16,7 +16,7 @@ class AppRollbacker(RollbackerBase):
     if self.app_handler.ping():
       self.app_handler.restart()
 
-    self.app_handler.wait_start(0.5, 10)
+    self.app_handler.wait_start(0.5, 15)
 
 class SyncthingRollbacker(RollbackerBase):
   
@@ -31,5 +31,5 @@ class SyncthingRollbacker(RollbackerBase):
     if self.app_handler.ping():
       self.app_handler.restart()
 
-    self.app_handler.wait_start(0.5, 10)
+    self.app_handler.wait_start(0.5, 15)
     

@@ -6,6 +6,7 @@ from .py_syncthing_adapter import Syncthing
 from . import platform_adapter
 from .data import custom_errors
 from .data import syncthing_adt
+from utils import st_facade_util as st_util
 
 # Standard library
 import os, sys, platform
@@ -20,7 +21,7 @@ class SyncthingFacade():
 
     if 'adapter' in kwargs:
       self.adapter = kwargs['adapter']
-        
+
   def get_config(self):
     return self.sync.sys.config()
 
@@ -847,41 +848,34 @@ class SyncthingClient(SyncthingFacade):
 
   def hostname(self):
     return socket.gethostname()
-
+  
   def free(self, local_path):
     '''
       Stop synchronization of local_path
     '''
-
-    dir_config = self.adapter.get_dir_config(local_path)
-    r_device_id = None
-
-    if not dir_config:
-      raise custom_errors.FileNotInConfig(local_path)
-    
-    r_device_id = dir_config['device_id']
-         
+        
     # Process local ~~~
 
     # 1. Syncthing config
     config = self.get_config()
-    del_folder = self.delete_folder(local_path, config)
 
     # Check whether folders are still connected to this device 
-    device_exists = False
-    
-    for f in config['folders']:
-      if self.device_exists(r_device_id, f):
-        device_exists = True
-    
-    if not device_exists:
-      del_device = self.delete_device(r_device_id, config)
+    folder = st_util.find_folder_with_path(local_path, config)
+    self.delete_folder(local_path, config)
+    pruned = st_util.prune_devices(folder, config)
         
     # Done processing st config, commit :)
     self.set_config(config)
-    # self.restart()
+    
+    if pruned:
+      self.restart()
 
     # 2. App config
+    dir_config = self.adapter.get_dir_config(local_path)
+
+    if not dir_config:
+      raise custom_errors.FileNotInConfig(local_path)
+
     kodrive_config = self.adapter.get_config()
 
     for key in kodrive_config['directories']: 
@@ -898,37 +892,37 @@ class SyncthingClient(SyncthingFacade):
       
       # Process remote ~~~
       r_api_key = dir_config['api_key']
-      
+      r_device_id = dir_config['device_id']
+
       if dir_config['host']:
         host = dir_config['host']
       else:
         host = self.devid_to_ip(r_device_id, False)
-
+    
+      # Create remote proxy to interact with remote
       remote = SyncthingProxy(
         r_device_id, host, r_api_key,
         port=dir_config['port'] if 'port' in dir_config else None
       )
       r_config = remote.get_config()
-      self_devid = self.get_device_id()
-
-      del_device = remote.delete_device_from_folder(
-        dir_config['remote_path'],
-        self_devid, 
-        r_config
+      r_folder = st_util.find_folder_with_path(
+        dir_config['remote_path'], r_config
       )
       
+      # Delete device id from folder
+      r_config = remote.get_config()
+      self_devid = self.get_device_id()
+      del_device = remote.delete_device_from_folder(
+        dir_config['remote_path'], self_devid, r_config
+      )
+
       # Check to see if no other folder depends has this device
-      device_exists = False
-
-      for f in r_config['folders']:
-        if self.device_exists(self_devid, f):
-          device_exists = True
-
-      if not device_exists:
-        remote.delete_device(self_devid, r_config)
-
+      pruned = st_util.prune_devices(r_folder, r_config)
+            
       remote.set_config(r_config)
-      # remote.restart()
+
+      if pruned:
+        remote.restart()
 
     return True
 
@@ -1125,6 +1119,9 @@ class SyncthingClient(SyncthingFacade):
 
   def auth(self, key, path):
     
+    # This logic doesn't really make sense,
+    # Why is the checking of st status only
+    # done if the key is invalid?
     try:
       if key == self.encode_device_key():
         raise custom_errors.AuthYourself()
@@ -1180,10 +1177,9 @@ class SyncthingClient(SyncthingFacade):
     }
 
     for f in folders:
-      if f['path'] == path:
+      if f['path'].rstrip('/') == path.rstrip('/'):
         if client_devid not in f['devices']:
           f['devices'].append(client_devid)
-
         else:
           raise custom_errors.AuthAlready(name)
         break
@@ -1408,7 +1404,6 @@ class SyncthingProxy(SyncthingFacade):
 
   def disconnect(self):
     return
-
 
 def get_handler(home=None):
   

@@ -35,7 +35,7 @@ dependencies = ['click', 'requests']
 
 setup(
     name='kodrive',
-    version='0.9.94',
+    version='0.9.95',
     url='https://github.com/Jvlythical/KodeDrive',
     license='LICENSE',
     author='Michael Yen',
