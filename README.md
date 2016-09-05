@@ -46,7 +46,7 @@ $ kodrive sys start
 1. A folder needs to be **authorized** with another user's system key:   
 
   ```sh
-  $ kodrive dir auth -a <SYSTEM-KEY> <PATH>
+  $ kodrive dir auth <SYSTEM-KEY> 
   ```
 2. Then obtain and provide the below **directory key** back to the other user:
  
