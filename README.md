@@ -8,19 +8,12 @@ Synchronize remote files and directories across different devices with an easy-t
 
 ## Getting Started
 
-### Install Dependencies
-To use KoDrive, the following must be installed:
-
-- Python 2.7
-- pip
-- virtualenv
-
-Refer to the [Dependencies](#dependencies) section.
-
 ### Install KoDrive
 To set ```kodrive``` (the KoDrive CLI) as a local command:
 
     $ curl https://raw.githubusercontent.com/Jvlythical/KoDrive/master/static/get-kodrive.py | python
+
+If a dependency is missing, please refer [below] (#dependencies) for installation guidance.  
 
 ### Initialize the KoDrive Daemon
 
@@ -75,7 +68,7 @@ The sharer then:
 
 1. Adds the directory to be shared with ```kodrive add <PATH>```
   ```sh
-  $ kodrive add <PATH>
+  $ kodrive dir add <PATH>
   $ kodrive ls
   ```
 
