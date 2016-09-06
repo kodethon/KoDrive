@@ -6,6 +6,7 @@ services:
   - docker
 
 before_install:
+<<<<<<< HEAD
   - docker pull jvlythical/kodrive-test:master
 
 script:
