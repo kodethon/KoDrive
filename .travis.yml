@@ -6,10 +6,10 @@ services:
   - docker
 
 before_install:
-  - docker pull jvlythical/kdr-test:master
+  - docker pull jvlythical/kodrive-test:dev
 
 script:
-  - docker run -it --rm jvlythical/kdr-test:master 
+  - docker run jvlythical/kodrive-test:dev 
 
 
 ############################################
