@@ -1,7 +1,7 @@
 # KoDrive
 
-[![PyPI](https://img.shields.io/pypi/status/Django.svg?maxAge=2592000)](https://pypi.python.org/pypi/kodrive/0.9.92)
-[![PyPI](https://img.shields.io/badge/pypi-v0.9.92-blue.svg)](https://pypi.python.org/pypi/kodrive/0.9.92)
+[![Build](https://img.shields.io/travis/Jvlythical/KoDrive/master.svg)](https://travis-ci.org/Jvlythical/KoDrive)
+[![PyPI](https://img.shields.io/pypi/v/kodrive.svg)](https://pypi.python.org/pypi/kodrive)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
