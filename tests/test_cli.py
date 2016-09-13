@@ -45,7 +45,7 @@ def test_mv_rename(runner):
   target_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'NOT_THE_CHOSEN_ONE')
 
   test_system_init(runner)
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(source_dir):
     os.makedirs(source_dir)
@@ -129,7 +129,7 @@ def test_mv_move(runner):
   final_dir = os.path.join(mock.client.adapter.home_dir, 'Downloads', 'parent123123', 'child123123')
 
   test_system_init(runner)
-  mock.client.wait_start(0.5, 10)
+  # mock.client.wait_start(0.5, 10)
 
   if not os.path.exists(source_dir):
     os.makedirs(source_dir)

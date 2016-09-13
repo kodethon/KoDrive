@@ -404,9 +404,10 @@ class SyncthingLinux64(PlatformBase):
       force_config=True
     )
 
-  def autostart(self):
+  def autostart(self, folder_path):
     return
 
+  # Not used, kept for reference
   def disable_autostart(self):
     return
 
@@ -555,9 +556,9 @@ class SyncthingMac64(PlatformBase):
       force_config=True
     )
 
-  def autostart(self):
+  def autostart(self, folder_path):
 
-    HOME = os.path.expanduser('~')
+    HOME = self.home_dir
     DEVNULL = open(os.devnull, 'w')
     bin_binary = os.path.join(HOME, 'bin', self.st_binary)
 
@@ -565,10 +566,12 @@ class SyncthingMac64(PlatformBase):
     if not os.path.exists(bin_binary):
       os.symlink(os.path.join(folder_path, self.st_binary), bin_binary)
 
+    # == ~/Library/LaunchAgents/com.kodrive.autostart.plist
     agent_path = os.path.join(HOME, 'Library/LaunchAgents')
     plist_name = 'com.kodrive.autostart'
     plist_path = os.path.join(agent_path, plist_name + '.plist')
 
+    # if no plist, create it
     if not os.path.isfile(plist_path):
       plist = mac_plist_adt.PList(plist_name, HOME, bin_binary)
       plistlib.writePlist(plist.file, plist_path)
@@ -606,7 +609,7 @@ class SyncthingMac64(PlatformBase):
 
     daemon_list = subprocess.check_output([
       'launchctl', 'list'
-    ])
+    ], stderr=subprocess.STDOUT)
 
     if plist_name in daemon_list:
       raise custom_errors.StartOnLoginFailure()

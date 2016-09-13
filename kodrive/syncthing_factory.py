@@ -1328,11 +1328,11 @@ class SyncthingClient(SyncthingFacade):
       body = body[:-2]
 
     return body
-  
-  # What does this method do?
-  # Sets autostart?
+
+  # Sets autostart depending on platform
   def autostart(self):
-    self.adapter.autostart()
+    path = self.adapter.get_syncthing_path()
+    self.adapter.autostart(path)
 
 class SyncthingProxy(SyncthingFacade):
 

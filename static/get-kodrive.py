@@ -3,6 +3,7 @@ import os
 import sys
 from subprocess import call
 import shutil
+import platform
 
 try:
     WindowsError
@@ -86,10 +87,26 @@ def main():
         echo('Installing kodrive')
 
     global virtualenv_bin
-    if not command_exists(virtualenv_bin):
-        virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
+    system = platform.system()
+
+    if system == "Linux":
         if not command_exists(virtualenv_bin):
-            fail('You need to have virtualenv installed to bootstrap kodrive.')
+            virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
+            if not command_exists(virtualenv_bin):
+                fail('You need to have virtualenv installed to bootstrap kodrive.')
+
+    elif system == "Darwin":
+        if not command_exists(virtualenv_bin):
+            virtualenv_bin = "%s/Library/Python/2.7/bin/virtualenv" % os.path.expanduser("~")
+            if not command_exists(virtualenv_bin):
+                fail('You need to have virtualenv installed to bootstrap kodrive.')
+
+    elif system == "Windows":
+        fail('kodrive is not supported on Windows.')
+
+    else:
+        fail("kodrive is not supported on %s." % system)
+
 
     bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
     venv = os.path.join(os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
