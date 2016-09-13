@@ -1354,7 +1354,7 @@ class SyncthingProxy(SyncthingFacade):
     self.sync = Syncthing(
       api_key=api_key, 
       host=host,
-      port=self.port
+      port=int(self.port)
     )
 
     # If remote host can't be detected, throw a tantrum >:/
