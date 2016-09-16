@@ -7,7 +7,7 @@ from .data import mac_plist_adt
 import xml.etree.ElementTree as ET
 import os, subprocess, socket
 import json, hashlib, plistlib
-import urllib, copy
+import urllib, copy, errno
 
 class PlatformBase(object):
 
@@ -564,10 +564,29 @@ class SyncthingMac64(PlatformBase):
 
     # == ln -s ~/.st/.../syncthing ~/bin/syncthing
     if not os.path.exists(bin_binary):
+
+      # NOTE: this avoids a race condition if directory is created
+      # before attempting to create it here. That will raise an OSError.
+      # If directory already exists, pass
+      try:
+        os.makedirs(os.path.join(HOME, 'bin'))
+
+      except OSError as exception:
+        if exception.errno != errno.EEXIST:
+          raise
+
       os.symlink(os.path.join(folder_path, self.st_binary), bin_binary)
 
     # == ~/Library/LaunchAgents/com.kodrive.autostart.plist
     agent_path = os.path.join(HOME, 'Library/LaunchAgents')
+
+    try:
+      os.makedirs(agent_path)
+
+    except OSError as exception:
+      if exception.errno != errno.EEXIST:
+        raise
+
     plist_name = 'com.kodrive.autostart'
     plist_path = os.path.join(agent_path, plist_name + '.plist')
 
@@ -576,6 +595,8 @@ class SyncthingMac64(PlatformBase):
       plist = mac_plist_adt.PList(plist_name, HOME, bin_binary)
       plistlib.writePlist(plist.file, plist_path)
 
+    # NOTE: fails if running on a headless VM, for most
+    # practical purposes, will not occur
     p = subprocess.Popen([
       'launchctl', 'load', plist_path
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
