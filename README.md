@@ -6,6 +6,8 @@
 
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
+![](static/videos/demo.gif)
+
 ## Getting Started
 
 ### Install KoDrive
