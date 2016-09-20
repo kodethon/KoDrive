@@ -69,8 +69,18 @@ $ kodrive sys start
 </p>
 
 
-## Stopping Synchronization
-The sharer can deauthorize access to certain users:
+## Stop Synchronization
+
+# Receive Directories
+
+The receiver(s) can only ```kodrive dir free <PATH>``` since it is not their directory:
+```sh
+$ kodrive dir free <PATH>
+```
+
+# Share Directories
+
+The sharer can deauthorize access to certain users since they own the directory:
 
 <!-- 1. ```kodrive auth -l``` lists all directories authorized to others and the devices which are authorized. This can be useful for ```kodrive dir auth -a/-r``` to obtain system keys and verify whether a device has been deauthorized. -->
 
@@ -84,11 +94,6 @@ The sharer can deauthorize access to certain users:
 <!-- ``` -->
 
 Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices from that directory:
-```sh
-$ kodrive dir free <PATH>
-```
-
-The receiver(s) can only ```kodrive dir free <PATH>``` since it is not their directory. They are not allowed to ```kodrive dir auth -a/-R``` since they are not the sharer:
 ```sh
 $ kodrive dir free <PATH>
 ```
