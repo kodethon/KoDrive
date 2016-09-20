@@ -6,8 +6,6 @@
 
 Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
-![](static/videos/demo.gif)
-
 ## Getting Started
 
 ### Install Dependencies
@@ -42,11 +40,11 @@ $ kodrive sys start
   ```
 2. The person sharing their directory will then provide a **directory key** to link with:
 
-  _**CAUTION**: linking will merge the 2 directories and grant access to **everything in BOTH** directories. This can lead to the sharing of sensitive data as well as conflicts. It is recommended for a receiver to link while in an empty directory. See [conflicts](https://github.com/Jvlythical/KoDrive#conflicts) for more information._
-
   ```sh
   $ kodrive link <DIRECTORY-KEY>
   ```
+  
+  **Note**: linking will synchronize both directories; it is recommended for a receiver to link an empty directory.
 
 ## Share Directories
 
@@ -68,17 +66,21 @@ $ kodrive sys start
     <b>Figure 1.</b> An illustration of the above process.
 </p>
 
+![](static/videos/demo.gif)
+<p align="center">
+    <b>Figure 2.</b> A video of the above process.
+</p>
 
 ## Stop Synchronization
 
-# Receive Directories
+### Receive Directories
 
 The receiver(s) can only ```kodrive dir free <PATH>``` since it is not their directory:
 ```sh
 $ kodrive dir free <PATH>
 ```
 
-# Share Directories
+### Share Directories
 
 The sharer can deauthorize access to certain users since they own the directory:
 
