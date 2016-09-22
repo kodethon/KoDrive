@@ -50,13 +50,12 @@ class SyncthingFacade():
     folder = self.find_folder({
       'path' : path
     }) 
-
-    files_needed = self.sync.db.need(folder=folder['id'])
-    status = self.sync.db.status(folder=folder['id'])
-
+    
     if not folder:
       raise IOError(path + ' is not being synchronized.')
     else:
+      files_needed = self.sync.db.need(folder=folder['id'])
+      status = self.sync.db.status(folder=folder['id'])
       return {
         'status' : status, 
         'files_needed' : files_needed
@@ -211,6 +210,7 @@ class SyncthingFacade():
     return t == dict
   
   def encode_device_key(self):
+
     devid = self.get_device_id()
     hostname = self.hostname()
     key = "%s#%s" % (hostname, devid)
@@ -887,7 +887,7 @@ class SyncthingClient(SyncthingFacade):
     # Done process app config, commit :)
     self.adapter.set_config(kodrive_config)
 
-    # If the folder was shared, remove data from remote 
+    # If the folder was shared, try remove data from remote 
     if dir_config['is_shared'] and dir_config['server']:
       
       # Process remote ~~~
@@ -898,12 +898,16 @@ class SyncthingClient(SyncthingFacade):
         host = dir_config['host']
       else:
         host = self.devid_to_ip(r_device_id, False)
-    
-      # Create remote proxy to interact with remote
-      remote = SyncthingProxy(
-        r_device_id, host, r_api_key,
-        port=dir_config['port'] if 'port' in dir_config else None
-      )
+      
+      try:
+        # Create remote proxy to interact with remote
+        remote = SyncthingProxy(
+          r_device_id, host, r_api_key,
+          port=dir_config['port'] if 'port' in dir_config else None
+        )
+      except Exception as e:
+        return True
+
       r_config = remote.get_config()
       r_folder = st_util.find_folder_with_path(
         dir_config['remote_path'], r_config
