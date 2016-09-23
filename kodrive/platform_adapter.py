@@ -3,6 +3,7 @@ import click
 from .py_syncthing_adapter import Syncthing
 from .data import custom_errors
 from .data import mac_plist_adt
+from .data import autostart as aust
 
 import xml.etree.ElementTree as ET
 import os, subprocess, socket
@@ -405,7 +406,34 @@ class SyncthingLinux64(PlatformBase):
     )
 
   def autostart(self, folder_path):
-    return
+    home = os.path.expanduser('~')
+    dirpath = os.path.join(home, '.config', 'systemd', 'user')
+    
+    # Creates folder if it doesn't exist
+    if not os.path.exists(dirpath):
+      os.makedirs(dirpath)
+    
+    service_name = 'syncthing.service'
+    st_service_path = os.path.join(dirpath, service_name)
+    
+    if not os.path.exists(st_service_path):
+      with open(st_service_path, "w") as f:
+        f.write(aust.getSyncthingService())
+
+    # Enable autostart (some platforms may not support systemd)
+    try:
+      opts = [
+        'systemctl', '--user', 'enable', st_service_path
+      ]
+      DEVNULL = open(os.devnull, 'w') 
+      process = subprocess.Popen(opts, stdout=DEVNULL)
+
+      opts = [
+        'systemctl', '--user', 'start', st_service_path 
+      ]
+      process = subprocess.Popen(opts, stdout=DEVNULL)
+    except Exception as e:
+      pass 
 
   # Not used, kept for reference
   def disable_autostart(self):

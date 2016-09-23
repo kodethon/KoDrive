@@ -383,6 +383,11 @@ def info(**kwargs):
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
+@click.option(
+    '-H', '--home', nargs=1, metavar="  <PATH>",
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
+    help="Set where config files are stored."
+)
 def start(**kwargs):
   ''' Start KodeDrive daemon. '''
 
