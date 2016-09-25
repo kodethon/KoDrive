@@ -37,7 +37,7 @@ def test_autostart(runner):
     
     # Ensure that data was correctly written
     fp = open(st_service_path)
-    data = fp.read
+    data = fp.read()
     fp.close
 
     assert data == aust.getSyncthingService()
