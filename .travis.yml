@@ -9,7 +9,7 @@ before_install:
   - docker pull jvlythical/kodrive-test:dev
 
 script:
-  - docker run jvlythical/kodrive-test:dev 
+  - docker run jvlythical/kodrive-test:dev
 
 
 ############################################

@@ -306,10 +306,10 @@ def info(path):
   else:
     stat = output['status']
     click.echo("State: %s" % stat['state'])
-    click.echo("\nTotal files: %s" % stat['localFiles'])
-    click.echo("Files needed: %s" % stat['needFiles'])
-    click.echo("\nTotal bytes: %s" % stat['localBytes'])
-    click.echo("Bytes needed: %s" % stat['needBytes'])
+    click.echo("\nTotal Files: %s" % stat['localFiles'])
+    click.echo("Files Needed: %s" % stat['needFiles'])
+    click.echo("\nTotal Bytes: %s" % stat['localBytes'])
+    click.echo("Bytes Needed: %s" % stat['needBytes'])
 
     progress = output['files_needed']['progress']
     queued = output['files_needed']['queued']
@@ -326,6 +326,8 @@ def info(path):
 
     for f in rest:
       click.echo("  " + f['name'])
+
+    click.echo("\nDevices Authorized:\n%s" % output['auth_ls'])
 
 ### Key
 @dir.command()

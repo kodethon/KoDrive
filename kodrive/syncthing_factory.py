@@ -50,16 +50,16 @@ class SyncthingFacade():
     folder = self.find_folder({
       'path' : path
     }) 
-
-    files_needed = self.sync.db.need(folder=folder['id'])
-    status = self.sync.db.status(folder=folder['id'])
-
+    
     if not folder:
       raise IOError(path + ' is not being synchronized.')
     else:
+      files_needed = self.sync.db.need(folder=folder['id'])
+      status = self.sync.db.status(folder=folder['id'])
       return {
         'status' : status, 
-        'files_needed' : files_needed
+        'files_needed' : files_needed,
+        'auth_ls' : self.auth_ls()
       }
 
   def set_rescan_interval(self, path, secs, restart=False):
@@ -211,6 +211,7 @@ class SyncthingFacade():
     return t == dict
   
   def encode_device_key(self):
+
     devid = self.get_device_id()
     hostname = self.hostname()
     key = "%s#%s" % (hostname, devid)
@@ -887,7 +888,7 @@ class SyncthingClient(SyncthingFacade):
     # Done process app config, commit :)
     self.adapter.set_config(kodrive_config)
 
-    # If the folder was shared, remove data from remote 
+    # If the folder was shared, try remove data from remote 
     if dir_config['is_shared'] and dir_config['server']:
       
       # Process remote ~~~
@@ -898,12 +899,16 @@ class SyncthingClient(SyncthingFacade):
         host = dir_config['host']
       else:
         host = self.devid_to_ip(r_device_id, False)
-    
-      # Create remote proxy to interact with remote
-      remote = SyncthingProxy(
-        r_device_id, host, r_api_key,
-        port=dir_config['port'] if 'port' in dir_config else None
-      )
+      
+      try:
+        # Create remote proxy to interact with remote
+        remote = SyncthingProxy(
+          r_device_id, host, r_api_key,
+          port=dir_config['port'] if 'port' in dir_config else None
+        )
+      except Exception as e:
+        return True
+
       r_config = remote.get_config()
       r_folder = st_util.find_folder_with_path(
         dir_config['remote_path'], r_config
@@ -1281,28 +1286,30 @@ class SyncthingClient(SyncthingFacade):
     
     return
 
-    return
-
+  # Returns a list of devices authorized to a folder
+  # NOTE: This is used in `dir info`
   def auth_ls(self):
 
-    self.wait_start(0.5, 10)
     kodrive_config = self.adapter.get_config()
     directories = kodrive_config['directories']
     config = self.get_config()
-    devices = config['devices']
     folders = config['folders']
-    body = str()
+    body = {}
+    header = str()
+
+    # Length of longest device name
+    max_len = 0
 
     for f in folders:
       shared = False  
-        
+       
+      # Check if you own the folder
       for k, v in directories.iteritems():
         if f['path'] ==  v['local_path']:
           shared = v['is_shared']
-      # if not your folder, don't display
 
+      # If not your folder, don't display
       if len(f['devices']) > 1 and not shared:
-        body += f['path']
 
         for i, val in enumerate(f['devices']):
 
@@ -1313,21 +1320,37 @@ class SyncthingClient(SyncthingFacade):
             if not r_devid:
               raise custom_errors.DeviceNotFound(val['deviceID'])
 
+            # Get encoded remote device keys
             key = "%s#%s" % (r_devid['name'], val['deviceID'])
             key = key.encode('base64')
             key = "".join(key.split())
 
-            body += '\n\t' + key
-      
-          if i == len(f['devices']) - 1:
-            body += '\n'
+            # Add remote device's name and key
+            body.update({
+              r_devid['name'] : key
+            })
 
-        body += '\n'
+            if r_devid['name'] > max_len:
+              max_len = len(r_devid['name'])
 
-    if body.endswith('\n'):
-      body = body[:-2]
+    # This format method allows easy specification of fill length
+    header += '{message: <{fill}}'.format(message='Name', fill=max_len + 5)
+    header += 'Key\n'
 
-    return body
+    result = header
+
+    # Append body to header, assign to result
+    if body:
+      for name, key in body.items():
+        result +='{message: <{fill}}'.format(message=name, fill=max_len + 5)
+        result += key + '\n'
+
+      return result.strip('\n')
+
+    # if body is empty, than no devices have been authorized.
+    else:
+      return 'No devices have been authorized.'
+    
 
   # Sets autostart depending on platform
   def autostart(self):
