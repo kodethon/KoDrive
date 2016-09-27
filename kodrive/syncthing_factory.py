@@ -366,7 +366,7 @@ class SyncthingFacade():
         'api_key' : toks[2],
         'port' : toks[3] if len(toks) > 3 else None
       }
-    except ValueError:
+    except Exception as e:
       pass
 
     try:
@@ -378,7 +378,7 @@ class SyncthingFacade():
         'folder_id' : toks[2],
         'label' : toks[3]
       }
-    except ValueError:
+    except Exception as e:
       pass
 
   def devid_to_ip(self, devid, wait = True):
