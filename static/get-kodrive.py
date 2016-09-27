@@ -93,13 +93,15 @@ def main():
         if not command_exists(virtualenv_bin):
             virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
             if not command_exists(virtualenv_bin):
-                fail('You need to have virtualenv installed to bootstrap kodrive.')
+                echo('You need to have virtualenv installed to bootstrap kodrive. ')
+                fail('To install virtualenv, please run: pip install --user virtualenv.')
 
     elif system == "Darwin":
         if not command_exists(virtualenv_bin):
             virtualenv_bin = "%s/Library/Python/2.7/bin/virtualenv" % os.path.expanduser("~")
             if not command_exists(virtualenv_bin):
-                fail('You need to have virtualenv installed to bootstrap kodrive.')
+                echo('You need to have virtualenv installed to bootstrap kodrive.')
+                fail('To install virtualenv, please run: pip install --user virtualenv.')
 
     elif system == "Windows":
         fail('kodrive is not supported on Windows.')
@@ -121,25 +123,39 @@ def main():
             bashrc = os.path.expanduser("~/.bashrc")
             with open(bashrc, 'a+') as f:
                 f.write('export PATH="$HOME/.local/bin:$PATH"')
+
+            if not command_exists('kodrive') != 0:
+                echo()
+                echo('=' * 60)
+                echo()
+                echo('WARNING:')
+                echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
+                echo('  not work out of the box. To fix this problem make sure to run')
+                echo('  one of the following depending on which shell you are using.')
+                echo()
+                echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
+                echo()
+                echo('=' * 60)
+                echo()
+
         elif 'csh' in os.environ['SHELL']:
             cshrc = os.path.expanduser("~/.cshrc")
             with open(cshrc, 'a+') as f:
                 f.write('set path=($home/.local/bin $path)')
 
-    if not command_exists('kodrive') != 0:
-        echo()
-        echo('=' * 60)
-        echo()
-        echo('WARNING:')
-        echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
-        echo('  not work out of the box. To fix this problem make sure to run')
-        echo('  one of the following depending on which shell you are using.')
-        echo()
-        echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
-        echo("  tcsh: set path=(%s $path)" % bin_dir)
-        echo()
-        echo('=' * 60)
-        echo()
+            if not command_exists('kodrive') != 0:
+                echo()
+                echo('=' * 60)
+                echo()
+                echo('WARNING:')
+                echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
+                echo('  not work out of the box. To fix this problem make sure to run')
+                echo('  one of the following depending on which shell you are using.')
+                echo()
+                echo("  tcsh: set path=(%s $path)" % bin_dir)
+                echo()
+                echo('=' * 60)
+                echo()
     
     succeed('kodrive is now installed.')
 
