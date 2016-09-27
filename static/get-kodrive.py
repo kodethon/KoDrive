@@ -19,6 +19,7 @@ else:
 DEFAULT_KODRIVE_HOME = os.path.expanduser('~/.local/venvs')
 DEFAULT_KODRIVE_BIN_DIR = os.path.expanduser('~/.local/bin')
 virtualenv_bin = 'virtualenv'
+pip_bin = 'pip'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
@@ -84,24 +85,33 @@ def main():
     if command_exists('kodrive'):
         succeed('You already have kodrive installed')
     else:
-        echo('Installing kodrive')
+        echo('Installing kodrive...')
 
     global virtualenv_bin
     system = platform.system()
 
     if system == "Linux":
         if not command_exists(virtualenv_bin):
+            if not command_exists(pip_bin): 
+                echo('You need to have pip installed to bootstrap kodrive.')
+                fail('Please run, curl https://bootstrap.pypa.io/get-pip.py | sudo python, to install pip.')
+
             virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
             if not command_exists(virtualenv_bin):
-                echo('You need to have virtualenv installed to bootstrap kodrive. ')
-                fail('To install virtualenv, please run: pip install --user virtualenv.')
+                echo('You need to have virtualenv installed to bootstrap kodrive.')
+                fail('Please run, pip install --user virtualenv, to install virtualenv.')
 
     elif system == "Darwin":
         if not command_exists(virtualenv_bin):
+            if not command_exists(pip_bin): 
+                echo('You need to have pip installed to bootstrap kodrive.')
+                fail('Please run, curl https://bootstrap.pypa.io/get-pip.py | sudo python, to install pip.')
+
             virtualenv_bin = "%s/Library/Python/2.7/bin/virtualenv" % os.path.expanduser("~")
             if not command_exists(virtualenv_bin):
                 echo('You need to have virtualenv installed to bootstrap kodrive.')
-                fail('To install virtualenv, please run: pip install --user virtualenv.')
+                fail('Please run, pip install --user virtualenv, to install virtualenv.')
+
 
     elif system == "Windows":
         fail('kodrive is not supported on Windows.')
