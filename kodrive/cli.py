@@ -306,10 +306,10 @@ def info(path):
   else:
     stat = output['status']
     click.echo("State: %s" % stat['state'])
-    click.echo("\nTotal files: %s" % stat['localFiles'])
-    click.echo("Files needed: %s" % stat['needFiles'])
-    click.echo("\nTotal bytes: %s" % stat['localBytes'])
-    click.echo("Bytes needed: %s" % stat['needBytes'])
+    click.echo("\nTotal Files: %s" % stat['localFiles'])
+    click.echo("Files Needed: %s" % stat['needFiles'])
+    click.echo("\nTotal Bytes: %s" % stat['localBytes'])
+    click.echo("Bytes Needed: %s" % stat['needBytes'])
 
     progress = output['files_needed']['progress']
     queued = output['files_needed']['queued']
@@ -326,6 +326,8 @@ def info(path):
 
     for f in rest:
       click.echo("  " + f['name'])
+
+    click.echo("\nDevices Authorized:\n%s" % output['auth_ls'])
 
 ### Key
 @dir.command()
@@ -383,6 +385,11 @@ def info(**kwargs):
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
+@click.option(
+    '-H', '--home', nargs=1, metavar="  <PATH>",
+    type=click.Path(exists=True, writable=True, resolve_path=True), 
+    help="Set where config files are stored."
+)
 def start(**kwargs):
   ''' Start KodeDrive daemon. '''
 

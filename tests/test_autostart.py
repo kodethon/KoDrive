@@ -3,6 +3,7 @@ import pytest
 from click.testing import CliRunner
 from kodrive import cli
 from kodrive import syncthing_factory as factory
+from kodrive.data import autostart as aust
 
 import time, os, json 
 import shutil, subprocess, platform
@@ -21,14 +22,27 @@ def test_autostart(runner):
   ''' Ensures that kodrive will autostart  '''
 
   system = platform.system()
+  result = runner.invoke(cli.sys, ['start'])
+  mock.client.wait_start(0.5, 10)
 
   if system == "Linux":
-    print 'Linux does not autostart yet.'
-    assert True
+    home = os.path.expanduser('~')
+    dirpath = os.path.join(home, '.config', 'systemd', 'user')
+    service_name = 'syncthing.service'
+    st_service_path = os.path.join(dirpath, service_name)
+    
+    # Ensure that file exists
+    if not os.path.exists(st_service_path):
+      assert False
+    
+    # Ensure that data was correctly written
+    fp = open(st_service_path)
+    data = fp.read()
+    fp.close
+
+    assert data == aust.getSyncthingService()
 
   elif system == "Darwin":
-    result = runner.invoke(cli.sys, ['start'])
-    mock.client.wait_start(0.5, 10)
 
     if result.exception:
       print result.exception
