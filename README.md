@@ -8,18 +8,6 @@ Synchronize remote files and directories across different devices with an easy-t
 
 ## Getting Started
 
-### Install Dependencies
-
-- [Python 2.7](https://www.python.org/downloads/)
-- [pip](https://pip.pypa.io/en/stable/installing/)
-```sh
-$ curl https://bootstrap.pypa.io/get-pip.py | sudo python
-```
-- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-```sh
-$ pip install --user virtualenv
-```
-
 ### Install KoDrive
 To set ```kodrive``` as a local command:
 
@@ -98,4 +86,16 @@ The sharer can deauthorize access to certain users since they own the directory:
 Furthermore, the sharer can completely remove the directory from the daemon which will deauthorize all devices from that directory:
 ```sh
 $ kodrive dir free <PATH>
+```
+
+## Dependencies
+
+- [Python 2.7](https://www.python.org/downloads/)
+- [pip](https://pip.pypa.io/en/stable/installing/)
+```sh
+$ curl https://bootstrap.pypa.io/get-pip.py | sudo python
+```
+- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+```sh
+$ pip install --user virtualenv
 ```
