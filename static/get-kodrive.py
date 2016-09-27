@@ -80,6 +80,45 @@ def install_files(venv, bin_dir, install):
 
     publish_script(venv, bin_dir)
 
+def modify_bashrc():
+    bashrc = os.path.expanduser("~/.bashrc")
+    with open(bashrc, 'a+') as f:
+        f.write('export PATH="$HOME/.local/bin:$PATH"')
+
+    if not command_exists('kodrive') != 0:
+        bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
+        echo()
+        echo('=' * 60)
+        echo()
+        echo('WARNING:')
+        echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
+        echo('  not work out of the box. To fix this problem make sure to run')
+        echo('  one of the following depending on which shell you are using.')
+        echo()
+        echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
+        echo()
+        echo('=' * 60)
+        echo()
+
+def modify_cshrc():
+    cshrc = os.path.expanduser("~/.cshrc")
+    with open(cshrc, 'a+') as f:
+        f.write('set path=($home/.local/bin $path)')
+
+    if not command_exists('kodrive') != 0:
+        bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
+        echo()
+        echo('=' * 60)
+        echo()
+        echo('WARNING:')
+        echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
+        echo('  not work out of the box. To fix this problem make sure to run')
+        echo('  one of the following depending on which shell you are using.')
+        echo()
+        echo("  tcsh: set path=(%s $path)" % bin_dir)
+        echo()
+        echo('=' * 60)
+        echo()
 
 def main():
     if command_exists('kodrive'):
@@ -119,53 +158,30 @@ def main():
     else:
         fail("kodrive is not supported on %s." % system)
 
-
     bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
-    venv = os.path.join(os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
-                        'kodrive')
+    venv = os.path.join(
+        os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
+        'kodrive'
+    )
     install_files(venv, bin_dir, 'kodrive')
+
     # Start kodrive 
     call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
 
     # Set PATH variable
-    if  'SHELL' in os.environ:
+    if 'SHELL' in os.environ:
         if 'bash' in os.environ['SHELL']:
-            bashrc = os.path.expanduser("~/.bashrc")
-            with open(bashrc, 'a+') as f:
-                f.write('export PATH="$HOME/.local/bin:$PATH"')
-
-            if not command_exists('kodrive') != 0:
-                echo()
-                echo('=' * 60)
-                echo()
-                echo('WARNING:')
-                echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
-                echo('  not work out of the box. To fix this problem make sure to run')
-                echo('  one of the following depending on which shell you are using.')
-                echo()
-                echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
-                echo()
-                echo('=' * 60)
-                echo()
-
+            modify_bashrc()      
         elif 'csh' in os.environ['SHELL']:
-            cshrc = os.path.expanduser("~/.cshrc")
-            with open(cshrc, 'a+') as f:
-                f.write('set path=($home/.local/bin $path)')
+            modify_cshrc()
+    else:
+        bashrc = os.path.expanduser("~/.bashrc")
+        cshrc = os.path.expanduser("~/.cshrc")
 
-            if not command_exists('kodrive') != 0:
-                echo()
-                echo('=' * 60)
-                echo()
-                echo('WARNING:')
-                echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
-                echo('  not work out of the box. To fix this problem make sure to run')
-                echo('  one of the following depending on which shell you are using.')
-                echo()
-                echo("  tcsh: set path=(%s $path)" % bin_dir)
-                echo()
-                echo('=' * 60)
-                echo()
+        if os.path.exist(bashrc):
+            modify_bashrc()
+        elif os.path.exist(cshrc):
+            modify_cshrc()
     
     succeed('kodrive is now installed.')
 
