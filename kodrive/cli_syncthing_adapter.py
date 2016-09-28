@@ -297,7 +297,7 @@ def ls():
 def key(**kwargs):
     
   handler = factory.get_handler()
-
+  
   try:
     # Return device key
     if 'device' in kwargs:
@@ -309,8 +309,17 @@ def key(**kwargs):
       
       if not handler.adapter.folder_exists(path):
         raise custom_errors.FileNotInConfig(path)
-        
-      return handler.encode_key(path), False
+      
+      client = False
+      server = False
+
+      if kwargs['client']:
+      	client = True
+
+      if kwargs['server']:
+      	server = True
+
+      return handler.encode_key(path, client, server), False
 
     # Else display help
     else:

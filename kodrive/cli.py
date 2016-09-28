@@ -331,14 +331,21 @@ def info(path):
 
 ### Key
 @dir.command()
+@click.option(
+  '-c', '--client', is_flag=True, help="Return directory key in client mode."
+)
+@click.option(
+  '-s', '--server', is_flag=True, help="Return directory key in server mode."
+)
 @click.argument(
   'path', nargs=1, 
   type=click.Path(exists=True, writable=True, resolve_path=True), 
 )
-def key(path):
-  ''' Display synchronization key. '''
-
-  output, err = cli_syncthing_adapter.key(folder=path)
+def key(**kwargs):
+  ''' Display directory key. '''
+  
+  kwargs['folder'] = kwargs['path']
+  output, err = cli_syncthing_adapter.key(**kwargs)
 
   if not output:
     click.echo(click.get_current_context().get_help())
