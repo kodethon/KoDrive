@@ -234,7 +234,7 @@ class SyncthingFacade():
     except ValueError: 
       pass
 
-  def encode_key(self, path):
+  def encode_key(self, path, client, server):
 
     kodrive_config = self.adapter.get_config()
     directories = kodrive_config['directories']
@@ -250,10 +250,10 @@ class SyncthingFacade():
           raise custom_errors.PermissionDenied()
    
     devid = self.get_device_id()
-    
+
     # Return different keys depending on
     # if the app is in server or client mode
-    if system['server']:
+    if (not client and system['server']) or server:
       api_key = self.adapter.get_api_key()
       key = "%s@%s@%s" % (devid, path, api_key)
     else:
@@ -367,7 +367,7 @@ class SyncthingFacade():
         'api_key' : toks[2],
         'port' : toks[3] if len(toks) > 3 else None
       }
-    except ValueError:
+    except Exception as e:
       pass
 
     try:
@@ -379,7 +379,7 @@ class SyncthingFacade():
         'folder_id' : toks[2],
         'label' : toks[3]
       }
-    except ValueError:
+    except Exception as e:
       pass
 
   def devid_to_ip(self, devid, wait = True):

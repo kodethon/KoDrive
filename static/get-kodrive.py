@@ -19,6 +19,7 @@ else:
 DEFAULT_KODRIVE_HOME = os.path.expanduser('~/.local/venvs')
 DEFAULT_KODRIVE_BIN_DIR = os.path.expanduser('~/.local/bin')
 virtualenv_bin = 'virtualenv'
+pip_bin = 'pip'
 
 def echo(msg=''):
     sys.stdout.write(msg + '\n')
@@ -79,54 +80,13 @@ def install_files(venv, bin_dir, install):
 
     publish_script(venv, bin_dir)
 
-
-def main():
-    if command_exists('kodrive'):
-        succeed('You already have kodrive installed')
-    else:
-        echo('Installing kodrive')
-
-    global virtualenv_bin
-    system = platform.system()
-
-    if system == "Linux":
-        if not command_exists(virtualenv_bin):
-            virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
-            if not command_exists(virtualenv_bin):
-                fail('You need to have virtualenv installed to bootstrap kodrive.')
-
-    elif system == "Darwin":
-        if not command_exists(virtualenv_bin):
-            virtualenv_bin = "%s/Library/Python/2.7/bin/virtualenv" % os.path.expanduser("~")
-            if not command_exists(virtualenv_bin):
-                fail('You need to have virtualenv installed to bootstrap kodrive.')
-
-    elif system == "Windows":
-        fail('kodrive is not supported on Windows.')
-
-    else:
-        fail("kodrive is not supported on %s." % system)
-
-
-    bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
-    venv = os.path.join(os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
-                        'kodrive')
-    install_files(venv, bin_dir, 'kodrive')
-    # Start kodrive 
-    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
-
-    # Set PATH variable
-    if  'SHELL' in os.environ:
-        if 'bash' in os.environ['SHELL']:
-            bashrc = os.path.expanduser("~/.bashrc")
-            with open(bashrc, 'a+') as f:
-                f.write('export PATH="$HOME/.local/bin:$PATH"')
-        elif 'csh' in os.environ['SHELL']:
-            cshrc = os.path.expanduser("~/.cshrc")
-            with open(cshrc, 'a+') as f:
-                f.write('set path=($home/.local/bin $path)')
+def modify_bashrc():
+    bashrc = os.path.expanduser("~/.bashrc")
+    with open(bashrc, 'a+') as f:
+        f.write('export PATH="$HOME/.local/bin:$PATH"')
 
     if not command_exists('kodrive') != 0:
+        bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
         echo()
         echo('=' * 60)
         echo()
@@ -136,10 +96,92 @@ def main():
         echo('  one of the following depending on which shell you are using.')
         echo()
         echo('  bash: export PATH={0}:$PATH'.format(bin_dir))
+        echo()
+        echo('=' * 60)
+        echo()
+
+def modify_cshrc():
+    cshrc = os.path.expanduser("~/.cshrc")
+    with open(cshrc, 'a+') as f:
+        f.write('set path=($home/.local/bin $path)')
+
+    if not command_exists('kodrive') != 0:
+        bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
+        echo()
+        echo('=' * 60)
+        echo()
+        echo('WARNING:')
+        echo('  It looks like {0} is not in your PATH so kodrive will'.format(bin_dir))
+        echo('  not work out of the box. To fix this problem make sure to run')
+        echo('  one of the following depending on which shell you are using.')
+        echo()
         echo("  tcsh: set path=(%s $path)" % bin_dir)
         echo()
         echo('=' * 60)
         echo()
+
+def main():
+    if command_exists('kodrive'):
+        succeed('You already have kodrive installed')
+    else:
+        echo('Installing kodrive...')
+
+    global virtualenv_bin
+    system = platform.system()
+
+    if system == "Linux":
+        if not command_exists(virtualenv_bin):
+            if not command_exists(pip_bin): 
+                echo('You need to have pip installed to bootstrap kodrive.')
+                fail('Please run, curl https://bootstrap.pypa.io/get-pip.py | sudo python, to install pip.')
+
+            virtualenv_bin = "%s/.local/bin/virtualenv" % os.path.expanduser("~")
+            if not command_exists(virtualenv_bin):
+                echo('You need to have virtualenv installed to bootstrap kodrive.')
+                fail('Please run, pip install --user virtualenv, to install virtualenv.')
+
+    elif system == "Darwin":
+        if not command_exists(virtualenv_bin):
+            if not command_exists(pip_bin): 
+                echo('You need to have pip installed to bootstrap kodrive.')
+                fail('Please run, curl https://bootstrap.pypa.io/get-pip.py | sudo python, to install pip.')
+
+            virtualenv_bin = "%s/Library/Python/2.7/bin/virtualenv" % os.path.expanduser("~")
+            if not command_exists(virtualenv_bin):
+                echo('You need to have virtualenv installed to bootstrap kodrive.')
+                fail('Please run, pip install --user virtualenv, to install virtualenv.')
+
+
+    elif system == "Windows":
+        fail('kodrive is not supported on Windows.')
+
+    else:
+        fail("kodrive is not supported on %s." % system)
+
+    bin_dir = os.environ.get('KODRIVE_BIN_DIR', DEFAULT_KODRIVE_BIN_DIR)
+    venv = os.path.join(
+        os.environ.get('KODRIVE_HOME', DEFAULT_KODRIVE_HOME),
+        'kodrive'
+    )
+    install_files(venv, bin_dir, 'kodrive')
+
+    # Start kodrive 
+    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
+
+    # Set PATH variable
+    if 'SHELL' in os.environ:
+        if 'bash' in os.environ['SHELL']:
+            modify_bashrc()      
+        elif 'csh' in os.environ['SHELL']:
+            modify_cshrc()
+    else:
+        bashrc = os.path.expanduser("~/.bashrc")
+        cshrc = os.path.expanduser("~/.cshrc")
+
+        if os.path.exist(bashrc):
+            modify_bashrc()
+        elif os.path.exist(cshrc):
+            modify_cshrc()
     
     succeed('kodrive is now installed.')
 

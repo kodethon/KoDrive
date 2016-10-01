@@ -132,7 +132,7 @@ def test_key():
   ''' Ensure that kodrive key meets specs '''
 
   mock.client.wait_start(0.5, 10) 
-  output = mock.client.encode_key(mock.client_conf['sync_dir'])
+  output = mock.client.encode_key(mock.client_conf['sync_dir'], False, False)
 
   assert len(output) > 0
 
@@ -158,7 +158,7 @@ def test_link_server():
 
   mock.server.make_server()
   mock.server.wait_start(0.5, 10)
-  key = mock.server.encode_key(server_sync_dir)
+  key = mock.server.encode_key(server_sync_dir, False, False)
   
   # Run command on mock.client
   md = mock.client.decode_key(key)
@@ -264,7 +264,7 @@ def test_free_server():
     assert False
   
   # Check device metadata was deleted
-  key = mock.server.encode_key(server_sync_dir)
+  key = mock.server.encode_key(server_sync_dir, False, False)
   md = mock.client.decode_key(key)
   device = mock.client.find_device(
     md['devid'],
