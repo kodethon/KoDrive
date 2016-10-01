@@ -15,8 +15,10 @@ class PlatformBase(object):
   app_config = 'config.json'
   st_config = 'config.xml'
   st_binary = 'syncthing'
+  st_inotify_binary = 'syncthing-inotify'
   stfolder = '.stfolder'
-  st_version = '0.14.4'
+  st_version = '0.14.7'
+  dl_server = 'http://cumulus.cs.ucdavis.edu'
 
   # Specifies whether to update kodrive config
   migrate = True
@@ -78,6 +80,51 @@ class PlatformBase(object):
       kodrive_config = self.get_platform_config(app_conf)
       kodrive_config['system']['devid'] = devid
       self.set_platform_config(app_conf, kodrive_config)
+
+  def start_platform_syncthing(self, folder_path, **kwargs):
+    st_conf_dir = kwargs['st_conf_dir']
+    st_conf_file = kwargs['st_conf_file']
+
+    command = os.path.join(folder_path, self.st_binary)
+    log_path = os.path.join(st_conf_dir, 'log')
+    opts = [
+        command, '-no-browser', '-logfile', log_path, 
+        '-home', os.path.join(st_conf_dir)
+    ]
+    
+    # Check if this is first time starting syncthing
+    new_flag = False
+    if not os.path.exists(st_conf_file):
+      new_flag = True
+    else:
+      gui_address = self.get_gui_address(st_conf_file)
+      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      toks = gui_address.split(':')
+      host = toks[0]
+      port = int(toks[1])
+
+      if sock.connect_ex((host, port)) != 0:
+        opts.append('-gui-address')
+        opts.append(gui_address)
+    
+    # Check if a migration is needed
+    if self.migrate:
+      self.migrate_config()
+    
+    # Set env variable to disable upgrades
+    os.environ['HOME'] = os.path.expanduser('~')
+    os.environ['STNOUPGRADE'] = '1'
+    DEVNULL = open(os.devnull, 'w') 
+    process = subprocess.Popen(opts, stdout=DEVNULL)
+    
+    # Enable inotify if prompted
+    command = os.path.join(folder_path, self.st_inotify_binary)
+    if 'inotify' in kwargs and kwargs['inotify']:
+      # Append output to log
+      log = open(log_path, 'a')
+      process = subprocess.Popen([command], stderr=log, stdout=log)
+
+    return new_flag
 
   def set_platform_dir_config(self, folder_path, object):
 
@@ -338,7 +385,7 @@ class SyncthingLinux64(PlatformBase):
 
       #linux_64_bit_repo = "https://github.com/syncthing/syncthing/releases/download/v%s" % self.st_version
       linux_64_bit_tar = "syncthing-linux-amd64-v%s.tar.gz" % self.st_version
-      linux_64_bit_repo = "http://cumulus.cs.ucdavis.edu/kodrive/"
+      linux_64_bit_repo = os.path.join(self.dl_server, 'kodrive')
       dest_tmp = os.path.join('/tmp', linux_64_bit_tar)
       
       if not os.path.exists(os.path.join(dest_tmp, linux_64_bit_tar)):
@@ -351,45 +398,10 @@ class SyncthingLinux64(PlatformBase):
     return syncthing_path
 
   def start_syncthing(self, folder_path, **kwargs):   
-    
-    command = os.path.join(folder_path, self.st_binary)
-    log_path = os.path.join(self.st_conf_dir, 'log')
-    opts = [
-        command, '-no-browser', '-logfile', log_path, 
-        '-home', os.path.join(self.st_conf_dir)
-    ]
-    
-    # Check if this is first time starting syncthing
-    new_flag = False
-    if not os.path.exists(self.st_conf_file):
-      new_flag = True
-    else:
-      gui_address = self.get_gui_address(self.st_conf_file)
-      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      toks = gui_address.split(':')
-      host = toks[0]
-      port = int(toks[1])
+    kwargs['st_conf_dir'] = self.st_conf_dir
+    kwargs['st_conf_file'] = self.st_conf_file
 
-      if sock.connect_ex((host, port)) != 0:
-        opts.append('-gui-address')
-        opts.append(gui_address)
-    
-    # Check if a migration is needed
-    if self.migrate:
-      self.migrate_config()
-    
-    # Set env variable to disable upgrades
-    os.environ['HOME'] = os.path.expanduser('~')
-    os.environ['STNOUPGRADE'] = '1'
-    DEVNULL = open(os.devnull, 'w') 
-    process = subprocess.Popen(opts, stdout=DEVNULL)
-    
-    # Enable inotify if prompted
-    if 'inotify' in kwargs and kwargs['inotify']:
-      opts = ['screen', '-S', 'inotify' '-dm',  self.st_inotify_binary]
-      process = subprocess.Popen(opts, stdout=DEVNULL)
-
-    return new_flag
+    return self.start_platform_syncthing(folder_path, **kwargs)
 
   def migrate_config(self):
     # Note: only migrates 2 layers down
@@ -579,11 +591,6 @@ class SyncthingMac64(PlatformBase):
     os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
-
-    # Enable inotify if prompted
-    if 'inotify' in kwargs and kwargs['inotify']:
-      opts = ['screen', '-S', 'inotify' '-dm',  self.st_inotify_binary]
-      process = subprocess.Popen(opts, stdout=DEVNULL)
 
     return new_flag
 
