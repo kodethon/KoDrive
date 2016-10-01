@@ -389,7 +389,7 @@ def info(**kwargs):
 
 ### Start
 @sys.command()
-@click.option('-i', '--client', is_flag=True, help="Enable inotify upon start.")
+@click.option('-i', '--inotify', is_flag=True, help="Enable inotify upon start.")
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
 @click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
