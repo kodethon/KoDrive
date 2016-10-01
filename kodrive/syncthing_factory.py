@@ -141,7 +141,7 @@ class SyncthingFacade():
   #
   def start(self, **kwargs):    
     path = self.adapter.get_syncthing_path()
-    is_new = self.adapter.start_syncthing(path)
+    is_new = self.adapter.start_syncthing(path, kwargs)
     init_client = None
     
     # Note: modifying config file shoult not be done here;

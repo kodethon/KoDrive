@@ -350,10 +350,8 @@ class SyncthingLinux64(PlatformBase):
 
     return syncthing_path
 
-  def start_syncthing(self, folder_path):   
+  def start_syncthing(self, folder_path, **kwargs):   
     
-    new_flag = False
-
     command = os.path.join(folder_path, self.st_binary)
     log_path = os.path.join(self.st_conf_dir, 'log')
     opts = [
@@ -362,6 +360,7 @@ class SyncthingLinux64(PlatformBase):
     ]
     
     # Check if this is first time starting syncthing
+    new_flag = False
     if not os.path.exists(self.st_conf_file):
       new_flag = True
     else:
@@ -376,25 +375,33 @@ class SyncthingLinux64(PlatformBase):
         opts.append(gui_address)
     
     # Check if a migration is needed
-    # Note: only migrates 2 layers down
     if self.migrate:
-      kodrive_config = self.get_config()
-      for i in kodrive_config:
-        if not type(kodrive_config[i]) == object:
-          self.default_config[i] = kodrive_config[i]
-        else:
-          for j in kodrive_config[i]:
-            self.default_config[i][j] = kodrive_config[i][j]
-
-      self.set_config(self.default_config)
+      self.migrate_config()
     
     # Set env variable to disable upgrades
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
+    
+    # Enable inotify if prompted
+    if 'inotify' in kwargs and kwargs['inotify']:
+      opts = ['screen', '-S', 'inotify' '-dm',  self.st_inotify_binary]
+      process = subprocess.Popen(opts, stdout=DEVNULL)
 
     return new_flag
+
+  def migrate_config(self):
+    # Note: only migrates 2 layers down
+    kodrive_config = self.get_config()
+    for i in kodrive_config:
+      if not type(kodrive_config[i]) == object:
+        self.default_config[i] = kodrive_config[i]
+      else:
+        for j in kodrive_config[i]:
+          self.default_config[i][j] = kodrive_config[i][j]
+
+    self.set_config(self.default_config)
 
   def delete_default_folder(self):
     home_dir = os.path.expanduser('~')
@@ -544,7 +551,7 @@ class SyncthingMac64(PlatformBase):
 
     return syncthing_path
 
-  def start_syncthing(self, folder_path):   
+  def start_syncthing(self, folder_path, **kwargs):   
     
     new_flag = False
 
@@ -572,7 +579,12 @@ class SyncthingMac64(PlatformBase):
     os.environ['STNOUPGRADE'] = '1'
     DEVNULL = open(os.devnull, 'w') 
     process = subprocess.Popen(opts, stdout=DEVNULL)
-    
+
+    # Enable inotify if prompted
+    if 'inotify' in kwargs and kwargs['inotify']:
+      opts = ['screen', '-S', 'inotify' '-dm',  self.st_inotify_binary]
+      process = subprocess.Popen(opts, stdout=DEVNULL)
+
     return new_flag
 
   def delete_default_folder(self):
