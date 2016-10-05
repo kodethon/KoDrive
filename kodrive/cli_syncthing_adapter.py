@@ -132,8 +132,9 @@ def link(**kwargs):
       traceback.print_exc()
 
     # Error! Rollback :/
-    app_rb.rollback_config()
-    st_rb.rollback_config()
+    if handler.ping():
+      app_rb.rollback_config()
+      st_rb.rollback_config()
 
     return e.message, True
   except Exception as e:
@@ -142,8 +143,9 @@ def link(**kwargs):
       traceback.print_exc()
     
     # Error! Rollback :/
-    app_rb.rollback_config()
-    st_rb.rollback_config()
+    if handler.ping():
+      app_rb.rollback_config()
+      st_rb.rollback_config()
 
     return e.message, True
 
@@ -223,8 +225,9 @@ def free(path):
     return e.message, True
 
   else:
-    app_rb.rollback_config()
-    st_rb.rollback_config()
+    if handler.ping():
+      app_rb.rollback_config()
+      st_rb.rollback_config()
 
 def tag(path, name):
   handler = factory.get_handler()
