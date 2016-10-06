@@ -1157,7 +1157,7 @@ class SyncthingClient(SyncthingFacade):
       f = directories[k]
 
       if f['local_path']  == path.rstrip('/'):
-        if f['is_shared'] and kdr_config['system']['server']:
+        if f['is_shared'] and kodrive_config['system']['server']:
           raise custom_errors.PermissionDenied()
 
     decoded = self.decode_device_key(key)
