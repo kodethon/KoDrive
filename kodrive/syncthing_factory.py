@@ -720,7 +720,7 @@ class SyncthingClient(SyncthingFacade):
     config = self.get_config()
     
     if self.folder_exists({'path' : local_path}):
-      raise custom_errors.AlreadyAdded()
+      raise ValueError('This folder has already been added.')
 
     if not self.device_exists(device_id):
       self.new_device(config=config, device_id=device_id)
@@ -807,7 +807,7 @@ class SyncthingClient(SyncthingFacade):
     
     # Check syncthing config to make sure folder is not added
     if self.folder_exists({'path' : kwargs['local_path']}, config):
-      raise ValueError('You are already synchronizing this folder.')
+      raise ValueError('This folder has already been added.')
     
     # Modify syncthing config
     config['folders'].append(remote_folder)

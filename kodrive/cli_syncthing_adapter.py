@@ -126,7 +126,9 @@ def link(**kwargs):
     
     return ("%s (%s) is now being synchronized." % (kwargs['path'], tag)), False
   except ValueError as e:
-  	return e.message, True
+    return e.message, True
+  except KeyError as e:
+    return e.message, True
   except Exception as e:
 
     if not config.Flags['production']:
