@@ -106,7 +106,6 @@ def link(**kwargs):
         interval=kwargs['interval'],
         remote_port=md['port'] if 'port' in md else None
       )
-
     # Client - client
     elif 'label' in md and 'folder_id' in md and 'hostname' in md:
       label = md['label']
@@ -126,17 +125,8 @@ def link(**kwargs):
       return 'Invalid Key.', True
     
     return ("%s (%s) is now being synchronized." % (kwargs['path'], tag)), False
-  except KeyError as e:
-
-    if not config.Flags['production']:
-      traceback.print_exc()
-
-    # Error! Rollback :/
-    if handler.ping():
-      app_rb.rollback_config()
-      st_rb.rollback_config()
-
-    return e.message, True
+  except ValueError as e:
+  	return e.message, True
   except Exception as e:
 
     if not config.Flags['production']:

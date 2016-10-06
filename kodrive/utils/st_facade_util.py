@@ -85,4 +85,13 @@ def get_devid(dev_obj):
   else:
     return dev_obj['deviceId']
 
-
+def update_devices(a_conf, b_conf, app_conf):
+  
+  for d in app_conf['directories']:
+    if d['server']:
+      a_folder = find_folder_with_path(d['local_path'], a_conf)
+      b_folder = find_folder({'id' : a_folder['id']}, b_conf)
+    
+      a_folder['devices'] = b_folder['devices']
+    
+  

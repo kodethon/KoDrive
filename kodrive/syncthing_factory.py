@@ -719,9 +719,7 @@ class SyncthingClient(SyncthingFacade):
 
     config = self.get_config()
     
-    if self.folder_exists({
-      'path' : local_path
-    }):
+    if self.folder_exists({'path' : local_path}):
       raise custom_errors.AlreadyAdded()
 
     if not self.device_exists(device_id):
@@ -807,12 +805,8 @@ class SyncthingClient(SyncthingFacade):
 
       r_folder_id = remote_folder['id']
     
-    # Check syncthing config to make sure the user is not
-    # already synchronizing this folder
-    if self.folder_exists({
-      'path' : kwargs['local_path']
-    }, config):
-      # TODO: maybe tell user where they are synchronizing the dev
+    # Check syncthing config to make sure folder is not added
+    if self.folder_exists({'path' : kwargs['local_path']}, config):
       raise ValueError('You are already synchronizing this folder.')
     
     # Modify syncthing config
@@ -1198,6 +1192,7 @@ class SyncthingClient(SyncthingFacade):
       # add device to devices
     
     self.set_config(config)
+
     self.restart()
       
     return
