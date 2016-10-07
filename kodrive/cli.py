@@ -275,9 +275,14 @@ def free(**kwargs):
 ### Add
 @dir.command()
 @click.option(
-  '-t', '--tag', nargs=1, metavar=" <TEXT>", 
+  '-t', '--tag', nargs=1, metavar="     <TEXT>", 
   default="my-sync",
   help="Associate this folder with a tag."
+)
+@click.option(
+  '-i', '--interval', default=5,
+  nargs=1, metavar="<INTEGER>",
+  help="Specify sync interval in seconds."
 )
 @click.argument(
   'path',
@@ -412,7 +417,6 @@ def stop():
   output, err = cli_syncthing_adapter.sys(exit=True)
   click.echo("%s" % output, err=err)
 
-"""
 @sys.command()
 def test():
   ''' test ''' 
@@ -420,7 +424,6 @@ def test():
   output, err = cli_syncthing_adapter.sys(test='a')
   click.echo("%s" % output, err=err)
 
-"""
 
 # Attach subcommands to main
 main.add_command(dir)

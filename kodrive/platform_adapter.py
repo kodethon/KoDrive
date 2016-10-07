@@ -6,6 +6,8 @@ from .data import mac_plist_adt
 from .data import autostart as aust
 
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element
+
 import os, subprocess, socket
 import json, hashlib, plistlib
 import urllib, copy, errno
@@ -57,6 +59,24 @@ class PlatformBase(object):
       	folder['devices'] = devices
 	
         return folder
+
+  def platform_set_folder(self, config_path, folder):
+    tree = ET.parse(config_path)
+    for f in tree.findall('folder'):
+      
+      path = f.attrib['path']
+      if path == folder['path']:
+
+      	for d in f.findall('device'):
+      		f.remove(d)
+
+      	for d in folder['devices']:
+      		device = Element('device')
+      		device.text=' '
+      		device.set('id', d['id'])
+      		f.insert(0, device)
+
+    tree.write(config_path)
 
   def get_gui_address(self, config_path):   
     tree = ET.parse(config_path)
@@ -392,6 +412,9 @@ class SyncthingLinux64(PlatformBase):
 
   def set_config(self, config):
     return self.set_platform_config(self.app_conf_file, config)
+
+  def set_folder(self, folder):
+  	return self.platform_set_folder(self.st_conf_file, folder)
 
   def get_dir_config(self, local_path):
     '''

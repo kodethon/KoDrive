@@ -154,18 +154,20 @@ class SyncthingFacade():
             )
     else:
 
-      config = self.get_config()
       for key in directories:
         d = directories[key]
+
+        if d['server']:
+          folder = self.adapter.find_folder(d['local_path'])
+          st_util.update_devices(folder)
+          self.adapter.set_folder(folder)
         
         # Only continue if folder was from a server
-        if d['server']:
-          for i, f in enumerate(config['folders']):
-            if f['path'].strip('/') == d['local_path'].strip('/'):
-              st_util.update_devices(config['folders'][i])
-            
-      self.set_config(config)
-
+        #if d['server']:
+        #  for i, f in enumerate(config['folders']):
+        #    if f['path'].strip('/') == d['local_path'].strip('/'):
+        #      st_util.update_devices(config['folders'][i])
+        
   ###
   # 
   # @@port => having syncthing listen to this port
@@ -637,7 +639,7 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : 5,
+      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 15,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,

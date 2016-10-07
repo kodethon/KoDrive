@@ -112,8 +112,9 @@ def update_devices(folder_conf):
       fp.write(json.dumps(data))
       fp.close()
     else:
-      with open(backup, "w") as f:
-        f.write(json.dump({'devices' : folder_conf['devices']}))
+    	print backup
+    	with open(backup, "w") as f:
+    		f.write(json.dumps({'devices' : folder_conf['devices']}))
 
     # Update folder devices
     try:
