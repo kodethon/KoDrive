@@ -412,6 +412,16 @@ def stop():
   output, err = cli_syncthing_adapter.sys(exit=True)
   click.echo("%s" % output, err=err)
 
+"""
+@sys.command()
+def test():
+  ''' test ''' 
+
+  output, err = cli_syncthing_adapter.sys(test='a')
+  click.echo("%s" % output, err=err)
+
+"""
+
 # Attach subcommands to main
 main.add_command(dir)
 main.add_command(sys)

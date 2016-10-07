@@ -20,6 +20,7 @@ def test_system_init(runner):
 
   if result.exception:
     print result.exception
+    print result.output
     assert False
 
   assert mock.client.ping()

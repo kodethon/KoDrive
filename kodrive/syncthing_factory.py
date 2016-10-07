@@ -134,6 +134,38 @@ class SyncthingFacade():
       'max_devices' : max_devices
     } 
   
+  def live_update(self):
+    kodrive_config = self.adapter.get_config()
+    directories = kodrive_config['directories']
+
+    # Behave differently depending on whether if folder was linked
+    if kodrive_config['system']['server']:
+      if self.ping():
+        config = self.get_config()
+        for key in directories:
+          d = directories[key]
+          
+          # If the folder was self-added
+          if not d['is_shared']:
+            folder = self.adapter.find_folder(d['local_path'])
+            self.adapter.broadcast_folder_info(
+              d['local_path'], 
+              devices=folder['devices']
+            )
+    else:
+
+      config = self.get_config()
+      for key in directories:
+        d = directories[key]
+        
+        # Only continue if folder was from a server
+        if d['server']:
+          for i, f in enumerate(config['folders']):
+            if f['path'].strip('/') == d['local_path'].strip('/'):
+              st_util.update_devices(config['folders'][i])
+            
+      self.set_config(config)
+
   ###
   # 
   # @@port => having syncthing listen to this port
@@ -641,7 +673,7 @@ class SyncthingClient(SyncthingFacade):
       'local_path' : kwargs['path'],
       'remote_path': '',
       'is_shared' : False
-    }) 
+    })
     open(os.path.join(kwargs['path'], '.stfolder'), 'w').close()
 
     return config
@@ -681,7 +713,8 @@ class SyncthingClient(SyncthingFacade):
     self.adapter.set_gui_address(config_path, gui_address)
 
     self.wait_start(0.5, 10)
-    self.restart()
+    if self.ping():
+      self.restart()
 
     self.sync = self.adapter.get_gui_hook()
 
@@ -718,8 +751,8 @@ class SyncthingClient(SyncthingFacade):
       raise KeyError('Invalid Key.')
 
     config = self.get_config()
-    
-    if self.folder_exists({'path' : local_path}):
+
+    if self.folder_exists({'path' : local_path}, config):
       raise ValueError('This folder has already been added.')
 
     if not self.device_exists(device_id):
@@ -743,18 +776,16 @@ class SyncthingClient(SyncthingFacade):
     
     # Find the remote folder
     if remote_path:
-      remote_folder = self.find_folder({
-        'path' : remote_path
-      }, remote_config)
+      remote_folder = self.find_folder({'path' : remote_path}, remote_config)
     else:
       remote_folder = remote_config['folders'][0] 
-
+        
+    # Determine folder lable
     label = kwargs['tag'] if 'tag' in kwargs else None
     label = label or remote_folder['label']
-    global_remote_folder = remote_folder['path']
     
     # Save the folder data into syncthing config
-    self.wait_start(0.5, 10) # Wait for the self.restart
+    self.wait_start(0.25, 20) # Wait for the self.restart
     self.acknowledge(
       device_id=device_id, api_key = api_key,
       hostname=remote.hostname(remote_config), 
@@ -819,23 +850,19 @@ class SyncthingClient(SyncthingFacade):
     
     if device:
       device['name'] = kwargs['hostname']
-
-    if 'api_key' in kwargs:
-      api_key = kwargs['api_key']
-    else:
-      api_key = ''
-
+        
     # Save folder data into kodrive config
     self.adapter.set_dir_config({
       'device_id' : device_id,
-      'api_key' : api_key,
+      'api_key' : kwargs['api_key'] if 'api_key' in kwargs else '',
       'label' : kwargs['label'],
       'local_path' : kwargs['local_path'],
-      'remote_path': kwargs['remote_path'] if 'remote_path' in kwargs else '',
       'is_shared' : True,
+      'server' : kwargs['server'] if 'server' in kwargs else False,
       'host' : kwargs['host'] if 'host' in kwargs else None,
-      'port' : kwargs['port'] if 'port' in kwargs else None,
-      'server' : kwargs['server'] if 'server' in kwargs else False
+
+      'remote_path': kwargs['remote_path'] if 'remote_path' in kwargs else '',
+      'port' : kwargs['port'] if 'port' in kwargs else None
     }) 
 
     self.set_config(config)
@@ -1351,6 +1378,9 @@ class SyncthingClient(SyncthingFacade):
   def autostart(self):
     path = self.adapter.get_syncthing_path()
     self.adapter.autostart(path)
+
+  def test(self, arg):
+    self.live_update()
 
 class SyncthingProxy(SyncthingFacade):
 

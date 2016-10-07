@@ -16,10 +16,13 @@ s_app_conf = json.dumps(mock.server.adapter.get_config())
 c_st_conf = json.dumps(mock.client.get_config())
 s_st_conf = json.dumps(mock.server.get_config())
 
+def test_live_update():
+  mock.client.live_update()
+
 def test_init_conf():
 
   mock.client.wait_start(0.5, 10)
-  config= mock.client.get_config()
+  config = mock.client.get_config()
   ris = config['options']['reconnectionIntervalS']
   rrim = config['options']['relayReconnectIntervalM']
 

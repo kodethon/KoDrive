@@ -436,11 +436,14 @@ def info(**kwargs):
 def start(**kwargs):
   handler = factory.get_handler()
 
+  kodrive_config = handler.adapter.get_config()
+
   if not handler.ping():
     if not handler.start(**kwargs):
       return 'KodeDrive could not be started.', True
     else:
       handler.autostart()
+      handler.live_update()
       return 'KodeDrive has successfully started.', False
   else:
     return 'KodeDrive has already been started.', False

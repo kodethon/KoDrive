@@ -1,3 +1,5 @@
+import os
+import json
 
 # Delete all devices that no longer have
 # a folder as a dependency
@@ -85,13 +87,42 @@ def get_devid(dev_obj):
   else:
     return dev_obj['deviceId']
 
-def update_devices(a_conf, b_conf, app_conf):
+def update_devices(folder_conf):
+
+  d = os.path.join(folder_conf['path'], '.kodrive')
+  config = os.path.join(d, 'config.json')
+  backup = os.path.join(d, 'backup')
   
-  for d in app_conf['directories']:
-    if d['server']:
-      a_folder = find_folder_with_path(d['local_path'], a_conf)
-      b_folder = find_folder({'id' : a_folder['id']}, b_conf)
+  if not os.path.exists(config):
+    return False
+  else:
     
-      a_folder['devices'] = b_folder['devices']
-    
+    # Backup folder devices
+    if os.path.exists(backup):
+
+      try:
+        fp = open(backup, 'r+')
+        data = json.loads(fp.read())
+        data['devices'] = folder_conf['devices']
+      except Exception as e:
+      	data = {}
+      	data['devices'] = folder_conf['devices']
+      	pass
+      	
+      fp.write(json.dumps(data))
+      fp.close()
+    else:
+      with open(backup, "w") as f:
+        f.write(json.dump({'devices' : folder_conf['devices']}))
+
+    # Update folder devices
+    try:
+      fp = open(config, 'r')
+      raw = fp.read()
+      data = json.loads(raw)
+    except Exception as e:
+    	return False  	   
+
+    folder_conf['devices'] = data['devices']
+    return True
   

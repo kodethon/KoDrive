@@ -1,7 +1,7 @@
-import click
+import click 
+from .py_syncthing_adapter import Syncthing 
 
-from .py_syncthing_adapter import Syncthing
-from .data import custom_errors
+from .data import custom_errors 
 from .data import mac_plist_adt
 from .data import autostart as aust
 
@@ -33,14 +33,30 @@ class PlatformBase(object):
   def platform_get_api_key(self, config_path):
     tree = ET.parse(config_path)
     return tree.find('gui').find('apikey').text
+    
+  def platform_get_folders(self, config_path):
+  	tree = ET.parse(config_path)
+  	folders = []
+  	
+  	for f in tree.findall('folder'):
+  		folders.append(f.attrib)
+  		
+  	return folders
 
   def platform_find_folder(self, config_path, folder_path):
     tree = ET.parse(config_path)
     for f in tree.findall('folder'):
+      
       path = f.attrib['path']
-
       if path == folder_path:
-        return f.attrib
+      	devices = []
+      	for d in f.findall('device'):
+      		devices.append(d.attrib)
+      		
+      	folder = f.attrib
+      	folder['devices'] = devices
+	
+        return folder
 
   def get_gui_address(self, config_path):   
     tree = ET.parse(config_path)
@@ -287,7 +303,32 @@ class PlatformBase(object):
             tree.write(config_path)
 
             return tree
+  
+  # Creates a .kodrive folder 
+  def broadcast_folder_info(self, folder_path, **kwargs):
+  	dir_path = os.path.join(folder_path, '.kodrive')
 
+  	if not os.path.exists(dir_path):
+  		os.makedirs(dir_path)
+  		
+  	conf_path = os.path.join(dir_path, 'config.json')
+  	
+  	if os.path.exists(conf_path):
+			fp = open(conf_path, 'r+')
+			config = json.loads(fp.read())
+			config['devices'] = kwargs['devices']
+
+			fp.write(json.dumps(config))
+  	else:
+			config = {}
+			if 'devices' in kwargs: 
+				config['devices'] = kwargs['devices']
+			
+			# Create config.json
+			with open(conf_path, 'w') as f:
+				f.write(json.dumps(config))
+
+### Linux Adapter
 class SyncthingLinux64(PlatformBase): 
   
   rel_st_conf_dir = '.config/syncthing'
@@ -327,7 +368,10 @@ class SyncthingLinux64(PlatformBase):
   @property
   def config_path(self):
     return self.app_conf_file
-  
+    
+  def get_folders(self):
+  	return self.platform_get_folders(self.st_conf_file)
+
   def find_folder(self, path):
     if path[len(path) - 1] != '/':
       path += '/'
@@ -458,6 +502,7 @@ class SyncthingLinux64(PlatformBase):
   def disable_autostart(self):
     return
 
+### Mac Adapter
 class SyncthingMac64(PlatformBase): 
 
   rel_st_conf_dir = 'Library/Application Support/Syncthing'
@@ -497,6 +542,9 @@ class SyncthingMac64(PlatformBase):
   @property
   def config_path(self):
     return self.app_conf_file
+    
+  def get_folders(self):
+  	return self.platform_get_folders(self.st_conf_file)
 
   def find_folder(self, path):
     if path[len(path) - 1] != '/':
