@@ -159,6 +159,9 @@ class SyncthingFacade():
 
         if d['server']:
           folder = self.adapter.find_folder(d['local_path'])
+          if not folder:
+            raise custom_errors.FileNotInConfig(d['local_path'])
+
           st_util.update_devices(folder)
           self.adapter.set_folder(folder)
         
@@ -308,6 +311,9 @@ class SyncthingFacade():
       return res['configInSync']
     except Exception:
       return False
+
+  def random(self):
+    return self.sync.misc.random()['random']
 
 # UTILS (Should be moved to its own class)
   
@@ -643,7 +649,7 @@ class SyncthingClient(SyncthingFacade):
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,
-      'id' : hashlib.sha1(kwargs['path']).hexdigest(),
+      'id' : self.random(),
       'scanProgressIntervalS' : 0,
       'hashers' : 0,
       'pullers' : 0,
@@ -766,12 +772,15 @@ class SyncthingClient(SyncthingFacade):
     else:
       host = self.devid_to_ip(device_id)
 
+    if not host:
+      raise custom_errors.DeviceNotFound('remote device')
+
     # Request remote to share its folder with us
     remote = SyncthingProxy(
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None
     )
-
+    
     remote_config = remote.request_folder(
       self.hostname(), self.get_device_id()
     )
@@ -796,7 +805,7 @@ class SyncthingClient(SyncthingFacade):
       host=remote.host, port=remote.port,
       server=True, interval=kwargs['interval']
     )
-
+    
     return label
 
   def acknowledge(self, **kwargs):
@@ -866,7 +875,7 @@ class SyncthingClient(SyncthingFacade):
       'remote_path': kwargs['remote_path'] if 'remote_path' in kwargs else '',
       'port' : kwargs['port'] if 'port' in kwargs else None
     }) 
-
+    
     self.set_config(config)
     self.restart()
 

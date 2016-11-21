@@ -136,6 +136,7 @@ def link(**kwargs):
     
     # Error! Rollback :/
     if handler.ping():
+      click.echo('An error occurred. Rolling back...') 
       app_rb.rollback_config()
       st_rb.rollback_config()
 
@@ -435,7 +436,11 @@ def info(**kwargs):
 
 def start(**kwargs):
   handler = factory.get_handler()
-  handler.live_update()
+
+  try:
+    handler.live_update()
+  except Exception as e:
+    click.echo(e)
 
   if not handler.ping():
     if not handler.start(**kwargs):
