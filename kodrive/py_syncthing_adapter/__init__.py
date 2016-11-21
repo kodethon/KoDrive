@@ -154,7 +154,8 @@ class Commands(object):
         self.misc = GetDict(interface,
             device_id = ('GET', '/svc/deviceid'),
             lang =      ('GET', '/svc/lang'),
-            report =    ('GET', '/svc/report')
+            report =    ('GET', '/svc/report'),
+            random =    ('GET', '/svc/random/string')
         )
 
         # set command aliases
