@@ -57,7 +57,7 @@ def ls():
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
-  '-i', '--interval', default=5,
+  '-i', '--interval', default=30,
   nargs=1, metavar="<INTEGER>",
   help="Specify sync interval in seconds."
 )
@@ -280,7 +280,7 @@ def free(**kwargs):
   help="Associate this folder with a tag."
 )
 @click.option(
-  '-i', '--interval', default=5,
+  '-i', '--interval', default=30,
   nargs=1, metavar="<INTEGER>",
   help="Specify sync interval in seconds."
 )

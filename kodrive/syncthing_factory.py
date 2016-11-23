@@ -635,7 +635,7 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 60,
+      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 30,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,
