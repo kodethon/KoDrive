@@ -36,6 +36,7 @@ if not server.ping():
     delay=None,
     client=False,
     server=False,
+    lcast=False,
     port=server_conf['port']
   )
 
@@ -44,5 +45,6 @@ if not client.ping():
     delay=None,
     client=False,
     server=False,
+    lcast=False,
     port=client_conf['port']
   )

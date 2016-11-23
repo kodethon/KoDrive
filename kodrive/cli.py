@@ -397,7 +397,7 @@ def info(**kwargs):
 @click.option('-i', '--inotify', is_flag=True, help="Enable inotify upon start.")
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
-@click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
+@click.option('-l', '--lcast', is_flag=True, help="Enable local announce.")
 @click.option(
     '-H', '--home', nargs=1, metavar="  <PATH>",
     type=click.Path(exists=True, writable=True, resolve_path=True), 

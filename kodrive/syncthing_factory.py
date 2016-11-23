@@ -192,19 +192,19 @@ class SyncthingFacade():
       # Update internal st reference
       self.sync = self.adapter.get_gui_hook()
 
-      if kwargs['delay']:
-        self.set_delay(kwargs['delay'])     
-
       # Initialize st config and kodrive config
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
-      self.adapter.init_configs(st_conf, app_conf, is_new=True)
+      kwargs['is_new'] = True
+      self.adapter.init_configs(st_conf, app_conf, **kwargs)
       self.adapter.delete_default_folder()
       
       init_client = self.make_client
     else:
-      if kwargs['delay']:
-        self.set_delay(kwargs['delay'])
+      st_conf = self.adapter.st_conf_file
+      app_conf = self.adapter.app_conf_file
+      kwargs['is_new'] = False
+      self.adapter.init_configs(st_conf, app_conf, **kwargs)
 
     # Initialize kodrive in one of two modes
     if kwargs['server']:
@@ -220,16 +220,6 @@ class SyncthingFacade():
 
     return True if self.wait_start(0.5, 20, verbose=True) else False
   
-  def set_delay(self, speed):
-    if speed < 0:
-      speed = 0
-    elif speed > 3:
-      speed = 3
-
-    st_conf = self.adapter.st_conf_file
-    app_conf = self.adapter.app_conf_file
-    self.adapter.init_configs(st_conf, app_conf, speed=speed)
-
   def shutdown(self):
     try:
       status = json.loads(self.sync.sys.set.shutdown())
@@ -645,7 +635,7 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 15,
+      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 60,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,
@@ -833,7 +823,7 @@ class SyncthingClient(SyncthingFacade):
         label=kwargs['label'],
         path=kwargs['local_path'],
         deviceID=self.get_device_id(),
-        rescanIntervals=kwargs['interval']
+        rescanIntervalS=kwargs['interval']
       )
       remote_folder.add_device(device_id)
       remote_folder = remote_folder.obj
