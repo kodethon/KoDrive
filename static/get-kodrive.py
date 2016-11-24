@@ -166,7 +166,7 @@ def main():
     install_files(venv, bin_dir, 'kodrive')
 
     # Start kodrive 
-    #call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
+    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
 
     # Set PATH variable
     if 'SHELL' in os.environ:
@@ -178,9 +178,9 @@ def main():
         bashrc = os.path.expanduser("~/.bashrc")
         cshrc = os.path.expanduser("~/.cshrc")
 
-        if os.path.exist(bashrc):
+        if os.path.exists(bashrc):
             modify_bashrc()
-        elif os.path.exist(cshrc):
+        elif os.path.exists(cshrc):
             modify_cshrc()
     
     succeed('kodrive is now installed.')
