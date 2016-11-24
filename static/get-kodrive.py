@@ -166,7 +166,7 @@ def main():
     install_files(venv, bin_dir, 'kodrive')
 
     # Start kodrive 
-    call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
+    #call([os.path.join(DEFAULT_KODRIVE_BIN_DIR, 'kodrive'), 'sys', 'start'])
 
     # Set PATH variable
     if 'SHELL' in os.environ:
