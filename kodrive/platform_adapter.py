@@ -139,7 +139,14 @@ class PlatformBase(object):
       host = toks[0]
       port = int(toks[1])
 
-      if sock.connect_ex((host, port)) != 0:
+      # Check if port is available, if it isn't try another port
+      if sock.connect_ex((host, port)) == 0:
+        port = int(port)
+
+        # Continue incrementing until an open port is found
+        while port < 65535 and sock.connect_ex((host, port)) == 0:
+          port += 1
+
         opts.append('-gui-address')
         opts.append(gui_address)
     
@@ -653,10 +660,18 @@ class SyncthingMac64(PlatformBase):
       toks = gui_address.split(':')
       host = toks[0]
       port = int(toks[1])
+      
+      # Check if port is available, if it isn't try another port
+      if sock.connect_ex((host, port)) == 0:
+        port = int(port)
 
-      if sock.connect_ex((host, port)) != 0:
+        # Continue incrementing until an open port is found
+        while port < 65535 and sock.connect_ex((host, port)) == 0:
+          port += 1
+
         opts.append('-gui-address')
         opts.append(gui_address)
+        
 
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
