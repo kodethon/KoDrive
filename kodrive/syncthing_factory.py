@@ -201,6 +201,10 @@ class SyncthingFacade():
       
       init_client = self.make_client
     else:
+      # Kinda hacky way to ensure that self.sync is up to date
+      # Added to fix gui port already bound problem
+      self.sync = self.adapter.get_gui_hook()
+
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
       kwargs['is_new'] = False

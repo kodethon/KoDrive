@@ -119,6 +119,7 @@ class PlatformBase(object):
     
     # Check if this is first time starting syncthing
     new_flag = False
+
     if not os.path.exists(st_conf_file):
       new_flag = True
     else:
@@ -127,17 +128,19 @@ class PlatformBase(object):
       toks = gui_address.split(':')
       host = toks[0]
       port = int(toks[1])
-
+        
       # Check if port is available, if it isn't try another port
       if sock.connect_ex((host, port)) == 0:
-        port = int(port)
+        port += 1
 
         # Continue incrementing until an open port is found
         while port < 65535 and sock.connect_ex((host, port)) == 0:
           port += 1
-
-        opts.append('-gui-address')
-        opts.append(gui_address)
+        
+        gui_address = host + ':' + str(port)
+        self.set_gui_address(self.st_conf_file, gui_address)
+        #opts.append('-gui-address')
+        #opts.append(gui_address)
     
     # Check if a migration is needed
     if self.migrate:
@@ -652,15 +655,17 @@ class SyncthingMac64(PlatformBase):
       
       # Check if port is available, if it isn't try another port
       if sock.connect_ex((host, port)) == 0:
-        port = int(port)
+        port += 1
 
         # Continue incrementing until an open port is found
         while port < 65535 and sock.connect_ex((host, port)) == 0:
           port += 1
-
-        opts.append('-gui-address')
-        opts.append(gui_address)
         
+        gui_address = host + ':' + str(port)
+        self.set_gui_address(self.st_conf_file, gui_address)
+
+        #opts.append('-gui-address')
+        #opts.append(gui_address)
 
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
