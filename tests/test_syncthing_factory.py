@@ -31,8 +31,8 @@ def test_init_conf():
     print "Instead got: %s" % ris
     assert False
 
-  if not rrim == 0:
-    print "Was expecting relayReconnectionIntervalM to be %s" % 0
+  if not rrim == 1:
+    print "Was expecting relayReconnectionIntervalM to be %s" % 1
     print "Instead got: %s" % rrim
     assert False
 

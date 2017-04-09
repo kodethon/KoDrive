@@ -4,6 +4,10 @@ import json
 # Delete all devices that no longer have
 # a folder as a dependency
 def prune_devices(folder, config):
+  
+  if not folder:
+    return False;
+
   pruned = False
 
   # For each device in the folder
@@ -112,9 +116,8 @@ def update_devices(folder_conf):
       fp.write(json.dumps(data))
       fp.close()
     else:
-    	print backup
-    	with open(backup, "w") as f:
-    		f.write(json.dumps({'devices' : folder_conf['devices']}))
+      with open(backup, "w") as f:
+        f.write(json.dumps({'devices' : folder_conf['devices']}))
 
     # Update folder devices
     try:

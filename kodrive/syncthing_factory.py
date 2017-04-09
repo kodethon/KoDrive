@@ -159,6 +159,9 @@ class SyncthingFacade():
 
         if d['server']:
           folder = self.adapter.find_folder(d['local_path'])
+          if not folder:
+            raise custom_errors.FileNotInConfig(d['local_path'])
+
           st_util.update_devices(folder)
           self.adapter.set_folder(folder)
         
@@ -189,19 +192,19 @@ class SyncthingFacade():
       # Update internal st reference
       self.sync = self.adapter.get_gui_hook()
 
-      if kwargs['delay']:
-        self.set_delay(kwargs['delay'])     
-
       # Initialize st config and kodrive config
       st_conf = self.adapter.st_conf_file
       app_conf = self.adapter.app_conf_file
-      self.adapter.init_configs(st_conf, app_conf, is_new=True)
+      kwargs['is_new'] = True
+      self.adapter.init_configs(st_conf, app_conf, **kwargs)
       self.adapter.delete_default_folder()
       
       init_client = self.make_client
     else:
-      if kwargs['delay']:
-        self.set_delay(kwargs['delay'])
+      st_conf = self.adapter.st_conf_file
+      app_conf = self.adapter.app_conf_file
+      kwargs['is_new'] = False
+      self.adapter.init_configs(st_conf, app_conf, **kwargs)
 
     # Initialize kodrive in one of two modes
     if kwargs['server']:
@@ -217,16 +220,6 @@ class SyncthingFacade():
 
     return True if self.wait_start(0.5, 20, verbose=True) else False
   
-  def set_delay(self, speed):
-    if speed < 0:
-      speed = 0
-    elif speed > 3:
-      speed = 3
-
-    st_conf = self.adapter.st_conf_file
-    app_conf = self.adapter.app_conf_file
-    self.adapter.init_configs(st_conf, app_conf, speed=speed)
-
   def shutdown(self):
     try:
       status = json.loads(self.sync.sys.set.shutdown())
@@ -308,6 +301,9 @@ class SyncthingFacade():
       return res['configInSync']
     except Exception:
       return False
+
+  def random(self):
+    return self.sync.misc.random()['random']
 
 # UTILS (Should be moved to its own class)
   
@@ -639,11 +635,11 @@ class SyncthingClient(SyncthingFacade):
         raise custom_errors.FileExists(kwargs['path'])
 
     folders.append({
-      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 15,
+      'rescanIntervalS' : kwargs['interval'] if 'interval' in kwargs else 30,
       'copiers' : 0,
       'pullerPauseS' : 0,
       'autoNormalize' : True,
-      'id' : hashlib.sha1(kwargs['path']).hexdigest(),
+      'id' : self.random(),
       'scanProgressIntervalS' : 0,
       'hashers' : 0,
       'pullers' : 0,
@@ -766,12 +762,15 @@ class SyncthingClient(SyncthingFacade):
     else:
       host = self.devid_to_ip(device_id)
 
+    if not host:
+      raise custom_errors.DeviceNotFound('remote device')
+
     # Request remote to share its folder with us
     remote = SyncthingProxy(
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None
     )
-
+    
     remote_config = remote.request_folder(
       self.hostname(), self.get_device_id()
     )
@@ -796,7 +795,7 @@ class SyncthingClient(SyncthingFacade):
       host=remote.host, port=remote.port,
       server=True, interval=kwargs['interval']
     )
-
+    
     return label
 
   def acknowledge(self, **kwargs):
@@ -824,7 +823,7 @@ class SyncthingClient(SyncthingFacade):
         label=kwargs['label'],
         path=kwargs['local_path'],
         deviceID=self.get_device_id(),
-        rescanIntervals=kwargs['interval']
+        rescanIntervalS=kwargs['interval']
       )
       remote_folder.add_device(device_id)
       remote_folder = remote_folder.obj
@@ -866,7 +865,7 @@ class SyncthingClient(SyncthingFacade):
       'remote_path': kwargs['remote_path'] if 'remote_path' in kwargs else '',
       'port' : kwargs['port'] if 'port' in kwargs else None
     }) 
-
+    
     self.set_config(config)
     self.restart()
 

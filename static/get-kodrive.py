@@ -178,9 +178,9 @@ def main():
         bashrc = os.path.expanduser("~/.bashrc")
         cshrc = os.path.expanduser("~/.cshrc")
 
-        if os.path.exist(bashrc):
+        if os.path.exists(bashrc):
             modify_bashrc()
-        elif os.path.exist(cshrc):
+        elif os.path.exists(cshrc):
             modify_cshrc()
     
     succeed('kodrive is now installed.')

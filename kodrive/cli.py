@@ -57,7 +57,7 @@ def ls():
 @main.command()
 @click.argument('key', nargs=1)
 @click.option(
-  '-i', '--interval', default=5,
+  '-i', '--interval', default=30,
   nargs=1, metavar="<INTEGER>",
   help="Specify sync interval in seconds."
 )
@@ -280,7 +280,7 @@ def free(**kwargs):
   help="Associate this folder with a tag."
 )
 @click.option(
-  '-i', '--interval', default=5,
+  '-i', '--interval', default=30,
   nargs=1, metavar="<INTEGER>",
   help="Specify sync interval in seconds."
 )
@@ -397,7 +397,7 @@ def info(**kwargs):
 @click.option('-i', '--inotify', is_flag=True, help="Enable inotify upon start.")
 @click.option('-c', '--client', is_flag=True, help="Set Kodedrive into client mode.")
 @click.option('-s', '--server', is_flag=True, help="Set Kodedrive into server mode.")
-@click.option('-d', '--delay', type=int, help="Set synchronization delay (1, 2, 3).", metavar="  <INTEGER>")
+@click.option('-l', '--lcast', is_flag=True, help="Enable local announce.")
 @click.option(
     '-H', '--home', nargs=1, metavar="  <PATH>",
     type=click.Path(exists=True, writable=True, resolve_path=True), 
@@ -417,12 +417,13 @@ def stop():
   output, err = cli_syncthing_adapter.sys(exit=True)
   click.echo("%s" % output, err=err)
 
+'''
 @sys.command()
 def test():
-  ''' test ''' 
 
   output, err = cli_syncthing_adapter.sys(test='a')
   click.echo("%s" % output, err=err)
+'''
 
 
 # Attach subcommands to main

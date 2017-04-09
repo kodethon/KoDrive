@@ -91,23 +91,12 @@ class PlatformBase(object):
     
     tree = ET.parse(st_conf)
     options = tree.find('options')
-    
-    # Translate speed to relayReconnectIntervalM & reconnectionIntervalS
-    if not 'speed' in kwargs:
-      kwargs['speed'] = 1
 
-    if kwargs['speed'] == 1:
-      relay_rec = 0
-      rec_interval = 5
-    elif kwargs['speed'] == 2:
-      relay_rec = 1
-      rec_interval = 5
-    else:
-      relay_rec = 2
-      rec_interval = 10
-    
-    options.find('relayReconnectIntervalM').text = str(relay_rec)
-    options.find('reconnectionIntervalS').text = str(rec_interval)
+    # Set syncthing options
+    options.find('relayReconnectIntervalM').text = '1'
+    options.find('reconnectionIntervalS').text = '30' if kwargs['server'] else '5'
+    options.find('overwriteRemoteDeviceNamesOnConnect').text = 'false' if kwargs['server'] else 'true'
+    options.find('localAnnounceEnabled').text = 'true' if kwargs['lcast'] else 'false'
     tree.write(st_conf)
     
     # Save device id to kodrive config

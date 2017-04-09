@@ -5,7 +5,7 @@ class Folder:
     if 'rescanIntervalS' in kwargs:
       rescanIntervalS = kwargs['rescanIntervalS']   
     else:
-      rescanIntervalS = 5
+      rescanIntervalS = 30
 
     self.folder = {
       'rescanIntervalS' : rescanIntervalS,
