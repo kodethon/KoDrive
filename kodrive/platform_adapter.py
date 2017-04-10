@@ -151,12 +151,12 @@ class PlatformBase(object):
       listen_address = self.get_listen_address(st_conf_file)
       toks = listen_address.split(':')
       
-      if len(toks) == 3:
-        port = int(toks[2]) 
-        p = self.get_available_port(host, port)
-        if p != port:
-          listen_address = ':'.join([toks[0], toks[1], str(p)])
-          self.set_listen_address(st_conf_file, listen_address)
+      port = int(toks[2]) if len(toks) == 3 else None
+      p = self.get_available_port(host, port)
+
+      if p != port:
+        listen_address = ':'.join(['tcp://' + host, str(p)])
+        self.set_listen_address(st_conf_file, listen_address)
         
     #opts.append('-gui-address')
     #opts.append(gui_address)
@@ -368,6 +368,9 @@ class PlatformBase(object):
 	
 	# Utility to find an available port
   def get_available_port(self, host='0.0.0.0', port=1025):
+    if not port:
+      port= 1025
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     if sock.connect_ex((host, port)) == 0:
@@ -692,10 +695,10 @@ class SyncthingMac64(PlatformBase):
       # Check listen address port is available  
       listen_address = self.get_listen_address(st_conf_file)
       toks = listen_address.split(':')
-      port = int(toks[2])
+      port = int(toks[2]) if len(toks) == 3 else None
       p = self.get_available_port(host, port)
       if p != port:
-        listen_address = ':'.join([toks[0], toks[1], str(p)])
+        listen_address = ':'.join(['tcp://' + host, str(p)])
         self.set_listen_address(st_conf_file, listen_address)
       
     #opts.append('-gui-address')
