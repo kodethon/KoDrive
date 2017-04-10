@@ -19,7 +19,7 @@ class PlatformBase(object):
   st_binary = 'syncthing'
   st_inotify_binary = 'syncthing-inotify'
   stfolder = '.stfolder'
-  st_version = '0.14.7'
+  st_version = '0.14.22'
   dl_server = 'http://cumulus.cs.ucdavis.edu'
 
   # Specifies whether to update kodrive config
