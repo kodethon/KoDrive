@@ -86,6 +86,17 @@ class PlatformBase(object):
     tree = ET.parse(config_path)
     tree.find('gui').find('address').text = str(address)
     tree.write(config_path)
+  
+  def get_listen_address(self, config_path):
+    tree = ET.parse(config_path)
+    addresses = tree.find('options').findall('listenAddress')
+    return addresses[len(addresses) - 1].text
+    
+  def set_listen_address(self, config_path, address):
+    tree = ET.parse(config_path)
+    addresses = tree.find('options').findall('listenAddress') 
+    addresses[len(addresses) - 1].text = str(address)
+    tree.write(config_path)
 
   def init_configs(self, st_conf, app_conf, **kwargs):
     
@@ -130,17 +141,23 @@ class PlatformBase(object):
       port = int(toks[1])
         
       # Check if port is available, if it isn't try another port
-      if sock.connect_ex((host, port)) == 0:
-        port += 1
-
-        # Continue incrementing until an open port is found
-        while port < 65535 and sock.connect_ex((host, port)) == 0:
-          port += 1
-        
+      p = self.get_available_port(host, port) 
+      
+      if p != port:
         gui_address = host + ':' + str(port)
-        self.set_gui_address(self.st_conf_file, gui_address)
-        #opts.append('-gui-address')
-        #opts.append(gui_address)
+        self.set_gui_address(st_conf_file, gui_address)
+      
+      # Check listen address port is available  
+      listen_address = self.get_listen_address(st_conf_file)
+      toks = listen_address.split(':')
+      port = int(toks[2])
+      p = self.get_available_port(host, port)
+      if p != port:
+          listen_address = ':'.join([toks[0], toks[1], str(port)])
+          self.set_listen_address(st_conf_file, listen_address)
+        
+    #opts.append('-gui-address')
+    #opts.append(gui_address)
     
     # Check if a migration is needed
     if self.migrate:
@@ -346,6 +363,18 @@ class PlatformBase(object):
 			# Create config.json
 			with open(conf_path, 'w') as f:
 				f.write(json.dumps(config))
+	
+	# Utility to find an available port
+  def get_available_port(self, host='0.0.0.0', port=1025):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if sock.connect_ex((host, port)) == 0:
+	    port += 1
+
+      # Continue incrementing until an open port is found
+    while port < 65535 and sock.connect_ex((host, port)) == 0:
+      port += 1
+    
+    return port
 
 ### Linux Adapter
 class SyncthingLinux64(PlatformBase): 
@@ -648,24 +677,27 @@ class SyncthingMac64(PlatformBase):
       new_flag = True
     else:  
       gui_address = self.get_gui_address(self.st_conf_file)
-      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       toks = gui_address.split(':')
       host = toks[0]
       port = int(toks[1])
       
-      # Check if port is available, if it isn't try another port
-      if sock.connect_ex((host, port)) == 0:
-        port += 1
-
-        # Continue incrementing until an open port is found
-        while port < 65535 and sock.connect_ex((host, port)) == 0:
-          port += 1
-        
-        gui_address = host + ':' + str(port)
+      p = self.get_available_port(host, port)
+      
+      if p != port:
+        gui_address = host + ':' + str(p)
         self.set_gui_address(self.st_conf_file, gui_address)
-
-        #opts.append('-gui-address')
-        #opts.append(gui_address)
+        
+      # Check listen address port is available  
+      listen_address = self.get_listen_address(st_conf_file)
+      toks = listen_address.split(':')
+      port = int(toks[2])
+      p = self.get_available_port(host, port)
+      if p != port:
+        listen_address = ':'.join([toks[0], toks[1], str(port)])
+        self.set_listen_address(st_conf_file, listen_address)
+      
+    #opts.append('-gui-address')
+    #opts.append(gui_address)
 
     os.environ['HOME'] = os.path.expanduser('~')
     os.environ['STNOUPGRADE'] = '1'
@@ -767,4 +799,6 @@ class SyncthingMac64(PlatformBase):
 
 # class SyncthingWin64():
   # TODO
+
+
 
