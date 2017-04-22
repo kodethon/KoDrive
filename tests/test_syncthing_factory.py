@@ -505,6 +505,7 @@ def test_deauth():
 
   assert True
 
+'''
 def test_rollback():
   mock.client.wait_start(0.5, 10)
 
@@ -537,7 +538,6 @@ def test_rollback():
 
   assert True
 
-'''
 def log_configs(configs):
   for c in configs:
     print c
