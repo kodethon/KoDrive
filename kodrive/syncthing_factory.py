@@ -178,7 +178,7 @@ class SyncthingFacade():
   #
   def start(self, **kwargs):    
     path = self.adapter.get_syncthing_path()
-    is_new = self.adapter.start_syncthing(path, **kwargs)
+    kwargs['is_new'] = self.adapter.start_syncthing(path, **kwargs)
     init_client = None
     
     # Note: modifying config file shoult not be done here;
@@ -186,29 +186,19 @@ class SyncthingFacade():
     # until syncthing has started
 
     # If is new, initialize config file
-    if is_new:
-      self.wait_start(0.25, 20)
-
-      # Update internal st reference
-      self.sync = self.adapter.get_gui_hook()
-
-      # Initialize st config and kodrive config
-      st_conf = self.adapter.st_conf_file
-      app_conf = self.adapter.app_conf_file
-      kwargs['is_new'] = True
-      self.adapter.init_configs(st_conf, app_conf, **kwargs)
-      self.adapter.delete_default_folder()
-      
+    if kwargs['is_new']:
+      self.wait_start(0.25, 25)
       init_client = self.make_client
-    else:
-      # Kinda hacky way to ensure that self.sync is up to date
-      # Added to fix gui port already bound problem
-      self.sync = self.adapter.get_gui_hook()
+      self.adapter.delete_default_folder()
 
-      st_conf = self.adapter.st_conf_file
-      app_conf = self.adapter.app_conf_file
-      kwargs['is_new'] = False
-      self.adapter.init_configs(st_conf, app_conf, **kwargs)
+    # Update internal st reference
+    self.sync = self.adapter.get_gui_hook()
+
+    # Initialize st config and kodrive config
+    st_conf = self.adapter.st_conf_file
+    app_conf = self.adapter.app_conf_file
+
+    self.adapter.init_configs(st_conf, app_conf, **kwargs)
 
     # Initialize kodrive in one of two modes
     if kwargs['server']:

@@ -1,16 +1,20 @@
 import pytest
 import json
+import os
 
 from kodrive import syncthing_factory as factory
 from kodrive.utils import config_rollbacker as rb
 from mock import adapters as mock
 
 Cache = {}
+
+# Generate roll back objects
 c_app_rb = rb.AppRollbacker(mock.client)
 s_app_rb = rb.AppRollbacker(mock.server)
 c_st_rb = rb.SyncthingRollbacker(mock.client)
 s_st_rb = rb.SyncthingRollbacker(mock.server)
 
+# Used to test roll back
 c_app_conf = json.dumps(mock.client.adapter.get_config())
 s_app_conf = json.dumps(mock.server.adapter.get_config())
 c_st_conf = json.dumps(mock.client.get_config())
@@ -44,8 +48,26 @@ def test_init_conf():
     print "Instead got: %s" % kodrive_config['system']['devid']
     assert False
 
+def test_no_default_folder(): 
+  ''' Ensure default Sync folder gets deleted '''
+  
+  default_folder = os.path.join(mock.client_conf['sync_home'], 'Sync')
+  if os.path.exists(default_folder):
+      print "Was expecting %s to not exist." % default_folder
+      assert False
+  
+  default_folder = os.path.join(mock.server_conf['sync_home'], 'Sync')
+  if os.path.exists(default_folder):
+      print "Was expecting %s to not exist." % default_folder
+      assert False
+      
+  default_folder = os.path.join(os.path.expanduser('~'), 'Sync')
+  if os.path.exists(default_folder):
+      print "Was expecting %s to not exist." % default_folder
+      assert False
+
 def test_make_server():
-  ''' Ensure that syncthing_ meets specs '''
+  ''' Test kodrive sys start -s '''
 
   config_path = mock.client.adapter.st_conf_file
   gui_addr = mock.client.adapter.get_gui_address(config_path)
@@ -74,9 +96,34 @@ def test_make_server():
     assert False
 
   assert True 
+  
+def test_get_config():
+  
+  mock.client.wait_start(0.5, 10)
+  mock.server.wait_start(0.5, 10)
+  
+  c_app_conf_n = json.dumps(mock.client.adapter.get_config())
+  s_app_conf_n = json.dumps(mock.server.adapter.get_config())
+  c_st_conf_n = json.dumps(mock.client.get_config())
+  s_st_conf_n = json.dumps(mock.server.get_config())
 
-def test_system_client():
-  ''' Ensure that kodrive sys -c meets specs '''
+  global c_app_conf
+  global s_app_conf
+  global c_st_conf
+  global s_st_conf
+
+  assert c_app_conf_n != None
+  assert s_app_conf_n != None
+  assert c_st_conf_n != None
+  assert s_st_conf_n != None
+
+  c_app_conf = c_app_conf_n
+  s_app_conf = s_app_conf_n
+  c_st_conf = c_st_conf_n
+  s_st_conf = s_st_conf_n
+
+def test_make_client():
+  ''' Test kodrive sys start -c '''
     
   mock.client.wait_start(0.5, 10)
 
@@ -344,7 +391,7 @@ def test_auth():
     mock.client.wait_start(0.5, 10)
     mock.client.free(client_sync_dir)
 
-  mock.client.wait_start(0.5, 10)
+  mock.client.wait_start(0.5, 15)
 
   if mock.client.device_exists(test_device_id):
     # mock.client.wait_start(0.5, 10)
@@ -465,7 +512,7 @@ def test_rollback():
   c_st_rb.rollback_config()
   s_app_rb.rollback_config()
   s_st_rb.rollback_config()
-
+  
   c_app_conf_n = json.dumps(mock.client.adapter.get_config())
   s_app_conf_n = json.dumps(mock.server.adapter.get_config())
   c_st_conf_n = json.dumps(mock.client.get_config())
@@ -475,6 +522,8 @@ def test_rollback():
   mock.client.wait_start(0.5, 10)
 
   if c_app_conf_n != c_app_conf:
+    print "Exepcted:\n%s" % c_app_conf
+    print "Got:\n%s" % c_app_conf_n
     assert False
 
   if s_app_conf_n != s_app_conf:
@@ -488,11 +537,11 @@ def test_rollback():
 
   assert True
 
+'''
 def log_configs(configs):
   for c in configs:
     print c
 
-'''
 def test_cli():
     result = .invoke(cli.main)
     assert result.exit_code == 0

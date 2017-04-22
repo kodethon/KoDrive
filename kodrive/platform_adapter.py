@@ -319,7 +319,9 @@ class PlatformBase(object):
 
   def delete_platform_folder(self, **kwargs):
     folder_path = kwargs['folder_path']
-    config_path = kwargs['config_path'] 
+    if not os.path.exists(folder_path):
+      return None
+      
     files = os.listdir(folder_path)
     deleted = False
 
@@ -328,6 +330,7 @@ class PlatformBase(object):
       os.rmdir(folder_path)
       deleted = True
       
+    config_path = kwargs['config_path'] 
     if deleted or 'force' in kwargs or 'force_config' in kwargs:
       # Update syncthing config to reflect changes
       if os.path.exists(config_path):
@@ -521,8 +524,7 @@ class SyncthingLinux64(PlatformBase):
     self.delete_platform_folder(
       folder_path=sync_folder, 
       config_path=self.st_conf_file,
-      force_config=True
-    )
+      force_config=True)
 
   def autostart(self, folder_path):
     home = os.path.expanduser('~')
@@ -763,7 +765,7 @@ class SyncthingMac64(PlatformBase):
     # practical purposes, will not occur
     p = subprocess.Popen([
       'launchctl', 'load', plist_path
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ], stdout=DEVNULL, stderr=subprocess.PIPE)
 
     out, err = p.communicate()
 
