@@ -130,3 +130,18 @@ def update_devices(folder_conf):
     folder_conf['devices'] = data['devices']
     return True
   
+def non_default_folder(remote_config, n = 0):
+  i = 0
+  for f in remote_config['folders']:
+    is_default_name = 'Default Folder' in f['label']
+    is_default_scan = f['rescanIntervalS'] == 5
+    
+    # Check if current folder is the default folder
+    if is_default_name and is_default_scan:
+      continue 
+    
+    if i == n:
+      return f
+    else:
+      i += 1
+

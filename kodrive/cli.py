@@ -1,5 +1,5 @@
 import click
-import os, time, math
+import os, time, math, pdb
 
 from . import cli_syncthing_adapter
 
@@ -380,7 +380,7 @@ def sys(ctx):
 )
 def key(**kwargs):
   ''' Display system key. '''
-
+ 
   output, err = cli_syncthing_adapter.key(device=True)
   click.echo("%s" % output, err=err)
 

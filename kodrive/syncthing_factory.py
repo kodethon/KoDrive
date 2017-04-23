@@ -1,4 +1,4 @@
-import click
+import click, pdb
 
 from .py_syncthing_adapter import Syncthing
 
@@ -135,6 +135,7 @@ class SyncthingFacade():
     } 
   
   def live_update(self):
+    
     kodrive_config = self.adapter.get_config()
     directories = kodrive_config['directories']
 
@@ -193,7 +194,7 @@ class SyncthingFacade():
 
     # Update internal st reference
     self.sync = self.adapter.get_gui_hook()
-
+   
     # Initialize st config and kodrive config
     st_conf = self.adapter.st_conf_file
     app_conf = self.adapter.app_conf_file
@@ -737,7 +738,7 @@ class SyncthingClient(SyncthingFacade):
     api_key = kwargs['api_key']
     local_path = kwargs['local_path']
     remote_path = kwargs['remote_path']
-
+    
     # Check if the device id is valid
     if 'error' in self.sync.misc.device_id(id=device_id):
       raise KeyError('Invalid Key.')
@@ -762,20 +763,19 @@ class SyncthingClient(SyncthingFacade):
     # Request remote to share its folder with us
     remote = SyncthingProxy(
       device_id, host, api_key, 
-      port=kwargs['remote_port'] if 'remote_port' in kwargs else None
-    )
-    
+      port=kwargs['remote_port'] if 'remote_port' in kwargs else None)
+      
     remote_config = remote.request_folder(
-      self.hostname(), self.get_device_id()
-    )
-    
+      self.hostname(), self.get_device_id())
+     
     # Find the remote folder
     if remote_path:
       remote_folder = self.find_folder({'path' : remote_path}, remote_config)
     else:
-      remote_folder = remote_config['folders'][0] 
+      # Find the first non-default folder
+      remote_folder = st_util.non_default_folder(remote_config)
         
-    # Determine folder lable
+    # Determine folder label
     label = kwargs['tag'] if 'tag' in kwargs else None
     label = label or remote_folder['label']
     
@@ -787,8 +787,7 @@ class SyncthingClient(SyncthingFacade):
       folder_obj=remote_folder, label=label,
       local_path=local_path, remote_path=remote_folder['path'],
       host=remote.host, port=remote.port,
-      server=True, interval=kwargs['interval']
-    )
+      server=True, interval=kwargs['interval'])
     
     return label
 

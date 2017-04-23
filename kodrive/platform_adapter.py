@@ -542,17 +542,17 @@ class SyncthingLinux64(PlatformBase):
         f.write(aust.getSyncthingService())
 
     # Enable autostart (some platforms may not support systemd)
+    DEVNULL = open(os.devnull, 'w') 
     try:
       opts = [
         'systemctl', '--user', 'enable', st_service_path
       ]
-      DEVNULL = open(os.devnull, 'w') 
-      process = subprocess.Popen(opts, stdout=DEVNULL)
+      process = subprocess.Popen(opts, stdout=DEVNULL, stderr=DEVNULL)
 
       opts = [
         'systemctl', '--user', 'start', st_service_path 
       ]
-      process = subprocess.Popen(opts, stdout=DEVNULL)
+      process = subprocess.Popen(opts, stdout=DEVNULL, stderr=DEVNULL)
     except Exception as e:
       pass 
 

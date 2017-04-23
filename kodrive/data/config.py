@@ -3,5 +3,5 @@ Flags = {
 }
 
 Folder = {
-  'rescanIntervalS' : 30    
+  'rescanIntervalS' : 45    
 }
