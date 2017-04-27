@@ -764,17 +764,11 @@ class SyncthingClient(SyncthingFacade):
     remote = SyncthingProxy(
       device_id, host, api_key, 
       port=kwargs['remote_port'] if 'remote_port' in kwargs else None)
-      
-    remote_config = remote.request_folder(
-      self.hostname(), self.get_device_id())
+    
+    # Request folder will set and restart the remote 
+    remote_hostname, remote_folder = remote.request_folder(
+      self.hostname(), self.get_device_id(), remote_path)
      
-    # Find the remote folder
-    if remote_path:
-      remote_folder = self.find_folder({'path' : remote_path}, remote_config)
-    else:
-      # Find the first non-default folder
-      remote_folder = st_util.non_default_folder(remote_config)
-        
     # Determine folder label
     label = kwargs['tag'] if 'tag' in kwargs else None
     label = label or remote_folder['label']
@@ -783,7 +777,7 @@ class SyncthingClient(SyncthingFacade):
     self.wait_start(0.25, 20) # Wait for the self.restart
     self.acknowledge(
       device_id=device_id, api_key = api_key,
-      hostname=remote.hostname(remote_config), 
+      hostname=remote_hostname, 
       folder_obj=remote_folder, label=label,
       local_path=local_path, remote_path=remote_folder['path'],
       host=remote.host, port=remote.port,
@@ -1419,7 +1413,7 @@ class SyncthingProxy(SyncthingFacade):
       if device_id == self.device_id:
         return d['name']
 
-  def request_folder(self, client_hostname, client_devid):
+  def request_folder(self, client_hostname, client_devid, path = None):
     
     config = self.get_config()       
     
@@ -1430,7 +1424,14 @@ class SyncthingProxy(SyncthingFacade):
       device_id = client_devid
     )
     
-    folder = config['folders'][0]
+    # Find the remote folder
+    if path:
+      folder = st_util.find_folder({'path' : path}, config)
+    else:
+      # Find the first non-default folder
+      folder = st_util.non_default_folder(config)
+    
+    #folder = config['folders'][0]
 
     if not folder['devices']:
       folder['devices'] = []
@@ -1442,7 +1443,8 @@ class SyncthingProxy(SyncthingFacade):
     self.set_config(config)
     self.restart()
 
-    return config
+    #return config
+    return self.hostname(config), folder
 
   def disconnect(self):
     return

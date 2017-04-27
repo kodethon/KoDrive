@@ -1,5 +1,5 @@
 Flags = {
-  'production' : False
+  'production' : True
 }
 
 Folder = {
