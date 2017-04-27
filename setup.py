@@ -1,42 +1,16 @@
 """
+
 Synchronize remote files with local directory.
+
 """
 from setuptools import find_packages, setup
 import sys, os
-
-# Deprecated, may be needed for packaging later though
-def get_data_files():
-    """ Return data_files in a platform dependent manner """
-
-    if sys.platform.startswith('linux'):
-        st_version = '0.14.3'
-        linux_64_bit_dir = "syncthing-linux-amd64-v%s" % st_version
-        bin_src = os.path.join('static/linux', linux_64_bit_dir, 'syncthing')
-        license_src = os.path.join('static/linux', linux_64_bit_dir, 'LICENSE.txt')
-        authors_src = os.path.join('static/linux', linux_64_bit_dir, 'AUTHORS.txt')
-        dest = os.path.expanduser(os.path.join('~', '.st', linux_64_bit_dir))
-        
-        if not os.path.exists(dest):
-            os.makedirs(dest)
-
-        return [
-            (dest, [bin_src]),
-            (dest, [license_src]),
-            (dest, [authors_src])
-        ]
-    elif os.name == 'nt':
-        data_files = []
-    else:
-        data_files = []
-
-    return data_files
-
 
 dependencies = ['click', 'requests']
 
 setup(
     name='kodrive',
-    version='1.0.17',
+    version='1.0.18',
     url='https://github.com/Jvlythical/KodeDrive',
     license='LICENSE',
     author='Michael Yen',
@@ -77,4 +51,31 @@ setup(
     ]
 )
 
+# Deprecated, may be needed for packaging later though
+'''
+def get_data_files():
+    """ Return data_files in a platform dependent manner """
 
+    if sys.platform.startswith('linux'):
+        st_version = '0.14.3'
+        linux_64_bit_dir = "syncthing-linux-amd64-v%s" % st_version
+        bin_src = os.path.join('static/linux', linux_64_bit_dir, 'syncthing')
+        license_src = os.path.join('static/linux', linux_64_bit_dir, 'LICENSE.txt')
+        authors_src = os.path.join('static/linux', linux_64_bit_dir, 'AUTHORS.txt')
+        dest = os.path.expanduser(os.path.join('~', '.st', linux_64_bit_dir))
+        
+        if not os.path.exists(dest):
+            os.makedirs(dest)
+
+        return [
+            (dest, [bin_src]),
+            (dest, [license_src]),
+            (dest, [authors_src])
+        ]
+    elif os.name == 'nt':
+        data_files = []
+    else:
+        data_files = []
+
+    return data_files
+'''
