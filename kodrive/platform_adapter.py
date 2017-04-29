@@ -10,7 +10,7 @@ from xml.etree.ElementTree import Element
 
 import os, subprocess, socket
 import json, hashlib, plistlib
-import urllib, copy, errno
+import urllib, copy, errno, time
 
 class PlatformBase(object):
 
@@ -135,7 +135,6 @@ class PlatformBase(object):
       new_flag = True
     else:
       gui_address = self.get_gui_address(st_conf_file)
-      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       toks = gui_address.split(':')
       host = toks[0]
       port = int(toks[1])
@@ -371,16 +370,26 @@ class PlatformBase(object):
 	
 	# Utility to find an available port
   def get_available_port(self, host='0.0.0.0', port=1025):
+    base_port = 1025
     if not port:
-      port= 1025
+      port = base_port
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    if sock.connect_ex((host, port)) == 0:
-        port += 1
-        # Continue incrementing until an open port is found
-        while port < 65535 and sock.connect_ex((host, port)) == 0:
-          port += 1
+    # Continue incrementing until an open port is found
+    iterations = 1
+    max = 65535
+    while sock.connect_ex((host, port)) == 0 and iterations < max:
+      port += (iterations * 2)
+      port %= max
+      if port <= base_port:
+        port = base_port
+      iterations += 1
+    
+    # Wait a bit to see if port is still available 
+    time.sleep(0.25)
+    if(sock.connect_ex((host, port)) == 0):
+      return self.get_available_port(host, port)
 
     return port
 
