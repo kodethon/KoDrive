@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/kodrive.svg)](https://pypi.python.org/pypi/kodrive)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Synchronize remote files and directories across different devices with an easy-to-use CLI.
+A continuous, decentralized, file synchronization, command-line tool. Synchronize remote files and directories across different devices with an easy-to-use CLI.
 
 ## Getting Started
 
